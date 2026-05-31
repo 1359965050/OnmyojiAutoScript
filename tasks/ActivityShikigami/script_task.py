@@ -169,8 +169,6 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
         logger.hr("Exit Shikigami", 2)
         self.ui_get_current_page(False)
         self.ui_goto(game.page_main)
-        if self.conf.general_climb.active_souls_clean:
-            self.set_next_run(task='SoulsTidy', success=False, finish=False, target=datetime.now())
         self.set_next_run(task="ActivityShikigami", success=True)
         raise TaskEnd
 
@@ -320,21 +318,7 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
         return True
 
     def switch_soul(self, enter_button: RuleImage, cur_img: RuleImage):
-        conf = self.conf.switch_soul_config
-        enable_switch = getattr(conf, f"enable_switch_{self.climb_type}", False)
-        enable_by_name = getattr(conf, f"enable_switch_{self.climb_type}_by_name", False)
-        if not enable_switch and not enable_by_name:
-            return
-        logger.hr('Start switch soul', 2)
-        conf.validate_switch_soul()
-        self.ui_click(enter_button, stop=self.I_CHECK_RECORDS, interval=1)
-        if enable_by_name:
-            group, team = getattr(conf, f"{self.climb_type}_group_team_name").split(",")
-            self.run_switch_soul_by_name(group, team)
-        elif enable_switch:
-            group_team = getattr(conf, f"{self.climb_type}_group_team")
-            self.run_switch_soul(group_team)
-        self.ui_click(self.I_UI_BACK_YELLOW, stop=cur_img, interval=1)
+        return
 
     def switch_climb_mode_in_game(self, mode: str = 'ap'):
         map_check = {
@@ -379,17 +363,14 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
 
     def get_general_battle_conf(self) -> tasks.Component.GeneralBattle.config_general_battle.GeneralBattleConfig:
         from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig as gbc
-        self.conf.validate_switch_preset()
         enable_preset = getattr(self.conf.general_battle, f'enable_{self.climb_type}_preset', False)
-        group, team = getattr(self.conf.switch_soul_config, f'{self.climb_type}_group_team').split(',')
         return gbc(lock_team_enable=not enable_preset,
                    preset_enable=enable_preset,
-                   preset_group=group if enable_preset else 1,
-                   preset_team=team if enable_preset else 1,
+                   preset_group=1,
+                   preset_team=1,
                    green_enable=getattr(self.conf.general_battle, f'enable_{self.climb_type}_green', False),
                    green_mark=getattr(self.conf.general_battle, f'{self.climb_type}_green_mark'),
-                   random_click_swipt_enable=getattr(self.conf.general_battle, f'enable_{self.climb_type}_anti_detect',
-                                                     False), )
+                   random_click_swipt_enable=self.conf.general_battle.enable_anti_detect, )
 
     def random_reward_click(self, exclude_click: list = None, click_now: bool = True) -> RuleClick:
         """

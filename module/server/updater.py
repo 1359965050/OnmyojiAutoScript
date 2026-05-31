@@ -69,63 +69,16 @@ class Updater(DeployConfig, GitManager, PipManager):
         return self.get_commit()
 
     def latest_commit(self) -> str:
-        source = "origin"
-        return self.get_commit(f"{source}/{self.Branch}")
+        return self.current_commit()
 
     def check_update(self) -> bool:
-        self.state = "checking"
-
-        # if State.deploy_config.GitOverCdn:
-        #     status = self.goc_client.get_status()
-        #     if status == "uptodate":
-        #         logger.info(f"No update")
-        #         return False
-        #     elif status == "behind":
-        #         logger.info(f"New update available")
-        #         return True
-        #     else:
-        #         # failed, should fallback to `git pull`
-        #         pass
-
-        source = "origin"
-        for _ in range(3):
-            if self.execute(
-                    f'"{self.git}" fetch {source} {self.Branch}', allow_failure=True
-            ):
-                break
-        else:
-            logger.warning("Git fetch failed")
-            return False
-
-        log = self.execute_output(
-            f'"{self.git}" log --not --remotes={source}/* -1 --oneline'
-        )
-        if log:
-            logger.info(
-                f"Cannot find local commit {log.split()[0]} in upstream, skip update"
-            )
-            return False
-
-        sha1, _, _, message = self.get_commit(f"..{source}/{self.Branch}")
-
-        if sha1:
-            logger.info(f"New update available")
-            logger.info(f"{sha1[:8]} - {message}")
-            return True
-        else:
-            logger.info(f"No update")
-            return False
+        self.state = "ok"
+        logger.info("Local mode: check_update bypassed")
+        return False
 
     def execute_pull(self) -> bool:
-        source = "origin"
-        for _ in range(3):
-            if self.execute(
-                    f'"{self.git}" pull {source} {self.Branch} --no-rebase', allow_failure=True
-            ):
-                break
-        else:
-            logger.warning("Git fetch failed")
-            return False
+        logger.info("Local mode: execute_pull bypassed")
+        return False
 
 
 

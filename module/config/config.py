@@ -125,7 +125,9 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
 
     @cached_property
     def notifier(self):
-        notifier = Notifier(self.model.script.error.notify_config, enable=self.model.script.error.notify_enable)
+        config = getattr(self.model.script.error, 'notify_config', 'provider: null')
+        enable = getattr(self.model.script.error, 'notify_enable', False)
+        notifier = Notifier(config, enable=enable)
         notifier.config_name = self.config_name.upper()
         logger.info(f'Notifier: {notifier.config_name}')
         return notifier

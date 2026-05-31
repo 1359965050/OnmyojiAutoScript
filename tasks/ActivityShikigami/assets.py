@@ -94,9 +94,9 @@ class ActivityShikigamiAssets:
 	# 挑战 
 	O_FIRE = RuleOcr(roi=(1124,599,96,50), area=(1123,570,106,100), mode="Single", method="Default", keyword="挑战", name="fire")
 	# 体力的数量检测 
-	O_REMAIN_AP = RuleOcr(roi=(584,15,63,30), area=(584,15,63,30), mode="DigitCounter", method="Default", keyword="", name="remain_ap")
+	O_REMAIN_AP = RuleOcr(roi=(566,15,85,30), area=(566,15,85,30), mode="DigitCounter", method="Default", keyword="", name="remain_ap")
 	# 活动体力的剩余检测 
-	O_REMAIN_PASS = RuleOcr(roi=(803,17,39,28), area=(803,17,39,28), mode="DigitCounter", method="Default", keyword="", name="remain_pass")
+	O_REMAIN_PASS = RuleOcr(roi=(768,15,80,30), area=(768,15,80,30), mode="DigitCounter", method="Default", keyword="", name="remain_pass")
 	# 还有多少次购买体力的机会 
 	O_REMAIN_BUY = RuleOcr(roi=(808,531,39,42), area=(808,531,39,42), mode="DigitCounter", method="Default", keyword="", name="remain_buy")
 	# 活动票数（没有百分比） 

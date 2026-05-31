@@ -31,8 +31,6 @@ class GeneralClimb(ConfigBase):
     # ap_buff: str = Field(default='buff_4,buff_5', description='体力爬塔加成,buff1-5,加成页从左往右顺序,清空则不切换加成')
     # # boss爬塔buff
     # boss_buff: str = Field(default='buff_1,buff_3', description='boss战爬塔加成,buff1-5,加成页从左往右顺序,清空则不切换加成')
-    # 结束后激活 御魂清理
-    active_souls_clean: bool = Field(default=False, description='是否运行结束后清理御魂')
     # 点击战斗随机休息
     random_sleep: bool = Field(default=False, description='是否启用在点击战斗前随机休息')
 

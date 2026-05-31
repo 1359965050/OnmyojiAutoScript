@@ -19,9 +19,7 @@
       "handle_error": true,
       "error_repeated": false,
       "save_error": true,
-      "screenshot_length": 1,
-      "notify_enable": false,
-      "notify_config": "provider: null"
+      "screenshot_length": 1
     },
     "optimization": {
       "screenshot_interval": 0.3,
@@ -787,36 +785,19 @@
       "enable_ap": true,
       "enable_boss": true,
       "run_sequence": "pass,boss,ap",
-      "active_souls_clean": false,
       "random_sleep": false
     },
-    "switch_soul_config": {
-      "enable_switch_pass": false,
-      "pass_group_team": "-1,-1",
-      "enable_switch_pass_by_name": false,
-      "pass_group_team_name": "",
-      "enable_switch_ap": false,
-      "ap_group_team": "-1,-1",
-      "enable_switch_ap_by_name": false,
-      "ap_group_team_name": "",
-      "enable_switch_boss": false,
-      "boss_group_team": "-1,-1",
-      "enable_switch_boss_by_name": false,
-      "boss_group_team_name": ""
-    },
     "general_battle": {
+      "enable_anti_detect": false,
       "enable_pass_preset": false,
       "enable_pass_green": false,
       "pass_green_mark": "green_left1",
-      "enable_pass_anti_detect": false,
       "enable_ap_preset": false,
       "enable_ap_green": false,
       "ap_green_mark": "green_left1",
-      "enable_ap_anti_detect": false,
       "enable_boss_preset": false,
       "enable_boss_green": false,
-      "boss_green_mark": "green_left1",
-      "enable_boss_anti_detect": false
+      "boss_green_mark": "green_left1"
     }
   },
   "meta_demon": {
