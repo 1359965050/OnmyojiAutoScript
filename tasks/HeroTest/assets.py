@@ -109,6 +109,6 @@ class HeroTestAssets:
 	# 兵道帖机密 
 	O_ART_WAR_CARD_PLUS = RuleOcr(roi=(916,25,90,29), area=(916,25,90,29), mode="SINGLE", method="Default", keyword="", name="art_war_card_plus")
 	# 挑战按钮 
-	O_FIRE = RuleOcr(roi=(1130,585,92,55), area=(1126,576,100,99), mode="Single", method="Default", keyword="挑战", name="fire")
+	O_FIRE = RuleOcr(roi=(1129,594,94,53), area=(1129,594,94,53), mode="Single", method="Default", keyword="挑战", name="fire")
 
 
