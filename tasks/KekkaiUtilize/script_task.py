@@ -47,7 +47,7 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
         # 检查蹭卡收获
         self.check_utilize_harvest()
         # 收体力盒子或者是经验盒子
-        self.check_box_ap_or_exp(con.box_ap_enable, con.box_exp_enable, con.box_exp_waste)
+        self.check_box_ap_or_exp()
 
         # 收取寮资金和体力
         self.recive_guild_ap_or_assets(con.harvest_guild_max_times)
@@ -203,11 +203,9 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
             if self.appear_then_click(self.I_GUILD_REALM, interval=1):
                 continue
 
-    def check_box_ap_or_exp(self, ap_enable: bool = True, exp_enable: bool = True, exp_waste: bool = True) -> bool:
+    def check_box_ap_or_exp(self) -> bool:
         """
         顺路检查盒子
-        :param ap_enable:
-        :param exp_enable:
         :return:
         """
 
@@ -270,10 +268,7 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
                     if not self.appear(self.I_UI_CANCEL):
                         logger.info('No cancel button')
                         continue
-                    if exp_waste:
-                        check_button = self.I_UI_CONFIRM
-                    else:
-                        check_button = self.I_UI_CANCEL
+                    check_button = self.I_UI_CONFIRM
                     while 1:
                         self.screenshot()
                         if not self.appear(check_button):
@@ -303,10 +298,8 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
         self.screenshot()
         box_ap = self.appear(self.I_BOX_AP)
         box_exp = self.appear(self.I_BOX_EXP, threshold=0.6) or self.appear(self.I_BOX_EXP_MAX, threshold=0.6)
-        if ap_enable:
-            _check_ap_box(box_ap)
-        if exp_enable:
-            _check_exp_box(box_exp)
+        _check_ap_box(box_ap)
+        _check_exp_box(box_exp)
 
     def check_utilize_harvest(self) -> bool:
         """

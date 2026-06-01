@@ -26,28 +26,6 @@ class WeeklyTriflesAssets:
 	I_WT_AB_JADE = RuleImage(roi_front=(977,552,44,47), roi_back=(977,552,44,47), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/area_boss/area_boss_wt_ab_jade.png")
 	# 微信分享 
 	I_WT_AB_WECHAT = RuleImage(roi_front=(920,646,50,41), roi_back=(760,620,240,85), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/area_boss/area_boss_wt_ab_wechat.png")
-
-
-	# Image Rule Assets
-	# 进入普通召唤 
-	I_BM_ENTER = RuleImage(roi_front=(437,600,62,68), roi_back=(437,600,62,68), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/broken_amulet/broken_amulet_bm_enter.png")
-	# 确定 
-	I_BM_CONFIRM = RuleImage(roi_front=(418,620,173,59), roi_back=(418,620,173,59), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/broken_amulet/broken_amulet_bm_confirm.png")
-	# 再次召唤 
-	I_BM_AGAIN = RuleImage(roi_front=(686,617,178,60), roi_back=(686,617,178,60), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/broken_amulet/broken_amulet_bm_again.png")
-	# 破碎符咒召唤次数选择标志 
-	I_BMT_CHECK = RuleImage(roi_front=(742,571,32,33), roi_back=(644,565,276,41), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/broken_amulet/broken_amulet_bmt_check.png")
-
-
-	# Ocr Rule Assets
-	# 左上角的数量 
-	O_BA_AMOUNT_1 = RuleOcr(roi=(535,11,124,36), area=(535,11,124,36), mode="Digit", method="Default", keyword="", name="ba_amount_1")
-	# 召唤的时候的数量 
-	O_BA_AMOUNT_2 = RuleOcr(roi=(762,570,125,35), area=(762,570,125,35), mode="DigitCounter", method="Default", keyword="", name="ba_amount_2")
-	# 破碎符咒召唤次数 
-	O_BA_TIMES = RuleOcr(roi=(741,564,174,44), area=(641,566,278,41), mode="Full", method="Default", keyword="", name="ba_times")
-
-
 	# Click Rule Assets
 	# 微信分享的点击 
 	C_WT_WECHAT = RuleClick(roi_front=(470,111,337,44), roi_back=(470,111,337,44), name="wt_wechat")

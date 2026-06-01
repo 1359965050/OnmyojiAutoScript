@@ -17,13 +17,12 @@ class ConfigMenu:
         self.menu["Overview"] = []
         self.menu['TaskList'] = []
         # 脚本设置
-        self.menu['Script'] = ['Script', 'Restart', 'GlobalGame']
+        self.menu['Script'] = ['ScriptConfig', 'Restart', 'GlobalGame']
         # 刷御魂
         self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea', 'SixRealms']
         # 日常的任务
-        self.menu["Daily Task"] = ['DailyTrifles', 'AreaBoss', 'GoldYoukai', 'ExperienceYoukai', 'Nian',
-                                   'TalismanPass', 'DemonEncounter', 'Pets', 'SoulsTidy', 'Delegation', 'WantedQuests',
-                                   'Tako', 'AutoCheckinBigGod']
+        self.menu["Daily Task"] = ['DailyTrifles', 'AreaBoss', 'GoldYoukai', 'ExperienceYoukai',
+                                   'DemonEncounter']
         # 很肝的任务
         self.menu["Liver Emperor Exclusive"] = [
             "BondlingFairyland",
@@ -31,17 +30,15 @@ class ConfigMenu:
             "GoryouRealm",
             "Exploration",
             "Hyakkiyakou",
-            "HeroTest",
-            "FindJade",
-            "MemoryScrolls"
+            "HeroTest"
         ]
         # 阴阳寮
-        self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan', 'CollectiveMissions',
+        self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan',
                               'Hunt' , 'AbyssShadows', 'GuildBanquet', 'DemonRetreat', 'GuildActivityMonitor']
         # 每周任务
-        self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'MysteryShop', 'Duel']
+        self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'Duel']
         # 活动的任务
-        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'FrogBoss', 'FloatParade', 'Quiz', 'KittyShop', 'DyeTrials']
+        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials']
         # 开发工具
         self.menu["Tools"] = ['Image Rule', 'Ocr Rule', 'Click Rule', 'Long Click Rule', 'Swipe Rule', 'List Rule']
 

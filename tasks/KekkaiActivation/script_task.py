@@ -39,8 +39,8 @@ class ScriptTask(KU, KekkaiActivationAssets):
         # 进入寮结界
         self.goto_realm()
 
-        if con.exchange_before:
-            self.check_max_lv(con.shikigami_class)
+        # 挂卡前必须更换下来满级的式神
+        self.check_max_lv(con.shikigami_class)
         # 收取经验
         self.harvest_card()
         # 开始挂卡
@@ -55,8 +55,7 @@ class ScriptTask(KU, KekkaiActivationAssets):
             if self.appear_then_click(self.I_UI_BACK_RED, interval=1):
                 continue
 
-        if con.exchange_max:
-            self.check_max_lv(con.shikigami_class)
+
         # self.back_guild()
         self.ui_get_current_page()
         self.ui_goto(page_main)

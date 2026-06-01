@@ -163,6 +163,8 @@ def convert_to_underscore(text: str) -> str:
     :param text:
     :return:
     """
+    if text in ['ScriptConfig', 'script_config', 'scriptConfig']:
+        return 'script'
     if '_' in text:
         # If text already contains underscore, assume it's in the correct format
         return text

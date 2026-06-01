@@ -127,6 +127,10 @@
         <translation>脚本</translation>
     </message>
     <message>
+        <source>ScriptConfig</source>
+        <translation>模拟器配置</translation>
+    </message>
+    <message>
         <source>General</source>
         <translation>通用</translation>
     </message>
@@ -193,10 +197,9 @@
 	<message><source>Guild</source><translation>阴阳寮</translation></message>
 	<message><source>RichMan</source><translation>大富翁</translation></message>
 	<message><source>Secret</source><translation>秘闻之境</translation></message>
-	<message><source>WeeklyTrifles</source><translation>每周琐事</translation></message>
+	<message><source>WeeklyTrifles</source><translation>每周分享</translation></message>
 	<message><source>Delegation</source><translation>式神委派</translation></message>
 	<message><source>GoryouRealm</source><translation>御灵之境</translation></message>
-	<message><source>CollectiveMissions</source><translation>集体任务</translation></message>
 	<message><source>Hunt</source><translation>狩猎战</translation></message>
 	<message><source>MysteryShop</source><translation>神秘商店</translation></message>
 	<message><source>Duel</source><translation>斗技</translation></message>
@@ -241,16 +244,16 @@
 	<message><source>Guild</source><translation>阴阳寮</translation></message>
 	<message><source>RichMan</source><translation>大富翁</translation></message>
 	<message><source>Secret</source><translation>秘闻之境</translation></message>
-	<message><source>WeeklyTrifles</source><translation>每周琐事</translation></message>
+	<message><source>WeeklyTrifles</source><translation>每周分享</translation></message>
 	<message><source>Delegation</source><translation>式神委派</translation></message>
 	<message><source>GoryouRealm</source><translation>御灵之境</translation></message>
-	<message><source>CollectiveMissions</source><translation>集体任务</translation></message>
 	<message><source>Hunt</source><translation>狩猎战</translation></message>
 	<message><source>MysteryShop</source><translation>神秘商店</translation></message>
 	<message><source>Duel</source><translation>斗技</translation></message>
 	<message><source>WantedQuests</source><translation>悬赏封印</translation></message>
 	<message><source>Tako</source><translation>石距</translation></message>
 	<message><source>AutoCheckinBigGod</source><translation>大神签到</translation></message>
+	<message><source>ScriptConfig</source><translation>模拟器配置</translation></message>
 </context>
 <context>
     <name>Args</name>
@@ -499,34 +502,21 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
 	<message><source>Auto Switch Sort</source><translation>切换好友列表以游戏刷新高星排序</translation></message>
 	<message><source>ShikigamiClass</source><translation>寄养式神类型</translation></message>
 	<message><source>Shikigami Order</source><translation>选中第几个式神寄养</translation></message>
-	<message><source>Guild Ap Enable</source><translation>顺路收取寮补给</translation></message>
-	<message><source>Guild Assets Enable</source><translation>顺路收取寮资金</translation></message>
-	<message><source>Box Ap Enable</source><translation>顺路收取体力盒子</translation></message>
-	<message><source>Box Exp Enable</source><translation>顺路收取经验盒子</translation></message>
+
 	<message><source>utilize_rule_help</source><translation>挑选结界卡的规则，使用默认default即可，具体规则看文档[任务列表]，不可以选auto,已经弃置了。</translation></message>
 	<message><source>auto_switch_sort_help</source><translation>会自动寻找最优的坑位</translation></message>
 	<message><source>shikigami_class_help</source><translation>选择的式神类别（寄养默认选择N卡，且不建议选别的）</translation></message>
 	<message><source>shikigami_order_help</source><translation>从左开始选第几个式神</translation></message>
-	<message><source>guild_ap_enable_help</source><translation>必选项</translation></message>
-	<message><source>guild_assets_enable_help</source><translation>必选项</translation></message>
-	<message><source>box_ap_enable_help</source><translation>必选项</translation></message>
-	<message><source>box_exp_enable_help</source><translation>必选项</translation></message>
+
 	<message><source>SelectFriendList</source><translation>选择同区还是跨区好友</translation></message>
 	<message><source>select_friend_list_help</source><translation>由于该死的游戏制作水准，无论任何方式都不可以稳定的对结界卡进行排序，需要从头到尾遍历一遍。
 且切换好友列表时候会丢失原先选定的好友卡，为此同时选择两个好友列表的最优解是会花费更多的时间，不打算支持</translation></message>
-	<message><source>Box Exp Waste</source><translation>从盒子提取经验时浪费一部分</translation></message>
-	<message><source>box_exp_waste_help</source><translation>某些时候寄养上存在满级的式神，收取经验盒子时会有提示，对于挂机玩家这点经验微不足道。如果不使能这一选项，将跳过收取经验盒子</translation></message>
+
 </context>	
 <context>
     <name>Args</name>
 	<message><source>ActivationScheduler</source><translation>任务调度</translation></message>
 	<message><source>ActivationConfig</source><translation>寄养</translation></message>
-	<message><source>Card Rule</source><translation>放卡规则</translation></message>
-	<message><source>Exchange Max</source><translation>收取经验后更换下来满级的式神</translation></message>
-	<message><source>Exchange Before</source><translation>收取经验前更换下来满级的式神</translation></message>
-	<message><source>card_rule_help</source><translation>保持默认auto即可，具体的规则请翻阅文档[任务列表]</translation></message>
-	<message><source>exchange_before_help</source><translation>必选项</translation></message>
-	<message><source>exchange_max_help</source><translation>必选项</translation></message>
 </context>	
 <context>
     <name>Args</name>

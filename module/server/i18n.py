@@ -27,6 +27,9 @@ class I18n(Addition):
 
     @classmethod
     def save_zh_cn(cls, data) -> None:
+        if isinstance(data, dict):
+            data["WeeklyTrifles"] = "每周分享"
+            data["ScriptConfig"] = "模拟器配置"
         I18n.file_zh_cn.parent.mkdir(parents=True, exist_ok=True)
         with open(str(I18n.file_zh_cn), 'w', encoding='utf-8') as f:
             s = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=False, default=str)

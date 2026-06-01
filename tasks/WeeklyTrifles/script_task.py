@@ -23,8 +23,6 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
             self._share_area_boss()
         if con.share_secret:
             self._share_secret()
-        if con.broken_amulet:
-            self._broken_amulet(con.broken_amulet)
 
         self.set_next_run(task='WeeklyTrifles', success=True, finish=True)
         raise TaskEnd('WeeklyTrifles')
@@ -199,78 +197,7 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
         self.ui_click(self.I_UI_BACK_BLUE, self.I_UI_BACK_YELLOW)
         self.ui_click(self.I_UI_BACK_YELLOW, self.I_CHECK_MAIN)
 
-    def _broken_amulet(self, dest_num: int):
-        """
 
-        :param dest_num:
-        :return:
-        """
-        def exit_amulet():
-            self.wait_until_appear(self.I_BM_CONFIRM, wait_time=3)
-            while 1:
-                self.screenshot()
-                if not self.appear(self.I_BM_CONFIRM):
-                    break
-                else:
-                    self.appear_then_click(self.I_BM_CONFIRM, interval=1)
-            logger.info('Exit broken amulet')
-
-        logger.hr('Broken amulet')
-        self.ui_get_current_page()
-        self.ui_goto(page_summon)
-        self.screenshot()
-        real_num = self.O_BA_AMOUNT_1.ocr(self.device.image)
-        if real_num <= 0:
-            logger.warning('No broken amulet')
-            return
-        logger.info(f'Broken amulet: {real_num}')
-        count = 0
-        self.wait_until_appear(self.I_BM_ENTER)
-        logger.info('Enter broken amulet')
-        while count < dest_num:
-            self.screenshot()
-            real_num = self.O_BA_AMOUNT_1.ocr(self.device.image)
-            if real_num <= 0:
-                exit_amulet()
-                return
-            if self.appear_then_click(self.I_BM_ENTER, interval=1) or self.appear_then_click(self.I_BM_AGAIN, interval=1):
-                sleep(0.4)  # 等待动画开始
-                timeout_timer = Timer(5).start()
-                # 随机点击直到再次召唤出现或者超时
-                while not timeout_timer.reached():
-                    if not self.click(random_click(), interval=0.8):
-                        continue
-                    self.screenshot()
-                    if self.appear(self.I_BM_AGAIN, interval=0.8):
-                        break
-                else:
-                    logger.warning(f'Wait for again timeout:Count[{count}], Remain[{real_num}]')
-                    exit_amulet()
-                    return
-            else:
-                # 既没有出现召唤破碎符咒也没有出现再次召唤, 则退出(一般不会出现这种情况, 只是为了异常处理)
-                exit_amulet()
-                return
-            x_10, _, _, _ = self.O_BA_TIMES.ocr(self.device.image, '10次')
-            x_50, _, _, _ = self.O_BA_TIMES.ocr(self.device.image, '50次')
-            self.I_BMT_CHECK.match(self.device.image)
-            x_check, y_check, width_check, height_check = self.I_BMT_CHECK.roi_front
-            selected_10 = min(abs(x_10 - x_check), abs(x_50 - x_check)) == abs(x_10 - x_check)
-            logger.info(f'Current selected {"10" if selected_10 else "50"} amulet')
-            count += 10 if selected_10 else 50
-            logger.info(f'Broken amulet:Count[{count}], Remain[{real_num}]')
-            # 一次50票不超过限制且当前选择的是10票则切换50票
-            if count + 50 < dest_num and selected_10:
-                logger.hr('Switch to 50 amulet')
-                self.device.click(x=x_50 - width_check // 2, y=y_check + height_check // 2, control_name='Click_50')
-                self.device.click_record_clear()
-            # 一次50票会超过限制且当前选择的是50票则切换10票
-            if count + 50 >= dest_num and not selected_10:
-                logger.hr('Switch to 10 amulet')
-                self.device.click(x=x_10 - width_check // 2, y=y_check + height_check // 2, control_name='Click_10')
-                self.device.click_record_clear()
-        # 正常结束且还有票, 则执行一次退出
-        exit_amulet()
 
 
 if __name__ == '__main__':
