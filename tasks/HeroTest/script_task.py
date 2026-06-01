@@ -12,7 +12,7 @@ from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 
 from module.logger import logger
 from module.exception import TaskEnd
-from tasks.HeroTest.config import Layer, HeroTest, SkillMode
+from tasks.HeroTest.config import Layer, HeroTest
 from typing import Callable
 
 import tasks.GameUi.page as pages
@@ -120,50 +120,96 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
         return win
 
     def hero1_skill_wait(self):
-        if self.wait_until_appear(self.I_BCMJ_SKILL_ADD_CONFIRM, wait_time=2):
-            while 1:
-                self.screenshot()
-                if self.appear_then_click(self.I_BCMJ_SKILL_ADD1, interval=1):
-                    break
-                if self.appear_then_click(self.I_BCMJ_SKILL_ADD2, interval=1):
-                    break
-                if self.appear_then_click(self.I_BCMJ_BLESS, interval=1):
-                    break
-                if self.appear_then_click(
-                        self.I_BCMJ_PROPERTY_ADD_CRITICAL, interval=1
-                ):
-                    break
-                if self.appear_then_click(
-                        self.I_BCMJ__DEFALUT_ATTRIBUTE, interval=1
-                ):
-                    break
-            if self.appear_then_click(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1):
-                return True
-        return False
+        if not self.appear(self.I_BCMJ_SKILL_ADD_CONFIRM):
+            return False
+        from time import sleep
+        click_count = 0
+        while 1:
+            self.screenshot()
+            if self.appear_then_click(self.I_BCMJ_SKILL_ADD1, interval=1):
+                break
+            if self.appear_then_click(self.I_BCMJ_SKILL_ADD2, interval=1):
+                break
+            if self.appear_then_click(self.I_BCMJ_BLESS, interval=1):
+                break
+            if self.appear_then_click(
+                    self.I_BCMJ_PROPERTY_ADD_CRITICAL, interval=1
+            ):
+                break
+            if self.appear_then_click(
+                    self.I_BCMJ__DEFALUT_ATTRIBUTE, interval=1
+            ):
+                break
+            click_count += 1
+            if click_count >= 5:
+                logger.warning("Preferred skills not found or recognized for hero1, selecting leftmost card as fallback")
+                fallback_x = 200 + random.randint(-15, 15)
+                fallback_y = 400 + random.randint(-50, 50)
+                self.device.click(x=fallback_x, y=fallback_y)
+                sleep(1.0)
+                break
+        self.ui_click_until_disappear(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1.5)
+        return True
 
     def hero2_skill_wait(self):
         if not self.appear(self.I_BCMJ_SKILL_ADD_CONFIRM):
             return False
-        # pve技能列表, 按优先级顺序
-        pve_skill = [
-            self.I_HERO2_SKILL1,  # 同调祝福
-            self.I_HERO2_SKILL2,  # 韵迟祝福
-            self.I_HERO2_SKILL3,  # 弥天祝福
-            self.I_HERO2_SKILL4,  # 叠辉祝福
-            self.I_HERO2_SKILL5,  # 敛神祝福
-            self.I_HERO2_SKILL6,  # 速度祝福
-        ]
-        # TODO: PVP
-        pvp_skill = []
-        target_skill_dict: dict[SkillMode, list] = {
-            SkillMode.PVE: pve_skill,
-            SkillMode.PVP: pvp_skill,
-        }
-        target_skills = target_skill_dict[self.conf.herotest.skill_mode]
+        
+        # Local imports to avoid namespace issues and prevent runtime errors
+        from time import sleep
+        from module.atom.ocr import RuleOcr
+        
+        # 1. Define OCR rule for the skill names row (1280x720 coordinate system)
+        # The text is located at Y ≈ 360 to Y ≈ 390. We use Y = 330 to Y = 420 for robust coverage.
+        skill_ocr = RuleOcr(roi=(0, 330, 1280, 90), area=(0, 330, 1280, 90), mode="Full", method="Default", keyword="", name="hero2_skills_ocr")
+        
+        # 2. Selection priority list (substring matching)
+        # Fanyin is the top priority: "泛音"
+        # Others in order: "凝啸" -> "叩弦" -> "遏云" -> "音迹"
+        priority_keywords = ["泛音", "凝啸", "叩弦", "遏云", "音迹"]
+        
+        # 3. Try to detect and select skill dynamically via OCR
+        click_count = 0
         while True:
             self.screenshot()
-            if any(self.appear_then_click(ts, interval=1) for ts in target_skills):
+            
+            # Run OCR on the screen area
+            results = skill_ocr.detect_and_ocr(self.device.image)
+            
+            # Find the best match according to our priority list
+            matched_res = None
+            for keyword in priority_keywords:
+                for res in results:
+                    if keyword in res.ocr_text:
+                        matched_res = res
+                        logger.info(f"Matched preferred skill: {res.ocr_text} via keyword '{keyword}'")
+                        break
+                if matched_res:
+                    break
+            
+            # If a preferred skill is matched, calculate absolute coordinate and click it
+            if matched_res:
+                box = matched_res.box
+                box_x = (box[0][0] + box[2][0]) / 2
+                box_y = (box[0][1] + box[2][1]) / 2
+                click_x = int(box_x + skill_ocr.roi[0])
+                click_y = int(box_y + skill_ocr.roi[1])
+                
+                logger.info(f"Clicking matched skill at ({click_x}, {click_y})")
+                self.device.click(x=click_x, y=click_y)
+                sleep(1.0)
                 break
+                
+            # Fallback if no matching skill detected or after a few attempts
+            click_count += 1
+            if click_count >= 5:
+                logger.warning("Preferred skills not detected or recognized for hero2, selecting leftmost card as fallback")
+                fallback_x = 150 + random.randint(-15, 15)
+                fallback_y = 400 + random.randint(-50, 50)
+                self.device.click(x=fallback_x, y=fallback_y)
+                sleep(1.0)
+                break
+                
         self.ui_click_until_disappear(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1.5)
         return True
 
@@ -207,11 +253,6 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
         cu = self.O_ART_WAR_CARD.ocr(image=self.device.image)
         if cu[0] >= 1:
             logger.info("Art war card is enough")
-            return True
-        cu = self.O_ART_WAR_CARD_PLUS.ocr(image=self.device.image)
-        cu = 0 if cu == '' else int(cu)
-        if cu >= 1:
-            logger.info("Art war card is not enough, but plus card is enough")
             return True
         logger.warning("Art war card is not enough")
         return False

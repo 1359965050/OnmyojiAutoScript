@@ -340,9 +340,46 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
         logger.info(f'Unlock {self.climb_type} team')
         self.ui_click(self.I_LOCK, stop=self.I_UNLOCK, interval=1.5)
 
+    def _ocr_remain_times(self, image: np.ndarray) -> int:
+        """
+        根据当前爬塔类型，从截图中 OCR 识别剩余次数。
+        """
+        if self.climb_type == 'pass':
+            return self.O_REMAIN_PASS.ocr_digit(image)
+        if self.climb_type == 'ap':
+            return self.O_REMAIN_AP.ocr_digit(image)
+        if self.climb_type == 'boss':
+            _, remain, _ = self.O_REMAIN_BOSS.ocr_digit_counter(image)
+            return remain
+        if self.climb_type == 'ap100':
+            return self.O_REMAIN_AP100.ocr_digit(image)
+        return 0
+
+    def _ocr_remain_times_enhanced(self, image: np.ndarray) -> int:
+        """
+        使用自适应二值化预处理增强后再 OCR 识别剩余次数（用于低置信度重试）。
+        """
+        ocr_asset_map = {
+            'pass': self.O_REMAIN_PASS,
+            'ap': self.O_REMAIN_AP,
+            'boss': self.O_REMAIN_BOSS,
+            'ap100': self.O_REMAIN_AP100,
+        }
+        asset = ocr_asset_map.get(self.climb_type)
+        if asset is None:
+            return 0
+        enhanced_image = _prepare_image_for_ocr(image, asset)
+        if self.climb_type == 'boss':
+            _, remain, _ = self.O_REMAIN_BOSS.ocr_digit_counter(enhanced_image)
+            return remain
+        return asset.ocr_digit(enhanced_image)
+
     def check_tickets_enough(self) -> bool:
         """
-        判断当前爬塔门票是否足够
+        判断当前爬塔门票是否足够。
+        当首次 OCR 返回 0 时，启动重试机制（最多 3 次），每次重试使用
+        自适应二值化预处理增强图像后再识别，防止单帧画面干扰（如金铃铛
+        动画帧遮挡数字区域）导致低置信度误判为"门票耗尽"。
         :return: True 可以运行 or False
         """
         logger.hr(f'Check {self.climb_type} tickets')
@@ -350,16 +387,28 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
             logger.warning(f'Detect fire fail, try reidentify')
             return False
         self.screenshot()
-        remain_times = 0
-        if self.climb_type == 'pass':
-            remain_times = self.O_REMAIN_PASS.ocr_digit(self.device.image)
-        if self.climb_type == 'ap':
-            remain_times = self.O_REMAIN_AP.ocr_digit(self.device.image)
-        if self.climb_type == 'boss':
-            _, remain_times, _ = self.O_REMAIN_BOSS.ocr_digit_counter(self.device.image)
-        if self.climb_type == 'ap100':
-            remain_times = self.O_REMAIN_AP100.ocr_digit(self.device.image)
-        return remain_times > 0
+        remain_times = self._ocr_remain_times(self.device.image)
+        if remain_times > 0:
+            return True
+
+        # 首次识别为 0，启动低置信度重试机制
+        max_retry = 3
+        for retry in range(1, max_retry + 1):
+            logger.warning(f'Remain times is 0, retry ({retry}/{max_retry}) with enhanced preprocessing')
+            sleep(0.5)
+            self.screenshot()
+            remain_times = self._ocr_remain_times_enhanced(self.device.image)
+            if remain_times > 0:
+                logger.info(f'Retry succeeded: remain_times={remain_times}')
+                return True
+            # 增强预处理也返回 0，再用原始方式试一次（可能是新截图帧干净了）
+            remain_times = self._ocr_remain_times(self.device.image)
+            if remain_times > 0:
+                logger.info(f'Retry (raw) succeeded: remain_times={remain_times}')
+                return True
+
+        logger.warning(f'All {max_retry} retries exhausted, remain_times confirmed as 0')
+        return False
 
     def get_general_battle_conf(self) -> tasks.Component.GeneralBattle.config_general_battle.GeneralBattleConfig:
         from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig as gbc

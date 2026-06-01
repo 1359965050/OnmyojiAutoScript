@@ -22,7 +22,7 @@ from module.config.scheduler import TaskScheduler
 from module.config.utils import *
 from module.notify.notify import Notifier
 
-from module.exception import RequestHumanTakeover, ScriptError
+from module.exception import ScriptError
 from module.logger import logger
 
 
@@ -239,9 +239,21 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.attr("Task", task)
             return task
         else:
-            logger.critical("No task waiting or pending")
-            logger.critical("Please enable at least one task")
-            raise RequestHumanTakeover
+            logger.debug("No task waiting or pending, please enable at least one task if needed")
+            # 返回一个默认的空任务，避免抛出异常导致连接断开
+            # 创建一个模拟 Function 对象的对象
+            class IdleFunction:
+                def __init__(self):
+                    self.enable = False
+                    self.command = "Idle"
+                    self.next_run = datetime.now() + timedelta(hours=1)
+                    self.priority = 0
+                def __str__(self):
+                    return "Idle (no enabled tasks)"
+                __repr__ = __str__
+            idle_function = IdleFunction()
+            logger.attr("Task", idle_function)
+            return idle_function
 
     def get_schedule_data(self) -> dict[str, dict]:
         """

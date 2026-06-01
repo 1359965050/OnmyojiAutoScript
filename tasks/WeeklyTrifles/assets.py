@@ -26,6 +26,8 @@ class WeeklyTriflesAssets:
 	I_WT_AB_JADE = RuleImage(roi_front=(977,552,44,47), roi_back=(977,552,44,47), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/area_boss/area_boss_wt_ab_jade.png")
 	# 微信分享 
 	I_WT_AB_WECHAT = RuleImage(roi_front=(920,646,50,41), roi_back=(760,620,240,85), threshold=0.8, method="Template matching", file="./tasks/WeeklyTrifles/area_boss/area_boss_wt_ab_wechat.png")
+
+
 	# Click Rule Assets
 	# 微信分享的点击 
 	C_WT_WECHAT = RuleClick(roi_front=(470,111,337,44), roi_back=(470,111,337,44), name="wt_wechat")

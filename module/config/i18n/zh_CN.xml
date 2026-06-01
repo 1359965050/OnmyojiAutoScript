@@ -450,9 +450,12 @@ window_background >>> DroidCast_raw >  ADB_nc >> DroidCast > uiautomator2 ~= ADB
     <name>Args</name>
 	<message><source>OrochiConfig</source><translation>副本</translation></message>
 	<message><source>UserStatus</source><translation>身份</translation></message>
+	<message><source>leader</source><translation>队长</translation></message>
+	<message><source>member</source><translation>队员</translation></message>
+	<message><source>alone</source><translation>单独刷</translation></message>
 	<message><source>Layer</source><translation>挑战层数</translation></message>
 	<message><source>Soul Buff Enable</source><translation>开启御魂加成</translation></message>
-	<message><source>user_status_help</source><translation>可选队长、队员、单独刷（野队还不打算实现）</translation></message>
+	<message><source>user_status_help</source><translation>可选队长、队员、单独刷</translation></message>
 	<message><source>layer_help</source><translation> </translation></message>
 	<message><source>soul_buff_enable_help</source><translation>会在庭院开始的时候设置加成</translation></message>
 </context>	

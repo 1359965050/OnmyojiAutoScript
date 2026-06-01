@@ -287,3 +287,22 @@
   - **多语言及自述清理**：在 `zh_CN.xml` 中移除了 `CollectiveMissions` 相关的翻译键值，在 `README.md` 的功能特性描述中移除了“集体任务”字样。
   - **代码资源物理清除**：彻底删除了整个集体任务 `tasks/CollectiveMissions/` 主代码文件夹及下属识别图、配置文件，防范任何潜在的无用代码堆积。
 
+### 5.20 八岐大蛇野队功能移除与身份选项中文化
+* **涉及文件**：
+  - [config.py](file:///f:/daima/OAS/tasks/Orochi/config.py)
+  - [script_task.py](file:///f:/daima/OAS/tasks/Orochi/script_task.py)
+  - [assets/i18n/zh-CN.json](file:///f:/daima/OAS/assets/i18n/zh-CN.json)
+  - [module/config/i18n/zh-CN.json](file:///f:/daima/OAS/module/config/i18n/zh-CN.json)
+  - [module/config/i18n/zh_CN.xml](file:///f:/daima/OAS/module/config/i18n/zh_CN.xml)
+* **改造详情**：
+  - **野队功能彻底移除**：从 `UserStatus` 枚举中移除了 `WILD = 'wild'` 选项，删除了 `run_wild()` 方法及相关逻辑代码（约 86 行），OASX 前端下拉菜单不再显示 "wild" 选项。
+  - **身份选项中文化**：在 `assets/i18n/zh-CN.json` 中添加枚举值翻译：`leader` → "队长"、`member` → "队员"、`alone` → "单独刷"，使 OASX 前端下拉菜单显示中文而非英文。
+  - **帮助文案精简**：将 `user_status_help` 从"可选队长、队员、单独刷（野队还不打算实现）"精简为"可选队长、队员、单独刷"。
+
+### 5.21 无任务启用时异常处理优化
+* **涉及文件**：
+  - [config.py](file:///f:/daima/OAS/module/config/config.py)
+* **改造详情**：
+  - **移除强制异常**：当没有启用任何任务时，原代码会抛出 `RequestHumanTakeover` 异常导致 WebSocket 连接断开。修改为返回一个默认的 "Idle" 空任务对象，使服务保持正常运行。
+  - **日志级别调整**：将无任务时的日志级别从 `CRITICAL` 降级为 `DEBUG`，避免频繁刷屏，提升用户体验。
+

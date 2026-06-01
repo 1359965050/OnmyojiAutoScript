@@ -107,8 +107,8 @@ class ExplorationAssets:
 	I_GET_REWARD = RuleImage(roi_front=(464,231,339,44), roi_back=(464,231,339,44), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_get_reward.png")
 	# description 
 	I_RED_CLOSE = RuleImage(roi_front=(1027,129,41,42), roi_back=(1021,121,54,55), threshold=0.6, method="Template matching", file="./tasks/Exploration/res/res_red_close.png")
-	# description 
-	I_E_EXIT_CONFIRM = RuleImage(roi_front=(694,380,163,49), roi_back=(694,380,163,49), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_exit_confirm.png")
+	# 确认退出探索弹窗的确认按钮 
+	I_E_EXIT_CONFIRM = RuleImage(roi_front=(580,380,150,49), roi_back=(550,350,250,100), threshold=0.7, method="Template matching", file="./tasks/Exploration/res/res_e_exit_confirm.png")
 	# 宝箱 
 	I_TREASURE_BOX_CLICK = RuleImage(roi_front=(34,386,47,37), roi_back=(2,130,135,406), threshold=0.65, method="Template matching", file="./tasks/Exploration/res/res_treasure_box_click.png")
 	# 困28滚动到最后 
