@@ -83,7 +83,7 @@
   {
     "itemName": "exploration_goto_hero_test",
     "imageName": "page_exploration_goto_hero_test.png",
-    "roiFront": "731,634,58,61",
+    "roiFront": "838,635,38,43",
     "roiBack": "7,605,1272,113",
     "method": "Template matching",
     "threshold": 0.65,
