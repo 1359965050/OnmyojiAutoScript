@@ -19,20 +19,20 @@
   },
   {
     "itemName": "reward_1",
-    "roiFront": "606,603,325,87",
-    "roiBack": "606,603,325,87",
+    "roiFront": "102,568,153,75",
+    "roiBack": "102,568,153,75",
     "description": "description"
   },
   {
     "itemName": "reward_2",
-    "roiFront": "25,134,224,472",
-    "roiBack": "25,134,224,472",
+    "roiFront": "573,564,143,75",
+    "roiBack": "573,564,143,75",
     "description": "description"
   },
   {
     "itemName": "reward_3",
-    "roiFront": "1092,156,168,437",
-    "roiBack": "1092,156,168,437",
+    "roiFront": "1057,564,159,77",
+    "roiBack": "1057,564,159,77",
     "description": "description"
   }
 ]

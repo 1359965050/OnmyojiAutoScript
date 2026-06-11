@@ -28,8 +28,8 @@
   },
   {
     "itemName": "fire",
-    "roiFront": "1130,585,92,55",
-    "roiBack": "1126,576,100,99",
+    "roiFront": "1129,594,94,53",
+    "roiBack": "1129,594,94,53",
     "mode": "Single",
     "method": "Default",
     "keyword": "挑战",
