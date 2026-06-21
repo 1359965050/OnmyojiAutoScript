@@ -20,6 +20,7 @@ class MainManager(ConfigManager):
     script_process: dict[str: ScriptProcess] = None  # 脚本进程
     push_data_thread: Thread = None  # 数据推送线程
     signal_kill_server: bool = False
+    _configs: dict[str, Config] = {}
 
     def __init__(self) -> None:
         super().__init__()
@@ -42,9 +43,18 @@ class MainManager(ConfigManager):
     #         self.config_cache = Config(config_name)
     #     return self.config_cache
 
-    @staticmethod
-    def config_cache(name: str) -> Config:
-        return Config(name)
+    @classmethod
+    def config_cache(cls, name: str) -> Config:
+        if name not in cls._configs:
+            config = Config(name)
+            config.start_watching()
+            cls._configs[name] = config
+        else:
+            config = cls._configs[name]
+            if config.should_reload():
+                config.reload()
+                config.start_watching()
+        return config
 
     def add_script_file(self, file_name: str):
         # 当你添加了新的脚本文件后，需要添加缓存的列表

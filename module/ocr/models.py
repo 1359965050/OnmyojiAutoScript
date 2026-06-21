@@ -1,7 +1,6 @@
 from typing import Dict
 
 from module.base.decorator import cached_property
-from module.ocr.ppocr import TextSystem
 from module.ocr.rpc import ModelProxy
 from module.server.setting import State
 
@@ -9,6 +8,7 @@ from module.server.setting import State
 class OcrModel:
     @cached_property
     def ch(self):
+        from module.ocr.ppocr import TextSystem
         return TextSystem()
 
 

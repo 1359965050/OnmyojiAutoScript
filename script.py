@@ -447,16 +447,8 @@ class Script:
         return self.wait_until(next_run)
 
     def exception_handler(self, e: Exception, command: str) -> None:
-        # 处理御魂溢出
-        from tasks.Utils.post_diagnotor import PostDiagnotor, AnalyzeType
-        image = getattr(self.device, 'image', None)
-        # image为None则不做处理
-        if image is None:
-            return
-        analyse_type = PostDiagnotor().handle(e=e, command=command, image=image)
-        if analyse_type == AnalyzeType.SoulOverflow:
-            self.config.task_call('SoulsTidy')
-            time.sleep(1)
+        # SoulsTidy 模块已物理移除，御魂溢出自动处理功能已禁用
+        pass
 
     def run(self, command: str) -> bool:
         """

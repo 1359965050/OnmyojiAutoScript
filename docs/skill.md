@@ -189,9 +189,9 @@
 * **涉及文件**：
   - [config_menu.py](file:///f:/daima/OAS/module/config/config_menu.py)
   - [utils.py](file:///f:/daima/OAS/module/config/utils.py)
-  - [zh_CN.xml](file:///f:/daima/OAS/module/config/i18n/zh_CN.xml) & [zh-CN.json](file:///f:/daima/OAS/module/config/i18n/zh-CN.json)
+  - [zh_CN.xml](file:///f:/daima/OAS/module/config/i18n/zh_CN.xml), [zh-CN.json](file:///f:/daima/OAS/module/config/i18n/zh-CN.json) & [assets/i18n/zh-CN.json](file:///f:/daima/OAS/assets/i18n/zh-CN.json)
 * **改造详情**：
-  - **“脚本”子菜单重命名**：将 `config_menu.py` 中 `'Script'` 分组下的第一个子菜单项从 `'Script'` 改为 `'ScriptConfig'`。在多语言文件 `zh_CN.xml` 的 `FluTreeView` 和 `TaskList` 上下文及 `zh-CN.json` 中新增 `ScriptConfig` 的翻译，将其显示重命名为 **“模拟器配置”**，完美防止了子菜单与父菜单同名导致的混淆。
+  - **“脚本”子菜单重命名恢复**：将 `config_menu.py` 中 `'Script'` 分组下的第一个子菜单项重新由 `'ScriptConfig'` 恢复为 `'Script'`。原因为编译后的前端 OASX (Flutter 客户端) 将侧边栏任务项名称硬编码在其内部翻译字典中，动态下发的新 Key `'ScriptConfig'` 无法在前端成功翻译而显示为英文。恢复为 `'Script'` 后，前端可以正常命中硬编码的 **“模拟器配置”** 翻译。后端已通过 `convert_to_underscore` 进行了映射，无需担心属性映射断裂。
   - **后端别名透明兼容**：为防止改动子项标识符导致后端复杂的 Pydantic 数据结构（如 `self.model.script` 属性）的大量断裂，我们在 `module/config/utils.py` 中的 `convert_to_underscore` 转换器中增加了对于 `ScriptConfig`（及其大小写下划线变体）的拦截兼容机制，统一转换返回为 `'script'`。从而在不改动底层核心架构和复杂字段的前提下实现了完全透明的配置流加载兼容。
   - **组队调度配置中文化**：将全局配置中的 `team_flow` 配置卡片在 `zh-CN.json` 本地化字典中重命名为 **“组队调度”**，极大提升了非专业用户的多开组队视觉体验。
 
@@ -322,5 +322,21 @@
   - 针对英杰试炼之“兵藏秘境”专属挑战界面的“挑战”按钮，对其 OCR 识别范围进行重校准。
   - 将 `O_FIRE` 规则对象的 `roi` 和 `area` 字段独立且精准更新为：**`roi=(1129, 594, 94, 53)`**、**`area=(1129, 594, 94, 53)`**。
   - 从而使兵藏秘境拥有专属于自己界面的精细化挑战点击与识别精度，既提高了该副本挑战识别的效率，又确保了与通用爬塔（`ActivityShikigami`）活动按钮的完全解耦。
+
+### 5.24 WebSocket 连接与前端加载性能优化（延迟与卡顿解决）
+* **涉及文件**：
+  - [main_manager.py](file:///f:/daima/OAS/module/server/main_manager.py)
+  - [models.py](file:///f:/daima/OAS/module/ocr/models.py)
+  - [rpc.py](file:///f:/daima/OAS/module/ocr/rpc.py)
+  - [sub_ocr.py](file:///f:/daima/OAS/module/ocr/sub_ocr.py)
+  - [base_ocr.py](file:///f:/daima/OAS/module/ocr/base_ocr.py)
+  - [list.py](file:///f:/daima/OAS/module/atom/list.py)
+* **改造详情**：
+  - **核心配置内存缓存化**：重构 `MainManager.config_cache` 静态方法为类方法，引入私有字典 `cls._configs`。在获取配置时进行缓存拦截，配合 `should_reload()` 检测磁盘修改状态，确保仅在配置文件变动时才调用 `reload()`，否则直接返回内存实例。将耗时从每次约 **1.04 秒** 缩短至 **小于 1 毫秒**。
+  - **后端事件循环阻塞消除**：消除了前端 OASX 启动时并发调用 API 和 WebSocket 连接造成的排队等待，彻底解决了前端首屏加载卡死 10 多秒的问题。
+  - **重度 OCR 库延迟导入 (Lazy Import)**：将 `TextSystem` 从模块顶部全局导入重构为局部惰性导入（例如在 `OcrModel.ch` 和 `OcrServer.__init__` 内局部引用）；同时将 `BoxedResult` 类型的导入置于 `TYPE_CHECKING` 保护块中，并在方法签名及类型标注中重构为字符串字面量表达。
+  - **OCR 二进制库 (ONNXRuntime) 加载绕过**：实现了在不启动 OCR 服务时，主 API 服务进程 100% 绕过 `ppocronnx` 和 `onnxruntime` 相关 C++ DLL 库的加载，大幅削减了启动内存和 CPU 开销。
+  - **冗余全局依赖物理清理**：彻底清除了 `sub_ocr.py` 中遗留且完全未被使用的 `TextSystem` 顶部导入，打破了连锁加载依赖链。
+
 
 

@@ -8,7 +8,6 @@ import cn2an
 
 from datetime import timedelta
 
-from module.ocr.ppocr import TextSystem
 from module.exception import ScriptError
 from module.base.utils import area_pad, crop, float2str
 from module.ocr.base_ocr import BaseCor, OcrMode, OcrMethod

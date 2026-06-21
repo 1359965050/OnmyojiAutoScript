@@ -8,7 +8,9 @@ import numpy as np
 
 from random import randint
 
-from ppocronnx.predict_system import BoxedResult
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ppocronnx.predict_system import BoxedResult
 from module.atom.ocr import RuleOcr
 from module.atom.image import RuleImage
 from module.logger import logger
@@ -176,7 +178,7 @@ class RuleList:
         self.target_check(name)
 
         # 开始一次ocr的检测
-        boxed_results: list[BoxedResult] = self._target.detect_and_ocr(image)
+        boxed_results: list["BoxedResult"] = self._target.detect_and_ocr(image)
         if not boxed_results:
             logger.warning(f'Not angy result in image')
             return 0, 0

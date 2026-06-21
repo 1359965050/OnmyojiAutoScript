@@ -5,7 +5,9 @@ import time
 import cv2
 import numpy as np
 
-from ppocronnx.predict_system import BoxedResult
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ppocronnx.predict_system import BoxedResult
 from enum import Enum
 
 
@@ -176,7 +178,7 @@ class BaseCor:
                     text=f'[{result}]')
         return result
 
-    def detect_and_ocr(self, image, logDisplay: bool = True) -> list[BoxedResult]:
+    def detect_and_ocr(self, image, logDisplay: bool = True) -> list["BoxedResult"]:
         """
         注意：这里使用了预处理和后处理
         :param image:
@@ -189,7 +191,7 @@ class BaseCor:
         image = enlarge_canvas(image)
 
         # ocr
-        boxed_results: list[BoxedResult] = self.model.detect_and_ocr(image)
+        boxed_results: list["BoxedResult"] = self.model.detect_and_ocr(image)
         results = []
         # after proces
         for result in boxed_results:
@@ -215,7 +217,7 @@ class BaseCor:
         else:
             return self.keyword == result
 
-    def filter(self, boxed_results: list[BoxedResult], keyword: str=None) -> list or None:
+    def filter(self, boxed_results: list["BoxedResult"], keyword: str=None) -> list or None:
         """
         使用ocr获取结果后和keyword进行匹配. 返回匹配的index list
         :param keyword: 如果不指定默认适用对象的keyword
@@ -268,7 +270,7 @@ class BaseCor:
         image = self.pre_process(image)
         image = enlarge_canvas(image)
         # ocr
-        boxed_results: list[BoxedResult] = self.model.detect_and_ocr(image)
+        boxed_results: list["BoxedResult"] = self.model.detect_and_ocr(image)
         results = ''
         # after proces
         for result in boxed_results:
