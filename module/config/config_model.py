@@ -58,7 +58,6 @@ from tasks.HeroTest.config import HeroTest
 # ----------------------------------------------------------------------------------------------------------------------
 
 # 每周任务---------------------------------------------------------------------------------------------------------------
-from tasks.TrueOrochi.config import TrueOrochi
 from tasks.RichMan.config import RichMan
 from tasks.Secret.config import Secret
 from tasks.WeeklyTrifles.config import WeeklyTrifles
@@ -105,7 +104,6 @@ class ConfigModel(ConfigBase):
     hero_test: HeroTest = Field(default_factory=HeroTest)
 
     # 这些是每周任务
-    true_orochi: TrueOrochi = Field(default_factory=TrueOrochi)
     rich_man: RichMan = Field(default_factory=RichMan)
     secret: Secret = Field(default_factory=Secret)
     weekly_trifles: WeeklyTrifles = Field(default_factory=WeeklyTrifles)

@@ -20,6 +20,7 @@ class Full(BaseCor):
     这个类适用于大ROI范围的文本识别。可以支持多条文本识别， 默认不支持竖方向的文本识别
     """
     def after_process(self, result):
+        result = BaseCor.after_process(self, result)
         return result
 
     def ocr_full(self, image, keyword: str=None) -> tuple:
@@ -64,6 +65,7 @@ class Single(BaseCor):
     这个类使用于单行文本识别（所识别的ROI不会动）
     """
     def after_process(self, result):
+        result = BaseCor.after_process(self, result)
         return result
 
     def ocr_single(self, image) -> str:
@@ -76,6 +78,9 @@ class Single(BaseCor):
             result = self.ocr_single_line(image)
             if result != "":
                 return result
+
+            if not self.fallback_detect:
+                return ""
 
             # 如果没有识别到，这个时候考虑到可能是竖方向的文本, 使用detect_and_ocr来进行识别
             logger.info(f"[{self.name}] Try to detect vertically")

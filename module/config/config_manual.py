@@ -17,7 +17,7 @@ class ConfigManual:
         > BondlingFairyland > EvoZone > GoryouRealm > HeroTest
         > Hyakkiyakou
         > Secret > WeeklyTrifles > Duel 
-        > TrueOrochi > RichMan
+        > RichMan
         > MetaDemon > DyeTrials
         """
 

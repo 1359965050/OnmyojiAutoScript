@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from tasks.Component.config_scheduler import Scheduler
 from tasks.Component.config_base import ConfigBase, Time
 from tasks.Component.SwitchSoul.switch_soul_config import SwitchSoulConfig
+from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 
 
 class SixRealmsGate(BaseModel):
@@ -19,6 +20,7 @@ class SixRealms(ConfigBase):
     scheduler: Scheduler = Field(default_factory=Scheduler)
     switch_soul_config: SwitchSoulConfig = Field(default_factory=SwitchSoulConfig)
     six_realms_gate: SixRealmsGate = Field(default_factory=SixRealmsGate)
+    general_battle_config: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig)
 
 
 

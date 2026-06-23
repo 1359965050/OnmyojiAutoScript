@@ -966,29 +966,6 @@
       "team_name": ""
     }
   },
-  "true_orochi": {
-    "scheduler": {
-      "enable": false,
-      "next_run": "2023-01-01 00:00:00",
-      "priority": 10,
-      "success_interval": "03 00:00:00",
-      "failure_interval": "01 00:00:00",
-      "server_update": "09:00:00",
-      "delay_date": 1,
-      "float_time": "00:00:00"
-    },
-    "true_orochi_config": {
-      "find_true_orochi": true,
-      "current_success": 0
-    },
-    "switch_soul": {
-      "enable": false,
-      "switch_group_team": "-1,-1",
-      "enable_switch_by_name": false,
-      "group_name": "",
-      "team_name": ""
-    }
-  },
   "rich_man": {
     "scheduler": {
       "enable": false,

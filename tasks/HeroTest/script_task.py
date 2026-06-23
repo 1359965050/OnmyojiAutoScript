@@ -72,8 +72,10 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
             if click_cnt >= max_click:  # 异常情况,怎么都无法进入
                 break
             if self.appear_then_click(self.I_START_CHALLENGE, interval=1):  # 兵藏秘境确认挑战
+                click_cnt = 0
                 continue
             if self.appear_then_click(self.I_BCMJ_RESET_CONFIRM, interval=1):  # 兵藏秘境确认重置
+                click_cnt = 0
                 continue
             if self.appear(self.I_REAL_MONEY, interval=1):  # 这里因为门票不够而不是其他异常所以success默认还是true
                 logger.warning('Ticket is not enough')

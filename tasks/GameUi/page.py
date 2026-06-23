@@ -52,7 +52,7 @@ class Page:
 #登录login
 page_login = Page(G.I_CHECK_LOGIN_FORM)
 # Main Home 主页
-page_main = Page(G.I_CHECK_MAIN)
+page_main = Page([G.I_CHECK_MAIN, G.I_MAIN_GOTO_EXPLORATION])
 page_main.additional = [G.I_AD_CLOSE_RED, G.I_BACK_FRIENDS, RestartAssets.I_CANCEL_BATTLE,
                         [RestartAssets.I_LOGIN_COURTYARD, RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA],
                             GGA.I_CHAT_CLOSE_BUTTON, G.I_CLOSE_CHAT_WINDOW]
@@ -108,9 +108,9 @@ page_heian_kitan = Page(G.I_CHECK_HEIAN_KITAN)
 page_heian_kitan.link(button=G.I_CHECK_HEIAN_KITAN, destination=page_exploration)
 page_exploration.link(button=G.I_EXPLORATION_GOTO_HEIAN_KITAN, destination=page_heian_kitan)
 # 六道之门 six gates
-page_six_gates = Page(G.I_CHECK_SIX_GATES)
+page_six_gates = Page(G.O_CHECK_SIX_GATES)
 page_six_gates.link(button=G.I_SIX_GATES_GOTO_EXPLORATION, destination=page_exploration)
-page_exploration.link(button=G.I_EXPLORATION_GOTO_SIX_GATES, destination=page_six_gates)
+page_exploration.link(button=G.O_EXPLORATION_GOTO_SIX_GATES, destination=page_six_gates)
 # 契灵之境 bondling fairyland
 page_bondling_fairyland = Page(BondlingFairylandAssets.I_BALL_AREA)
 page_bondling_fairyland.link(button=G.I_BACK_YOLLOW, destination=page_exploration)

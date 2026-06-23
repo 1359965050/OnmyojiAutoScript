@@ -59,6 +59,7 @@ class BaseCor:
     roi: list = []  # [x, y, width, height]
     area: list = []  # [x, y, width, height]
     keyword: str = ""  # 默认为空
+    fallback_detect: bool = True
 
 
     def __init__(self,
@@ -67,7 +68,8 @@ class BaseCor:
                  method: str,
                  roi: tuple,
                  area: tuple,
-                 keyword: str) -> None:
+                 keyword: str,
+                 fallback_detect: bool = True) -> None:
         """
 
         :param name:
@@ -89,6 +91,7 @@ class BaseCor:
         self.roi: list = list(roi)
         self.area: list = list(area)
         self.keyword = keyword
+        self.fallback_detect = fallback_detect
 
     def __str__(self):
         return f"{self.name}"
@@ -114,6 +117,17 @@ class BaseCor:
         :param result:
         :return:
         """
+        if isinstance(result, str):
+            replacements = {
+                "枪合战": "花合战",
+                "混池心屿": "混沌之屿",
+                "混池之屿": "混沌之屿",
+                "愿战之购": "鏖战之屿",
+                "愿战之屿": "鏖战之屿",
+                "孔准国": "孔雀国",
+            }
+            for old, new in replacements.items():
+                result = result.replace(old, new)
         return result
 
     @classmethod
@@ -254,7 +268,11 @@ class BaseCor:
         if indices:
             # 剔除掉重复的index
             indices = list(set(indices))
-            return indices
+            req_len = max(1, len(keyword) // 2) if len(keyword) <= 3 else max(2, len(keyword) // 2)
+            if len(indices) >= req_len:
+                return indices
+            else:
+                return None
         else:
             return None
 
