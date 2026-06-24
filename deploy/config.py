@@ -18,7 +18,7 @@ class ConfigModel:
     GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
-    AutoUpdate: bool = True
+    AutoUpdate: bool = False
     KeepLocalChanges: bool = False
 
     # Python
@@ -38,6 +38,11 @@ class ConfigModel:
     StartOcrServer: bool = False
     OcrServerPort: int = 22268
     OcrClientAddress: str = "127.0.0.1:22268"
+
+    # Image
+    StartImageServer: bool = False
+    ImageServerPort: int = 22278
+    ImageClientAddress: str = "127.0.0.1:22278"
 
     # Update
     EnableReload: bool = True

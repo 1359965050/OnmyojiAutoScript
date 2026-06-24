@@ -16,8 +16,8 @@ class ConfigMenu:
         # 总览
         self.menu["Overview"] = []
         self.menu['TaskList'] = []
-        # 脚本设置
-        self.menu['Script'] = ['Script', 'Restart', 'GlobalGame']
+        # 全局设置
+        self.menu['GlobalSettings'] = ['EmulatorSettings', 'Restart', 'GameSettings']
         # 刷御魂
         self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea', 'SixRealms']
         # 日常的任务
@@ -36,11 +36,9 @@ class ConfigMenu:
         self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan',
                               'Hunt' , 'AbyssShadows', 'GuildBanquet', 'DemonRetreat', 'GuildActivityMonitor']
         # 每周任务
-        self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles', 'Duel']
+        self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles']
         # 活动的任务
         self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials']
-        # 开发工具
-        self.menu["Tools"] = ['Image Rule', 'Ocr Rule', 'Click Rule', 'Long Click Rule', 'Swipe Rule', 'List Rule']
 
     @cached_property
     def gui_menu(self) -> str:
@@ -53,7 +51,6 @@ class ConfigMenu:
     @cached_property
     def gui_menu_list(self) -> dict:
         del self.menu['TaskList']
-        del self.menu['Tools']
         return self.menu
 
 

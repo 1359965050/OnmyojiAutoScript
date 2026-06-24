@@ -1,9 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-import asyncio
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
 from module.config.utils import convert_to_underscore
@@ -117,6 +115,26 @@ async def script_stop(script_name: str):
     mm.script_process[script_name].stop()
     return
 
+@script_app.put('/{script_name}/logger/level')
+async def script_set_log_level(script_name: str, level: str):
+    """
+    热切换指定脚本子进程的日志级别。
+    level: DEBUG/INFO/WARNING/ERROR/CRITICAL
+    """
+    valid_levels = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+    level = level.upper()
+    if level not in valid_levels:
+        raise HTTPException(status_code=400, detail=f'Invalid level: {level}')
+    if script_name not in mm.script_process:
+        raise HTTPException(status_code=404, detail=f'Script {script_name} not found')
+    script_process = mm.script_process[script_name]
+    try:
+        script_process.state_queue.put({"action": "set_log_level", "level": level})
+        return {"script": script_name, "level": level, "status": "ok"}
+    except Exception as e:
+        logger.error(f'Failed to set log level for {script_name}: {e}')
+        raise HTTPException(status_code=500, detail=str(e))
+
 @script_app.get('/{script_name}/{task}/args')
 async def script_task(script_name: str, task: str):
     return mm.config_cache(script_name).model.script_task(task)
@@ -168,37 +186,6 @@ async def sync_next_run(script_name: str, task: str, target_dt: str):
     return True
 
 
-# --------------------------------------  SSE  --------------------------------------
-@script_app.get('/{script_name}/state')
-async def script_task_state(script_name: str):
-    async def state_generate_events():
-        while True:
-            # 生成 SSE 事件数据
-            event_data = "data: Hello, SSE!\n\n"
-            yield event_data
-
-            # 模拟异步操作，可以替换为您的实际处理逻辑
-            await asyncio.sleep(1)
-
-    response = StreamingResponse(state_generate_events(), media_type="text/event-stream")
-    response.headers["Cache-Control"] = "no-cache"
-    return response
-
-@script_app.get('/{script_name}/log')
-async def script_task_log(script_name: str):
-    async def log_generate_events():
-        while True:
-            # 生成 SSE 事件数据
-            event_data = "data: log\n"
-            yield event_data
-
-            # 模拟异步操作，可以替换为您的实际处理逻辑
-            await asyncio.sleep(1)
-
-    response = StreamingResponse(log_generate_events(), media_type="text/event-stream")
-    response.headers["Cache-Control"] = "no-cache"
-    return response
-
 # -------------------------------------- websocket --------------------------------------
 
 @script_app.websocket("/ws/{script_name}")
@@ -207,6 +194,8 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
         mm.script_process[script_name] = ScriptProcess(script_name)
     script_process = mm.script_process[script_name]
     await script_process.connect(websocket)
+    
+    await mm.ensure_coroutines(script_name)
 
     try:
         await script_process.send_json(websocket, {"state": script_process.state})

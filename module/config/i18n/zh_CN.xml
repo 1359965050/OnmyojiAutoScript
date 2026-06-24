@@ -169,7 +169,6 @@
     <message><source>Nian</source><translation>年兽</translation></message>
     <message><source>Soul Zones</source><translation>御魂副本</translation></message>
     <message><source>Orochi</source><translation>八岐大蛇</translation></message>
-	<message><source>OrochiMoans</source><translation>御魂悲鸣</translation></message>
     <message><source>OrochiJudgement</source><translation>御魂神罚</translation></message>
     <message><source>Sougenbi</source><translation>业原火</translation></message>
     <message><source>FallenSun</source><translation>日轮之城</translation></message>
@@ -201,7 +200,6 @@
 	<message><source>GoryouRealm</source><translation>御灵之境</translation></message>
 	<message><source>Hunt</source><translation>狩猎战</translation></message>
 	<message><source>MysteryShop</source><translation>神秘商店</translation></message>
-	<message><source>Duel</source><translation>斗技</translation></message>
 	<message><source>WantedQuests</source><translation>悬赏封印</translation></message>
 	<message><source>Tako</source><translation>石距</translation></message>
 	<message><source>AutoCheckinBigGod</source><translation>大神签到</translation></message>
@@ -215,7 +213,6 @@
     <message><source>Nian</source><translation>年兽</translation></message>
     <message><source>Soul Zones</source><translation>御魂副本</translation></message>
     <message><source>Orochi</source><translation>八岐大蛇</translation></message>
-	<message><source>OrochiMoans</source><translation>御魂悲鸣</translation></message>
     <message><source>OrochiJudgement</source><translation>御魂神罚</translation></message>
     <message><source>Sougenbi</source><translation>业原火</translation></message>
     <message><source>FallenSun</source><translation>日轮之城</translation></message>
@@ -247,7 +244,6 @@
 	<message><source>GoryouRealm</source><translation>御灵之境</translation></message>
 	<message><source>Hunt</source><translation>狩猎战</translation></message>
 	<message><source>MysteryShop</source><translation>神秘商店</translation></message>
-	<message><source>Duel</source><translation>斗技</translation></message>
 	<message><source>WantedQuests</source><translation>悬赏封印</translation></message>
 	<message><source>Tako</source><translation>石距</translation></message>
 	<message><source>AutoCheckinBigGod</source><translation>大神签到</translation></message>
@@ -679,16 +675,6 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
 	<message><source>GoryouConfig</source><translation>御灵</translation></message>
 	<message><source>GoryouClass</source><translation>御灵类型</translation></message>
 	<message><source>goryou_class_help</source><translation>闭着眼睛选，自动支持到当天的类型。不支持选择层数是因为正常人都会打第三层</translation></message>
-</context>
-<context>
-    <name>Args</name>
-	<message><source>DuelConfig</source><translation>自动斗技</translation></message>	
-	<message><source>Switch All Soul</source><translation>一键切换斗技御魂</translation></message>	
-	<message><source>Target Score</source><translation>达到 X 分数后会结束任务</translation></message>
-	<message><source>switch_all_soul_help</source><translation>你应当先进行式神御魂的导入</translation></message>
-	<message><source>Honor Full Exit</source><translation>刷满荣誉就退出</translation></message>
-	<message><source>target_score_help</source><translation>3000以上表示为名士（也是自动斗技的最高）</translation></message>
-	<message><source>honor_full_exit_help</source><translation>这无需关心本周荣誉的上限是什么</translation></message>
 </context>
 <context>
     <name>Args</name>

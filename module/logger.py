@@ -2,12 +2,11 @@
 # @author runhey
 # github https://github.com/runhey
 import sys
-
 import logging
 import os
 import shutil
+from io import TextIOBase, StringIO
 from datetime import datetime, timedelta, date
-from io import TextIOBase
 from pathlib import Path
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, NewLine, RenderResult
 from rich.highlighter import NullHighlighter
@@ -231,6 +230,62 @@ def set_func_logger(func):
     )
     hdlr.setFormatter(flutter_formatter)
     logger.addHandler(hdlr)
+
+
+def set_structured_func_logger(script_name: str, func: Callable[[str], None]):
+    """
+    发送结构化 JSON 日志到前端。
+    保留 Rich 渲染效果（traceback、级别等），同时附加 level/module/message 字段。
+    """
+    from module.server.log_record import LogRecord
+
+    class StructuredFlutterHandler(RichHandler):
+        def __init__(self):
+            self._render_stream = StringIO()
+            console = Console(
+                file=self._render_stream,
+                force_terminal=False,
+                force_interactive=False,
+                no_color=True,
+                highlight=False,
+                width=80,
+            )
+            super().__init__(
+                console=console,
+                show_path=False,
+                show_time=False,
+                show_level=True,
+                rich_tracebacks=True,
+                tracebacks_show_locals=True,
+                tracebacks_extra_lines=3,
+                highlighter=NullHighlighter(),
+            )
+            self.setFormatter(flutter_formatter)
+            self.script_name = script_name
+            self._func = func
+
+        def emit(self, record: logging.LogRecord) -> None:
+            try:
+                self._render_stream.seek(0)
+                self._render_stream.truncate(0)
+                super().emit(record)
+                formatted = self._render_stream.getvalue()
+                log_record = LogRecord.from_logging_record(
+                    record, self.script_name, formatted
+                )
+                self._func(log_record.to_json())
+            except Exception:
+                self.handleError(record)
+
+    logger.addHandler(StructuredFlutterHandler())
+
+
+def set_log_level(level: str) -> None:
+    """热切换根 logger 级别。"""
+    try:
+        logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    except Exception:
+        pass
 
 # ======================================================================================================================
 #            Set print format

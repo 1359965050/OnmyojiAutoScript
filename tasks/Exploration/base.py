@@ -79,36 +79,61 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
 
     def pre_process(self):
         explorationConfig = self._config
-        if explorationConfig.switch_soul_config.enable:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
-            self.run_switch_soul(explorationConfig.switch_soul_config.switch_group_team)
+        
+        try:
+            if explorationConfig.switch_soul_config.enable:
+                self.ui_goto_page(page_shikigami_records)
+                self.run_switch_soul(explorationConfig.switch_soul_config.switch_group_team)
 
-        if explorationConfig.switch_soul_config.enable_switch_by_name:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
-            self.run_switch_soul_by_name(explorationConfig.switch_soul_config.group_name,
-                                         explorationConfig.switch_soul_config.team_name)
+            if explorationConfig.switch_soul_config.enable_switch_by_name:
+                self.ui_goto_page(page_shikigami_records)
+                self.run_switch_soul_by_name(explorationConfig.switch_soul_config.group_name,
+                                             explorationConfig.switch_soul_config.team_name)
 
-        # 开启加成
-        con = self.config.exploration.exploration_config
-        if con.buff_gold_50_click or con.buff_gold_100_click or con.buff_exp_50_click or con.buff_exp_100_click:
-            self.ui_get_current_page()
-            self.ui_goto(page_main)
-            self.open_buff()
-            if con.buff_gold_50_click:
-                self.gold_50()
-            if con.buff_gold_100_click:
-                self.gold_100()
-            if con.buff_exp_50_click:
-                self.exp_50()
-            if con.buff_exp_100_click:
-                self.exp_100()
-            self.close_buff()
+            con = self.config.exploration.exploration_config
+            if con.buff_gold_50_click or con.buff_gold_100_click or con.buff_exp_50_click or con.buff_exp_100_click:
+                self.ui_goto_page(page_main)
+                self.open_buff()
+                if con.buff_gold_50_click:
+                    self.gold_50()
+                if con.buff_gold_100_click:
+                    self.gold_100()
+                if con.buff_exp_50_click:
+                    self.exp_50()
+                if con.buff_exp_100_click:
+                    self.exp_100()
+                self.close_buff()
 
-        self.ui_get_current_page()
-        # 探索页面
-        self.ui_goto(page_exploration)
+            self.ui_goto_page(page_exploration)
+        except Exception as e:
+            logger.warning(f'pre_process exception: {e}')
+            logger.info('Force navigate to exploration page')
+            self._force_goto_exploration()
+
+    def _force_goto_exploration(self):
+        timer = Timer(30).start()
+        while not timer.reached():
+            self.screenshot()
+            if self.appear(self.I_CHECK_EXPLORATION):
+                logger.info('Already in exploration page')
+                return
+            if self.appear(self.I_MAIN_GOTO_EXPLORATION):
+                self.appear_then_click(self.I_MAIN_GOTO_EXPLORATION)
+                self.wait_until_appear(self.I_CHECK_EXPLORATION, wait_time=5)
+                return
+            if self.appear(self.I_UI_CONFIRM):
+                self.appear_then_click(self.I_UI_CONFIRM)
+                continue
+            if self.appear(self.I_UI_CANCEL):
+                self.appear_then_click(self.I_UI_CANCEL)
+                continue
+            if self.appear(self.I_UI_BACK_YELLOW):
+                self.appear_then_click(self.I_UI_BACK_YELLOW)
+                continue
+            if self.appear(self.I_UI_BACK_RED):
+                self.appear_then_click(self.I_UI_BACK_RED)
+                continue
+            sleep(0.5)
 
     def post_process(self):
         self.wait_until_stable(self.I_UI_BACK_RED)
@@ -162,16 +187,37 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
             time.sleep(1)
 
         # 选中对应章节
+        select_timer = Timer(10).start()
         while 1:
             self.screenshot()
+            if select_timer.reached():
+                logger.warning(f'Select exploration level timeout, force click exploration button')
+                # 尝试直接点击探索按钮区域
+                self.device.click(1125, 620)
+                time.sleep(1)
+                return True
+            
             if self.appear_then_click(self.I_UI_CONFIRM, interval=1):
+                select_timer.reset()
                 continue
             if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=1):
+                select_timer.reset()
                 continue
+            
+            # 检查是否已经在探索内部界面（说明已经进入了）
+            if self.appear(self.I_E_SETTINGS_BUTTON) or self.appear(self.I_E_AUTO_ROTATE_ON) or self.appear(self.I_E_AUTO_ROTATE_OFF):
+                logger.info('Already in exploration main scene')
+                return True
+            
             self.O_E_EXPLORATION_LEVEL_NUMBER.keyword = explorationConfig.exploration_config.exploration_level
             if self.ocr_appear_click(self.O_E_EXPLORATION_LEVEL_NUMBER):
-                self.wait_until_appear(self.I_E_EXPLORATION_CLICK, wait_time=3)
-            if self.appear(self.I_E_EXPLORATION_CLICK):
+                logger.info(f'Clicked exploration level: {explorationConfig.exploration_config.exploration_level}')
+                select_timer.reset()
+                # 等待探索按钮出现，增加超时时间
+                self.wait_until_appear(self.I_E_EXPLORATION_CLICK, wait_time=5)
+                continue
+                
+            if self.appear(self.I_E_EXPLORATION_CLICK, threshold=0.6):
                 break
             if self.is_in_room():
                 break
@@ -336,12 +382,20 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         # 判断是否开启突破票检测
         if not con_scrolls.scrolls_enable:
             return
+        
+        # 只有在探索章节标题界面或探索大世界界面才检测突破票
+        # 避免在战斗奖励等其他界面误检测
+        if not (self.appear(self.I_E_EXPLORATION_CLICK) or self.appear(self.I_CHECK_EXPLORATION)):
+            return
+        
         if self.appear(self.I_E_EXPLORATION_CLICK) and self.appear(self.I_EXP_CREATE_TEAM):
             cu, res, total = self.O_REALM_RAID_NUMBER1.ocr(self.device.image)
         else:
             cu, res, total = self.O_REALM_RAID_NUMBER.ocr(self.device.image)
-        # 判断突破票数量
-        if cu < con_scrolls.scrolls_threshold:
+        
+        # 判断突破票数量，如果 OCR 结果无效（None 或负数），则不执行
+        if cu is None or cu < 0 or cu < con_scrolls.scrolls_threshold:
+            logger.info(f'Scrolls count: {cu}, threshold: {con_scrolls.scrolls_threshold}, skip realm raid')
             return
 
         # 关闭加成
@@ -384,7 +438,6 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         logger.info('Quit explore')
         boss_timer = Timer(15)
         boss_timer.start()
-        # click_yellow_button = 0 #用于保证只点一次左上返回按钮，不要直接触发连点回到主界面
         
         while 1:
             self.screenshot()
@@ -402,15 +455,32 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 boss_timer.reset()
                 continue
 
+            # 处理确认退出对话框
+            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
+                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
+                logger.info('Confirm exit exploration')
+                boss_timer.reset()
+                continue
+            if self.appear(self.I_UI_CONFIRM, threshold=0.5):
+                self.appear_then_click(self.I_UI_CONFIRM, interval=0.8)
+                logger.info('Confirm exit with UI_CONFIRM')
+                boss_timer.reset()
+                continue
+
+            # 在探索主界面中，需要先点击右上角箭头按钮退出到章节标题界面
+            if self.appear(self.I_E_SETTINGS_BUTTON) or self.appear(self.I_E_AUTO_ROTATE_ON) or self.appear(self.I_E_AUTO_ROTATE_OFF):
+                if self.appear_then_click(self.I_E_EXPLORATION_OPEN, interval=1):
+                    boss_timer.reset()
+                    continue
+            
             if boss_timer.reached():
                 logger.warning('Exit timeout, force clicking back button')
                 boss_timer.reset()
                 self.click(self.I_UI_BACK_BLUE)
                 continue
-
-            if self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8):
-                continue
-            if self.appear_then_click(self.I_BACK_YOLLOW, interval=3.5):
+            
+            if self.appear_then_click(self.I_UI_BACK_YELLOW, interval=2):
+                boss_timer.reset()
                 continue
             
             if self.appear(self.I_EXPLORATION_TITLE) or self.appear(self.I_CHECK_EXPLORATION):

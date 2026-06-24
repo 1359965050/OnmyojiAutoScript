@@ -3,22 +3,19 @@
 # github https://github.com/runhey
 import time
 
-import cv2
-import numpy as np
 import random
 import re
+from datetime import datetime, time
 from module.atom.click import RuleClick
-from tasks.base_task import BaseTask
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.GameUi.game_ui import GameUi
-from tasks.GameUi.page import page_area_boss, page_shikigami_records
+from tasks.GameUi.page import page_area_boss, page_shikigami_records, page_main
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.AreaBoss.assets import AreaBossAssets
 from tasks.AreaBoss.config_boss import AreaBossFloor
 from module.logger import logger
 from module.exception import TaskEnd
 from module.atom.image import RuleImage
-from typing import List
 
 
 class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
@@ -28,6 +25,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         运行脚本
         :return:
         """
+        self.check_can_run()
         # 直接手动关闭这个锁定阵容的设置
         self.config.area_boss.general_battle.lock_team_enable = False
         con = self.config.area_boss.boss
@@ -69,25 +67,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         elif con.boss_number - boss_fought == 1:
             self.boss_fight(self.I_BATTLE_1)
         # 退出
-        self.go_back()
+        self.goto_page(page_main)
         self.set_next_run(task='AreaBoss', success=True, finish=False)
 
         # 以抛出异常的形式结束
         raise TaskEnd
 
-    def go_back(self) -> None:
-        """
-        返回, 要求这个时候是出现在地域鬼王的主界面
-        :return:
-        """
-        # 点击返回
-        logger.info("Script back home")
-        while 1:
-            self.screenshot()
-            if self.appear_then_click(self.I_UI_BACK_YELLOW, threshold=0.6, interval=2):
-                continue
-            if self.appear(self.I_CHECK_MAIN, threshold=0.6):
-                break
+    def check_can_run(self):
+        """判断是否可以执行, 不能执行则直接结束任务"""
+        now = datetime.now().time()
+        time_not_passed: bool = time(0, 0, 0) <= now <= time(6, 0, 0)
+        if time_not_passed:
+            logger.error("It's not time to challenge boss")
+            self.goto_page(page_main)
+            self.set_next_run(task='AreaBoss', server=False, target=datetime.now().replace(hour=10))
+            raise TaskEnd
 
     def boss(self, battle: RuleImage, collect: bool = False):
 
@@ -151,20 +145,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             return True
 
         if ultra:
-            if not self.get_difficulty():
-                # 判断是否能切换到极地鬼
-                if not self.appear(self.I_AB_DIFFICULTY_NORMAL) and self.config.area_boss.boss.Attack_60:
+            if not self.get_difficulty():  # 在普通界面
+                # 出现了极, 则直接切换到极地鬼
+                if self.appear(self.I_AB_DIFFICULTY_NORMAL):
+                    self.switch_difficulty(True)
+                elif self.config.area_boss.boss.Attack_60:  # 没有出现极则一次没打过, 拉到60级再打
                     self.switch_to_level_60()
-                    if not self.start_fight():
+                    if not self.start_fight():  # 60级没打过退出吧
                         logger.warning("you are so weakness!")
                         self.wait_until_appear(self.I_AB_CLOSE_RED)
                         self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                         return False
-                else:
+                    self.switch_difficulty(True)  # 打过了切换到极
+                else:  # 普通地鬼且没有开启打60级
                     self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                     return False
-                # 切换到 极地鬼
-            self.switch_difficulty(True)
 
             # 调整悬赏层数
             match reward_floor:
@@ -180,6 +175,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         return result
 
     def start_fight(self) -> bool:
+        self.check_can_run()
         while 1:
             self.screenshot()
             if self.appear_then_click(self.I_FIRE, interval=1):

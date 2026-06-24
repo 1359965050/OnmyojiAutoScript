@@ -31,7 +31,6 @@ from tasks.DemonEncounter.config import DemonEncounter
 from tasks.DailyTrifles.config import DailyTrifles
 # ----------------------------------------------------------------------------------------------------------------------
 from tasks.Orochi.config import Orochi
-from tasks.OrochiMoans.config import OrochiMoans
 from tasks.Sougenbi.config import Sougenbi
 from tasks.FallenSun.config import FallenSun
 from tasks.EternitySea.config import EternitySea
@@ -61,7 +60,6 @@ from tasks.HeroTest.config import HeroTest
 from tasks.RichMan.config import RichMan
 from tasks.Secret.config import Secret
 from tasks.WeeklyTrifles.config import WeeklyTrifles
-from tasks.Duel.config import Duel
 # ----------------------------------------------------------------------------------------------------------------------
 
 class ConfigModel(ConfigBase):
@@ -85,7 +83,6 @@ class ConfigModel(ConfigBase):
 
     # 这些是刷御魂的
     orochi: Orochi = Field(default_factory=Orochi)
-    orochi_moans: OrochiMoans = Field(default_factory=OrochiMoans)
     sougenbi: Sougenbi = Field(default_factory=Sougenbi)
     fallen_sun: FallenSun = Field(default_factory=FallenSun)
     eternity_sea: EternitySea = Field(default_factory=EternitySea)
@@ -107,7 +104,6 @@ class ConfigModel(ConfigBase):
     rich_man: RichMan = Field(default_factory=RichMan)
     secret: Secret = Field(default_factory=Secret)
     weekly_trifles: WeeklyTrifles = Field(default_factory=WeeklyTrifles)
-    duel: Duel = Field(default_factory=Duel)
 
     # 阴阳寮
     hunt: Hunt = Field(default_factory=Hunt)
@@ -122,12 +118,15 @@ class ConfigModel(ConfigBase):
 
         :param config_name:
         """
+        # 初始化期间禁止自动保存，避免 Pydantic 设置每个字段时触发大量无意义的磁盘写入
+        object.__setattr__(self, '_initializing', True)
         if not config_name:
             super().__init__()
-            return
-        data = self.read_json(config_name)
-        data["config_name"] = config_name
-        super().__init__(**data)
+        else:
+            data = self.read_json(config_name)
+            data["config_name"] = config_name
+            super().__init__(**data)
+        object.__setattr__(self, '_initializing', False)
 
     def __setattr__(self, key, value):
         """
@@ -137,6 +136,9 @@ class ConfigModel(ConfigBase):
         :return:
         """
         super().__setattr__(key, value)
+        # 初始化期间跳过自动保存
+        if getattr(self, '_initializing', True):
+            return
         logger.info("auto save config")
         self.save()
 

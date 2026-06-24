@@ -285,7 +285,7 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 last_action = self.agent.decision(tracks=tracks, state=self.slave_state, freeze=freeze)
                 self.do_action(last_action, state=self.slave_state)
             else:
-                # TODO freeze state
+                # freeze state handling not implemented
                 tracks = []
 
             # debug

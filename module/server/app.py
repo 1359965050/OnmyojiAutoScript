@@ -14,6 +14,7 @@ from module.logger import logger
 from module.server.home_router import home_app
 from module.server.script_router import script_app
 from module.server.tool_router import tool_app
+from module.server.api_logger import ApiLoggingMiddleware, api_logger
 from module.server.setting import State
 from module.server.main_manager import mm
 from starlette.staticfiles import StaticFiles
@@ -39,6 +40,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+app.add_middleware(ApiLoggingMiddleware)
 
 app.include_router(home_app)
 app.include_router(script_app)

@@ -35,7 +35,6 @@ class SoloExploration(BaseExploration):
         while 1:
             self.screenshot()
             scene = self.get_current_scene()
-            logger.info(f'[run_solo] Current scene: {scene.name}')  # TODO 2026.06.22 之后删掉这个刷屏的
             #
             if scene == Scene.WORLD:
                 # 打开右边箭头
@@ -45,6 +44,11 @@ class SoloExploration(BaseExploration):
                     # 宝箱
                     logger.info('Treasure box appear, get it.')
                     self.ui_click_until_disappear(self.I_TREASURE_BOX_CLICK)
+                    logger.info('Wait 1 second after opening treasure box')
+                    sleep(1)
+                    logger.info('Click to close treasure box reward')
+                    self.click(self.I_UI_CANCEL)
+                    sleep(1)
                 if self.check_exit():
                     break
                 self.open_expect_level()
@@ -81,7 +85,7 @@ class SoloExploration(BaseExploration):
                         logger.info(f'Fight, minions cnt {self.minions_cnt}')
                     continue
                 # 向后拉,寻找怪
-                if search_fail_cnt >= 4:
+                if search_fail_cnt >= 2:
                     search_fail_cnt = 0
                     if (self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28\
                         and self.appear(self.I_SWIPE_END))\
@@ -95,6 +99,7 @@ class SoloExploration(BaseExploration):
             #
             elif scene == Scene.BATTLE_PREPARE or scene == Scene.BATTLE_FIGHTING:
                 self.check_take_over_battle(is_screenshot=False, config=self._config.general_battle_config)
+                self._match_end.refresh()
             elif scene == Scene.UNKNOWN:
                 continue
 
@@ -107,7 +112,6 @@ class SoloExploration(BaseExploration):
         while 1:
             self.screenshot()
             scene = self.get_current_scene()
-            logger.info(f'[run_leader] Current scene: {scene.name}')  # TODO 2026.06.22 之后删掉这个刷屏的
             # 探索大世界
             if scene == Scene.WORLD:
                 # 打开右边箭头
@@ -216,7 +220,7 @@ class SoloExploration(BaseExploration):
                         logger.info(f'Fight, minions cnt {self.minions_cnt}')
                     continue
                 # 向后拉,寻找怪
-                if search_fail_cnt >= 4:
+                if search_fail_cnt >= 2:
                     search_fail_cnt = 0
                     if (self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28\
                         and self.appear(self.I_SWIPE_END))\
@@ -230,6 +234,7 @@ class SoloExploration(BaseExploration):
             #
             elif scene == Scene.BATTLE_PREPARE or scene == Scene.BATTLE_FIGHTING:
                 self.check_take_over_battle(is_screenshot=False, config=self._config.general_battle_config)
+                self._match_end.refresh()
             elif scene == Scene.UNKNOWN:
                 continue
 
@@ -242,7 +247,6 @@ class SoloExploration(BaseExploration):
         while 1:
             self.screenshot()
             scene = self.get_current_scene()
-            logger.info(f'[run_member] Current scene: {scene.name}')  # TODO 2026.06.12 之后删掉这个刷屏的
             #
             if scene == Scene.WORLD:
                 # 打开右边箭头
@@ -252,6 +256,11 @@ class SoloExploration(BaseExploration):
                     # 宝箱
                     logger.info('Treasure box appear, get it.')
                     self.ui_click_until_disappear(self.I_TREASURE_BOX_CLICK)
+                    logger.info('Wait 1 second after opening treasure box')
+                    sleep(1)
+                    logger.info('Click to close treasure box reward')
+                    self.click(self.I_UI_CANCEL)
+                    sleep(1)
                 if self.check_exit():
                     break
                 if self.check_then_accept():
@@ -440,6 +449,7 @@ class SoloExploration(BaseExploration):
 class ScriptTask(SoloExploration):
     def run(self):
         logger.hr('exploration')
+        self.pre_process()
         random_click_cnt = 0
         while 1:
             self.screenshot()
@@ -453,9 +463,6 @@ class ScriptTask(SoloExploration):
                 continue
             else:
                 break
-
-        if scene == Scene.UNKNOWN:
-            self.pre_process()
 
         match self._config.exploration_config.user_status:
             case UserStatus.ALONE:

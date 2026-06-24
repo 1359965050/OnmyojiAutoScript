@@ -23,7 +23,7 @@ from module.device.method.utils import (
 from module.config.server import set_server
 from module.exception import RequestHumanTakeover, EmulatorNotRunningError
 from module.logger import logger
-from module.map.map_grids import SelectedGrids
+from module.base.utils.grids import SelectedGrids
 
 def retry(func):
     @wraps(func)

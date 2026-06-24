@@ -1,37 +1,19 @@
-import datetime
-import subprocess
-import threading
-import time
-import requests
-from typing import Generator, List, Tuple
+# This Python file uses the following encoding: utf-8
+# 本地单机版 — 更新功能已禁用
 
-from deploy.config import ExecutionError
-from deploy.git import GitManager
-from deploy.pip import PipManager
+import subprocess
+
 from deploy.utils import DEPLOY_CONFIG
 from module.logger import logger
-from module.base.retry import retry
 from module.server.config import DeployConfig
 
 
-class Updater(DeployConfig, GitManager, PipManager):
+class Updater(DeployConfig):
+    """精简版 Updater — 仅保留本地 git log 查询能力，禁用一切远程操作"""
+
     def __init__(self, file=DEPLOY_CONFIG):
         super().__init__(file=file)
         self.state = 0
-
-    @property
-    def delay(self):
-        self.read()
-        return int(self.CheckUpdateInterval) * 60
-
-    @property
-    def schedule_time(self):
-        self.read()
-        t = self.AutoRestartTime
-        if t is not None:
-            return datetime.time.fromisoformat(t)
-        else:
-            return None
 
     def execute_output(self, command) -> str:
         command = command.replace(r"\\", "/").replace("\\", "/").replace('"', '"')
@@ -40,15 +22,16 @@ class Updater(DeployConfig, GitManager, PipManager):
         ).stdout
         return log
 
-    def get_commit(self, revision="", n=1, short_sha1=False) -> Tuple:
+    def get_commit(self, revision="", n=1, short_sha1=False):
         """
         Return:
             (sha1, author, isotime, message,)
         """
         ph = "h" if short_sha1 else "H"
+        git = getattr(self, 'git', 'git')
 
         log = self.execute_output(
-            f'"{self.git}" log {revision} --pretty=format:"%{ph}---%an---%ad---%s" --date=iso -{n}'
+            f'"{git}" log {revision} --pretty=format:"%{ph}---%an---%ad---%s" --date=iso -{n}'
         )
 
         if not log:
@@ -63,7 +46,7 @@ class Updater(DeployConfig, GitManager, PipManager):
             return logs
 
     def current_branch(self) -> str:
-        return self.Branch
+        return getattr(self, 'Branch', 'local')
 
     def current_commit(self) -> str:
         return self.get_commit()
@@ -72,19 +55,9 @@ class Updater(DeployConfig, GitManager, PipManager):
         return self.current_commit()
 
     def check_update(self) -> bool:
-        self.state = "ok"
         logger.info("Local mode: check_update bypassed")
         return False
 
     def execute_pull(self) -> bool:
         logger.info("Local mode: execute_pull bypassed")
         return False
-
-
-
-if __name__ == "__main__":
-    updater = Updater()
-    print(updater.latest_commit())
-
-
-

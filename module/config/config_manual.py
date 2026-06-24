@@ -12,11 +12,11 @@ class ConfigManual:
         > KekkaiUtilize > KekkaiActivation > DemonEncounter
         > AreaBoss > GoldYoukai > ExperienceYoukai > RealmRaid > RyouToppa > DailyTrifles > Exploration
         > Dokan > AbyssShadows > Hunt > GuildBanquet > DemonRetreat > GuildActivityMonitor
-        > Orochi > OrochiMoans > OrochiJudgement > Sougenbi > FallenSun > EternitySea > SixRealms
+        > Orochi > Sougenbi > FallenSun > EternitySea > SixRealms
         > ActivityShikigami
         > BondlingFairyland > EvoZone > GoryouRealm > HeroTest
         > Hyakkiyakou
-        > Secret > WeeklyTrifles > Duel 
+        > Secret > WeeklyTrifles
         > RichMan
         > MetaDemon > DyeTrials
         """

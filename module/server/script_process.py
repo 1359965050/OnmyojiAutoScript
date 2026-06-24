@@ -5,7 +5,9 @@
 import sys, os
 import signal
 import multiprocessing
-from asyncio import QueueEmpty, CancelledError, sleep
+import logging
+from queue import Empty as QueueEmpty
+from asyncio import CancelledError, sleep
 from enum import Enum
 
 from module.logger import logger
@@ -27,7 +29,7 @@ class ScriptProcess(ScriptWSManager):
         if config_name not in ConfigManager.all_script_files():
             raise FileNotFoundError(f'{config_name}.json not found')
         self.config_name = config_name  # config_name
-        self.log_pipe_out, self.log_pipe_in = multiprocessing.Pipe(False)
+        self.log_queue = multiprocessing.Queue()
         self.state_queue = multiprocessing.Queue()
         self.state: ScriptState = ScriptState.INACTIVE
         self._process = None
@@ -41,7 +43,7 @@ class ScriptProcess(ScriptWSManager):
             logger.warning(f'Script {self.config_name} is already running and first stop it')
             self.stop()
         self._process = multiprocessing.Process(target=func,
-                                                args=(self.config_name, self.state_queue, self.log_pipe_in,),
+                                                args=(self.config_name, self.state_queue, self.log_queue,),
                                                 name=self.config_name,
                                                 daemon=True
                                                 )
@@ -98,54 +100,96 @@ class ScriptProcess(ScriptWSManager):
                 if self.state == ScriptState.INACTIVE:
                     await sleep(1)
                     continue
-                await sleep(0.05)
                 try:
-                    if not self.log_pipe_out.poll():
-                        await sleep(0.3)
-                        continue
-                    log = self.log_pipe_out.recv()
-                    if not log:
-                        await sleep(0.5)
-                        continue
-                    await self.broadcast_log(log)
-                except EOFError as e:
-                    await sleep(0.5)
-                    logger.warning(f'EOFError: {e}')
-                    continue
+                    batch = []
+                    # 批量取日志，降低空转；单次最多取 50 条
+                    while len(batch) < 50:
+                        try:
+                            batch.append(self.log_queue.get_nowait())
+                        except QueueEmpty:
+                            break
+                    if batch:
+                        # 每条日志都是独立 JSON 记录，分别广播，方便前端解析
+                        for log_record in batch:
+                            await self.broadcast_log(log_record)
+                    else:
+                        await sleep(0.05)
+                except CancelledError:
+                    raise
                 except Exception as e:
-                    logger.error(f'Log Error: {e}')
+                    logger.error(f'Log broadcast error: {e}')
+                    await sleep(0.5)
                     continue
         except CancelledError as e:
             logger.warning(f'{self.config_name} log coroutine is cancelled')
             return
 
 
-def func(config: str, state_queue: multiprocessing.Queue, log_pipe_in) -> None:
+def func(config: str, state_queue: multiprocessing.Queue, log_queue: multiprocessing.Queue) -> None:
     def signal_handler(signum, frame):
         logger.info(f'Script {config} received signal {signum}, exiting gracefully')
-        log_pipe_in.close()
-        state_queue.close()
-        sys.exit(0)
+        try:
+            # 先 flush 所有 handler，确保本地文件日志落盘
+            for h in list(logging.root.handlers) + list(logger.handlers):
+                try:
+                    h.flush()
+                except Exception:
+                    pass
+        finally:
+            try:
+                log_queue.close()
+            except Exception:
+                pass
+            try:
+                state_queue.close()
+            except Exception:
+                pass
+            sys.exit(0)
 
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
     def start_log() -> None:
         try:
-            from module.logger import set_file_logger, set_func_logger
+            from module.logger import set_file_logger, set_structured_func_logger, set_log_level
             set_file_logger(name=config)
-            set_func_logger(log_pipe_in.send)
+
+            def queue_send(msg: str) -> None:
+                try:
+                    # Queue.put 在 Windows 下对并发写更友好；超时避免业务阻塞
+                    log_queue.put(msg, timeout=0.5)
+                except Exception:
+                    # 日志通道异常时丢弃，避免反压影响脚本主逻辑
+                    pass
+
+            set_structured_func_logger(config, queue_send)
         except Exception as e:
             logger.exception(f'Start log error')
             logger.error(f'Error: {e}')
             raise
     start_log()
+
+    def control_loop():
+        """读取主进程通过 state_queue 下发的控制命令（如调整日志级别）。"""
+        while True:
+            try:
+                msg = state_queue.get(timeout=1)
+                if not isinstance(msg, dict):
+                    continue
+                action = msg.get('action')
+                if action == 'set_log_level':
+                    from module.logger import set_log_level
+                    set_log_level(msg.get('level', 'INFO'))
+            except QueueEmpty:
+                continue
+            except Exception:
+                continue
+
+    import threading
+    threading.Thread(target=control_loop, name=f'{config}_control', daemon=True).start()
+
     import time
     try:
-        # while 1:
-        #     time.sleep(1)
-        #     logger.info(f'Script {config} is running')
-        #     state_queue.put({"state": ScriptState.RUNNING})
         from script import Script
         script = Script(config_name=config)
         script.state_queue = state_queue
@@ -168,5 +212,3 @@ if __name__ == '__main__':
     from time import sleep
     sleep(10)
     logger.info(p._process.exitcode)
-
-

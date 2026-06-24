@@ -123,7 +123,7 @@
     "roiBack": "653,76,46,26",
     "method": "Template matching",
     "threshold": 0.85,
-    "description": "状态：集结等待中。检查右下角的挑战是不是灰色的。FIXME 黄色和灰色的挑战截图总是傻傻分不清，先改用OCR"
+    "description": "状态：集结等待中。检查右下角的挑战是不是灰色的。NOTE 黄色和灰色的挑战截图辨识度低，后续可改用OCR"
   },
   {
     "itemName": "ryou_dokan_start_challenge",

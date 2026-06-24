@@ -363,7 +363,7 @@ class ScriptTask(ExtendGreenMark, GameUi, SwitchSoul, DokanSceneDetector):
                 win = True
                 break
 
-            # 如果出现失败 就点击，返回False。 TODO 不知道挑战馆主失败是不是同一个画面？
+            # 如果出现失败 就点击，返回False（假设挑战馆主失败与普通战斗失败为同一画面）
             if self.appear(GeneralBattle.I_FALSE):
                 logger.info("Battle failed")
                 win = False
@@ -863,7 +863,6 @@ class ScriptTask(ExtendGreenMark, GameUi, SwitchSoul, DokanSceneDetector):
                 break
             # 退出时,意外弹出"确认退出集结场景" 弹窗,导致卡住
             # 只能怀疑是上面两个appear的耗时 导致screenshot 过时导致错误点击
-            # TODO: 待验证
             # 还有一种可能:在退出战斗过程中,在过场图出现前,点击左上角退出按钮,会导致该弹窗弹出(恶心)
             self.screenshot()
             if not self.appear(self.I_RYOU_DOKAN_CENTER_TOP):

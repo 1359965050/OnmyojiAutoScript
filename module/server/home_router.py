@@ -29,11 +29,6 @@ async def home_menu():
     return {'Home': [], 'Updater': []}
 
 
-@home_app.post('/notify_test')
-async def notify_test(setting: str, title: str, content: str):
-    return False
-
-
 @home_app.get('/kill_server')
 async def kill_server():
     shutdown_ocr_server()

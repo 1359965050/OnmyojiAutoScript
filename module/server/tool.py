@@ -16,6 +16,13 @@ import cv2
 import numpy as np
 from filelock import FileLock
 
+try:
+    import multiprocessing
+    from module.server.tool_capture_worker import CaptureCommand, CaptureRequest, CaptureResponse, capture_worker
+    HAS_MULTIPROCESSING = True
+except ImportError:
+    HAS_MULTIPROCESSING = False
+
 from dev_tools.assets_extract import AssetsExtractor
 from dev_tools.assets_test import detect_image_detail, detect_ocr_detail
 from module.config.atomicwrites import atomic_write
@@ -86,6 +93,9 @@ class EmulatorCaptureSession:
         self.frame_rate = 2
         self.error = ""
         self._thread: threading.Thread | None = None
+        self._process: multiprocessing.Process | None = None
+        self._request_queue: multiprocessing.Queue | None = None
+        self._response_queue: multiprocessing.Queue | None = None
         self._stop_event = threading.Event()
         self._frame_lock = threading.Lock()
         self._latest_frame = None
@@ -94,6 +104,7 @@ class EmulatorCaptureSession:
         self._retry_count = 0
         self._max_retries = EMULATOR_CAPTURE_MAX_RETRIES
         self._last_error_at = 0.0
+        self._use_process = HAS_MULTIPROCESSING
 
     def status(self) -> dict[str, Any]:
         with self._frame_lock:
@@ -107,7 +118,31 @@ class EmulatorCaptureSession:
                 "retry_count": self._retry_count,
                 "max_retries": self._max_retries,
                 "last_error_at": self._last_error_at,
+                "mode": "process" if self._use_process else "thread",
             }
+
+    def _update_from_response(self, response: CaptureResponse) -> None:
+        with self._frame_lock:
+            self.state = response.state
+            self.error = response.error
+            self._retry_count = response.retry_count
+            self._updated_at = response.updated_at
+            if response.frame_data:
+                self._latest_jpeg = response.frame_data
+                self._updated_at = response.updated_at
+                self.error = ""
+                self._retry_count = 0
+
+    def _poll_responses(self) -> None:
+        while not self._stop_event.is_set():
+            if self._response_queue is None:
+                break
+            try:
+                response = self._response_queue.get(timeout=0.1)
+                self._update_from_response(response)
+            except Exception:
+                pass
+            time.sleep(0.05)
 
     def start(self, config_name: str, frame_rate: int) -> int:
         self.stop(clear_error=True)
@@ -121,17 +156,55 @@ class EmulatorCaptureSession:
             self._last_error_at = 0.0
             self._latest_frame = None
             self._latest_jpeg = None
-        self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run, daemon=True, name=f"annotator_capture_{self.session_id}")
-        self._thread.start()
+
+        if self._use_process:
+            ctx = multiprocessing.get_context("spawn")
+            self._request_queue = ctx.Queue()
+            self._response_queue = ctx.Queue()
+            self._process = ctx.Process(
+                target=capture_worker,
+                args=(self._request_queue, self._response_queue),
+                daemon=True,
+                name=f"annotator_capture_{self.session_id}",
+            )
+            self._process.start()
+            logger.info(
+                f"[annotator] emulator capture process started, session={self.session_id}, "
+                f"config={self.config_name}, pid={self._process.pid}"
+            )
+            self._request_queue.put(CaptureRequest(command=CaptureCommand.START, config_name=config_name, frame_rate=self.frame_rate))
+            self._stop_event.clear()
+            self._thread = threading.Thread(target=self._poll_responses, daemon=True, name=f"annotator_poll_{self.session_id}")
+            self._thread.start()
+        else:
+            self._stop_event.clear()
+            self._thread = threading.Thread(target=self._run, daemon=True, name=f"annotator_capture_{self.session_id}")
+            self._thread.start()
         return self.frame_rate
 
     def stop(self, clear_error: bool = False) -> None:
         self._stop_event.set()
+
+        if self._use_process and self._request_queue:
+            try:
+                self._request_queue.put(CaptureRequest(command=CaptureCommand.STOP))
+            except Exception:
+                pass
+
         thread = self._thread
         if thread and thread.is_alive():
             thread.join(timeout=2.5)
         self._thread = None
+
+        if self._use_process and self._process:
+            if self._process.is_alive():
+                self._process.terminate()
+                self._process.join(timeout=2.5)
+            self._process = None
+
+        self._request_queue = None
+        self._response_queue = None
+
         with self._frame_lock:
             self.state = "stopped"
             self._retry_count = 0

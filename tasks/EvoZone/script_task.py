@@ -53,8 +53,6 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
                 success = self.run_member()
             case UserStatus.ALONE:
                 self.run_alone()
-            case UserStatus.WILD:
-                self.run_wild()
             case _:
                 logger.error('Unknown user status')
 
@@ -322,10 +320,6 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
 
         self.ui_current = page_awake_zones
         self.ui_goto(page_main)
-
-    def run_wild(self):
-        logger.error('Wild mode is not implemented')
-        pass
 
 
 if __name__ == '__main__':

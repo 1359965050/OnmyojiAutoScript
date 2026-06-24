@@ -48,7 +48,6 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
             case UserStatus.LEADER: success = self.run_leader()
             case UserStatus.MEMBER: success = self.run_member()
             case UserStatus.ALONE: self.run_alone()
-            case UserStatus.WILD: self.run_wild()
             case _: logger.error('Unknown user status')
 
         # 下一次运行时间
@@ -297,10 +296,6 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
 
         self.ui_current = page_soul_zones
         self.ui_goto(page_main)
-
-    def run_wild(self):
-        logger.error('Wild mode is not implemented')
-        pass
 
     def battle_wait(self, random_click_swipt_enable: bool) -> bool:
         """
