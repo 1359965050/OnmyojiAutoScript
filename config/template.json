@@ -137,6 +137,15 @@
       "buff_gold_50_click": false,
       "buff_gold_100_click": false
     },
+    "general_battle": {
+      "lock_team_enable": false,
+      "preset_enable": false,
+      "preset_group": 1,
+      "preset_team": 1,
+      "green_enable": false,
+      "green_mark": "green_left1",
+      "random_click_swipt_enable": false
+    },
     "switch_soul": {
       "enable": false,
       "switch_group_team": "-1,-1",

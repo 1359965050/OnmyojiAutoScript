@@ -40,12 +40,8 @@ async def kill_server():
 async def update_info():
     try:
         updater = Updater()
-        result = {'is_update': False,
-                  'branch': "本地专享版",
-                  'current_commit': updater.current_commit(),
-                  'latest_commit': updater.current_commit(),
-                  'commit': updater.get_commit(n=15),
-                  }
+        result = updater.get_update_info()
+        result['branch'] = updater.current_branch()
         return result
     except Exception as e:
         logger.error(e)
@@ -57,10 +53,13 @@ async def execute_update():
     # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启oasx
     try:
         updater = Updater()
-        updater.execute_pull()
+        success = updater.execute_pull()
+        if success:
+            return '更新成功，请重启 OASX。'
+        return '更新失败，请检查网络或 git 配置。'
     except Exception as e:
         logger.error(e)
-    return '当前处于本地专享单机版，已安全禁用云端更新功能。'
+        return f'更新异常: {e}'
 
 
 @home_app.put('/chinese_translate')

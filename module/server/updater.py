@@ -156,10 +156,9 @@ class Updater(DeployConfig, GitManager, PipManager):
             if self.execute(
                     f'"{self.git}" pull {source} {self.Branch} --no-rebase', allow_failure=True
             ):
-                break
-        else:
-            logger.warning("Git fetch failed")
-            return False
+                return True
+        logger.warning("Git pull failed")
+        return False
 
 
 if __name__ == "__main__":

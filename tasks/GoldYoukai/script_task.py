@@ -10,7 +10,6 @@ from module.base.timer import Timer
 from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_main, page_team, page_shikigami_records
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
-from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.Component.GeneralRoom.general_room import GeneralRoom
 from tasks.Component.GeneralInvite.general_invite import GeneralInvite
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
@@ -67,14 +66,14 @@ class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, 
                     logger.warning('Wait for too long and start the challenge')
                     self.click_fire()
                     count += 1
-                    self.run_general_battle()
+                    self.run_general_battle(config=self.config.gold_youkai.general_battle)
                     break
                 if not self.appear(self.I_ADD_5_1):
                     # 有人进来了，可以进行挑战
                     logger.info('There is someone in the room and start the challenge')
                     self.click_fire()
                     count += 1
-                    self.run_general_battle()
+                    self.run_general_battle(config=self.config.gold_youkai.general_battle)
                     break
         # 退出 (要么是在组队界面要么是在庭院)
         self.gold_exit(con)
@@ -98,11 +97,12 @@ class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, 
                 logger.info('Win battle')
                 self.ui_click_until_disappear(self.I_GOLD_WIN)
                 return True
-
             if self.appear(self.I_FALSE):
                 logger.warning('False battle')
                 self.ui_click_until_disappear(self.I_FALSE)
                 return False
+            if random_click_swipt_enable:
+                self.random_click_swipt()
 
     def gold_exit(self, con):
         self.ui_get_current_page()
