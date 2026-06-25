@@ -318,7 +318,9 @@ class ConfigModel(ConfigBase):
                 for group_name in groups.keys():
                     if group_name in key:
                         groups_value[key] = groups[group_name]
-            result[key] = merge_value(groups_value[key], value, schema["$defs"])
+            # value 可能为标量（如 0xABCDEF 排除标记），此时传入空字典让 merge_value 使用默认值
+            jsons = value if isinstance(value, dict) else {}
+            result[key] = merge_value(groups_value[key], jsons, schema["$defs"])
 
         return result
 

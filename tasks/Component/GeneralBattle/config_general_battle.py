@@ -47,4 +47,10 @@ class GeneralBattleConfig(BaseModel):
     # 是否启动战斗时随机点击或者随机滑动
     random_click_swipt_enable: bool = Field(default=False, description='random_click_swipt_enable_help')
 
+    # 以下字段为 mine 分支兼容字段，用于 ActivityShikigami
+    continuous_battle: bool = Field(default=False, description='continuous_battle_help')
+    max_continuous: int = Field(default=0, description='max_continuous_help', ge=0)
+    quick_exit: bool = Field(default=False, description='quick_exit_help')
+    battle_timeout: float = Field(default=120.0, description='battle_timeout_help', ge=10.0)
+
 

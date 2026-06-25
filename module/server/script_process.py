@@ -31,6 +31,7 @@ class ScriptProcess(ScriptWSManager):
         self.config_name = config_name  # config_name
         self.log_queue = multiprocessing.Queue()
         self.state_queue = multiprocessing.Queue()
+        self.command_queue = multiprocessing.Queue()
         self.state: ScriptState = ScriptState.INACTIVE
         self._process = None
 
@@ -43,7 +44,8 @@ class ScriptProcess(ScriptWSManager):
             logger.warning(f'Script {self.config_name} is already running and first stop it')
             self.stop()
         self._process = multiprocessing.Process(target=func,
-                                                args=(self.config_name, self.state_queue, self.log_queue,),
+                                                args=(self.config_name, self.state_queue,
+                                                      self.command_queue, self.log_queue,),
                                                 name=self.config_name,
                                                 daemon=True
                                                 )
@@ -125,7 +127,13 @@ class ScriptProcess(ScriptWSManager):
             return
 
 
-def func(config: str, state_queue: multiprocessing.Queue, log_queue: multiprocessing.Queue) -> None:
+def func(config: str, state_queue: multiprocessing.Queue,
+         command_queue: multiprocessing.Queue, log_queue: multiprocessing.Queue) -> None:
+    # 子进程内同样避免 Windows ProactorEventLoop 的 pipe 竞争断言
+    if sys.platform.startswith("win"):
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     def signal_handler(signum, frame):
         logger.info(f'Script {config} received signal {signum}, exiting gracefully')
         try:
@@ -136,14 +144,11 @@ def func(config: str, state_queue: multiprocessing.Queue, log_queue: multiproces
                 except Exception:
                     pass
         finally:
-            try:
-                log_queue.close()
-            except Exception:
-                pass
-            try:
-                state_queue.close()
-            except Exception:
-                pass
+            for q in (log_queue, state_queue, command_queue):
+                try:
+                    q.close()
+                except Exception:
+                    pass
             sys.exit(0)
 
     signal.signal(signal.SIGTERM, signal_handler)
@@ -170,10 +175,10 @@ def func(config: str, state_queue: multiprocessing.Queue, log_queue: multiproces
     start_log()
 
     def control_loop():
-        """读取主进程通过 state_queue 下发的控制命令（如调整日志级别）。"""
+        """读取主进程通过 command_queue 下发的控制命令（如调整日志级别）。"""
         while True:
             try:
-                msg = state_queue.get(timeout=1)
+                msg = command_queue.get(timeout=1)
                 if not isinstance(msg, dict):
                     continue
                 action = msg.get('action')

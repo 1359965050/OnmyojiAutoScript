@@ -370,15 +370,30 @@ window_background >>> DroidCast_raw >  ADB_nc >> DroidCast > uiautomator2 ~= ADB
 	<message><source>GreenMarkType</source><translation>设置第 X 个式神为绿标</translation></message>
 	<message><source>Random Click Swipt Enable</source><translation>战斗时随机点击或者随机滑动</translation></message>
 	
-	<message><source>lock_team_enable_help</source><translation>如果锁定阵容将无法启用预设队伍、加成功能</translation></message>
-	<message><source>preset_enable_help</source><translation>将会在第一次战斗的时候切换队伍预设</translation></message>
-	<message><source>preset_group_help</source><translation>可选[1~7]</translation></message>
-	<message><source>preset_team_help</source><translation>可选[1~5]</translation></message>
-	<message><source>buff_enable_help</source><translation>在准备阶段开启加成不太符合直觉，暂时还未实现，而且挺多的战斗是不允许准备阶段开启加成的</translation></message>
-	<message><source>green_enable_help</source><translation>在战斗开始的一瞬间点击绿标，无反馈点击</translation></message>
-	<message><source>green_mark_help</source><translation>可选[左一, 左二, 左三, 左四, 左五, 主阴阳师]</translation></message>
-	<message><source>random_click_swipt_enable_help</source><translation>防封优化，每三分钟的战斗可能触发2~5次，请注意这个与绿标功能冲突，可能会乱点绿标</translation></message>
-</context>
+	<message><source>lock_team_enable</source><translation>锁定阵容</translation></message>
+		<message><source>lock_team_enable_help</source><translation>如果锁定阵容将无法启用预设队伍、加成功能</translation></message>
+		<message><source>preset_enable</source><translation>启用切换预设队伍</translation></message>
+		<message><source>preset_enable_help</source><translation>将会在第一次战斗的时候切换队伍预设</translation></message>
+		<message><source>preset_group</source><translation>第 X 个预设组</translation></message>
+		<message><source>preset_group_help</source><translation>可选[1~7]</translation></message>
+		<message><source>preset_team</source><translation>第 X 个预设队伍</translation></message>
+		<message><source>preset_team_help</source><translation>可选[1~5]</translation></message>
+		<message><source>buff_enable_help</source><translation>在准备阶段开启加成不太符合直觉，暂时还未实现，而且挺多的战斗是不允许准备阶段开启加成的</translation></message>
+		<message><source>green_enable</source><translation>启用我方绿标</translation></message>
+		<message><source>green_enable_help</source><translation>在战斗开始的一瞬间点击绿标，无反馈点击</translation></message>
+		<message><source>green_mark</source><translation>设置第 X 个式神为绿标</translation></message>
+		<message><source>green_mark_help</source><translation>可选[左一, 左二, 左三, 左四, 左五, 主阴阳师]</translation></message>
+		<message><source>random_click_swipt_enable</source><translation>战斗时随机点击或者随机滑动</translation></message>
+		<message><source>random_click_swipt_enable_help</source><translation>防封优化，每三分钟的战斗可能触发2~5次，请注意这个与绿标功能冲突，可能会乱点绿标</translation></message>
+		<message><source>continuous_battle</source><translation>连续战斗</translation></message>
+		<message><source>continuous_battle_help</source><translation>开启后自动进行多次战斗</translation></message>
+		<message><source>max_continuous</source><translation>最大连续次数</translation></message>
+		<message><source>max_continuous_help</source><translation>连续战斗的最大次数，0 表示不限制</translation></message>
+		<message><source>quick_exit</source><translation>快速退出</translation></message>
+		<message><source>quick_exit_help</source><translation>战斗结束后快速退出结算界面</translation></message>
+		<message><source>battle_timeout</source><translation>战斗超时时间</translation></message>
+		<message><source>battle_timeout_help</source><translation>超过该时间未结束战斗则判定超时，单位秒，最小 10 秒</translation></message>
+	</context>
 <context>
     <name>Args</name>
 	<message><source>Boss Number</source><translation>挑战鬼王数量</translation></message>
@@ -422,7 +437,30 @@ window_background >>> DroidCast_raw >  ADB_nc >> DroidCast > uiautomator2 ~= ADB
 	<message><source>dokan_attack_priority_help</source><translation>道馆攻击优先顺序</translation></message>
 	<message><source>dokan_auto_cheering_while_cd_help</source><translation>失败CD后自动加油</translation></message>
 	<message><source>anti_detect_click_fixed_random_area_help</source><translation>防封：使用固定的随机区域进行随机点击，若为False将自动识别当前画面中的最大纯色区域作为随机点击区域</translation></message>
-</context>
+	<message><source>RichMan</source><translation>大富翁</translation></message>
+	<message><source>RichManConfig</source><translation>大富翁</translation></message>
+	<message><source>PassBattleConf</source><translation>战斗配置</translation></message>
+	<message><source>BossBattleConf</source><translation>Boss战战斗配置</translation></message>
+	<message><source>Pass Limit</source><translation>门票模式挑战上限</translation></message>
+	<message><source>Ap Limit</source><translation>体力模式挑战上限</translation></message>
+	<message><source>Boss Limit</source><translation>Boss战挑战上限</translation></message>
+	<message><source>Run Sequence</source><translation>运行爬塔顺序</translation></message>
+
+	<message><source>pass_battle_conf</source><translation>战斗配置</translation></message>
+	<message><source>pass_limit</source><translation>门票模式挑战上限</translation></message>
+	<message><source>ap_limit</source><translation>体力模式挑战上限</translation></message>
+	<message><source>boss_limit</source><translation>Boss战挑战上限</translation></message>
+	<message><source>run_sequence</source><translation>运行爬塔顺序</translation></message>
+	<message><source>run_sequence_help</source><translation>可选：pass(门票), ap(体力), boss(boss战)\n英文逗号分隔，从左到右依次运行\n例：pass,ap,boss = 先门票 -> 再体力 -> 再boss战</translation></message>
+	<message><source>enable_switch_pass</source><translation>切换御魂</translation></message>
+	<message><source>pass_group_team</source><translation>御魂分组</translation></message>
+	<message><source>enable_switch_pass_by_name</source><translation>按名称切换</translation></message>
+	<message><source>pass_group_team_name</source><translation>分组名称</translation></message>
+	<message><source>enable_switch_boss</source><translation>Boss战切换御魂</translation></message>
+	<message><source>boss_group_team</source><translation>Boss战御魂分组</translation></message>
+	<message><source>enable_switch_boss_by_name</source><translation>Boss战按名称切换</translation></message>
+	<message><source>boss_group_team_name</source><translation>Boss战分组名称</translation></message>
+	</context>
 <context>
     <name>Args</name>
 	<message><source>InviteConfig</source><translation>邀请</translation></message>
@@ -479,17 +517,6 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
 	<message><source>little_kuro_switch_help</source><translation> </translation></message>
 	<message><source>azure_basan_switch_help</source><translation> </translation></message>
 	<message><source>bondling_stone_class_help</source><translation> </translation></message>
-</context>	
-<context>
-    <name>Args</name>
-	<message><source>HarvestConfig</source><translation>收获奖励</translation></message>
-	<message><source>harvest_enable_help</source><translation>这个一个部分是为了在登录游戏时，自动点击赠送的奖励。是必选项，列出来是给各位阴阳师大大知道有这个东西。欢迎补充如果缺少</translation></message>
-	<message><source>Enable Jade</source><translation>永久勾玉卡</translation></message>
-	<message><source>Enable Sign</source><translation>每日签到</translation></message>
-	<message><source>Enable Sign 999</source><translation>签到999天后的签到福袋</translation></message>
-	<message><source>Enable Mail</source><translation>邮件</translation></message>
-	<message><source>Enable Soul</source><translation>御魂或者觉醒加成</translation></message>
-	<message><source>Enable Ap</source><translation>体力</translation></message>
 </context>	
 <context>
     <name>Args</name>
@@ -648,11 +675,8 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
 	<message><source>SecretConfig</source><translation>秘闻</translation></message>	
 	<message><source>Secret Gold 50</source><translation>金币加成50%</translation></message>	
 	<message><source>Secret Gold 100</source><translation>金币加成100%</translation></message>
-	<message><source>Layer 10</source><translation>挑战十层</translation></message>
-	<message><source>Layer 9</source><translation>挑战九层</translation></message>
 	<message><source>secret_gold_50_help</source><translation>这将会在低层[1-5]自动打开加成并且自动关闭加成</translation></message>
 	<message><source>secret_gold_100_help</source><translation>同上</translation></message>
-	<message><source>layer_10_help</source><translation>考虑到练度，这将不是默认打开的</translation></message>
 	<message><source>TalismanConfig</source><translation>花合战</translation></message>
 	<message><source>LevelReward</source><translation>选择礼盒</translation></message>
 	<message><source>PetsConfig</source><translation>宠物</translation></message>

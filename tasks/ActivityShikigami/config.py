@@ -4,7 +4,7 @@
 from datetime import timedelta, time
 from module.logger import logger
 
-from pydantic import BaseModel, Field, model_validator, validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
 
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.Component.config_scheduler import Scheduler
@@ -13,17 +13,15 @@ from typing import Optional
 
 
 class GeneralClimb(ConfigBase):
-    limit_time: Time = Field(default=Time(hour=1, minute=30), description='总限制时间')
-    pass_limit: int = Field(default=50)
-    ap_limit: int = Field(default=300)
-    boss_limit: int = Field(default=20)
-    ap100_limit: int = Field(default=20)
-    run_sequence: str = Field(default='pass,ap,ap100,boss',
-                              description='pass:门票,ap100:100体,boss:boss战,ap:体力\n'
-                                          '逗号分隔,从左到右依次运行\n'
-                                          '例:pass,ap100,boss,ap=门票->100体->boss战->体力')
-    active_souls_clean: bool = Field(default=False, description='是否运行结束后清理御魂')
-    random_sleep: bool = Field(default=False, description='是否启用在点击战斗前随机休息')
+    limit_time: Time = Field(default=Time(hour=1, minute=30), title='限制运行时间', description='总限制时间')
+    pass_limit: int = Field(default=50, title='门票爬塔最大次数', description='')
+    ap_limit: int = Field(default=300, title='体力爬塔最大次数', description='')
+    boss_limit: int = Field(default=20, title='Boss战最大次数', description='')
+    run_sequence: str = Field(default='pass,ap,boss',
+                              title='运行爬塔顺序',
+                              description='可选：pass(门票), ap(体力), boss(boss战)\n'
+                                          '英文逗号分隔，从左到右依次运行\n'
+                                          '例：pass,ap,boss = 先门票 -> 再体力 -> 再boss战')
 
     @property
     def limit_time_v(self) -> timedelta:
@@ -34,10 +32,12 @@ class GeneralClimb(ConfigBase):
 
     @property
     def run_sequence_v(self) -> list[str]:
+        """得到limit>0且配置好的运行顺序序列"""
         self.valid_run_sequence()
         str_list = [climb_type.strip() for climb_type in self.run_sequence.split(',')]
         return [climb_type for climb_type in str_list if getattr(self, f'{climb_type}_limit', 0) > 0]
 
+    # @model_validator(mode='after')
     def valid_run_sequence(self):
         if not self.run_sequence or not self.run_sequence.strip():
             raise ValueError('run sequence cannot be empty')
@@ -97,26 +97,17 @@ def check_soul_by_ocr(enable_switch: bool, group_team: str, label: str):
 
 
 class SwitchSoulConfig(BaseModel):
-    enable_switch_pass: bool = Field(default=False)
-    pass_group_team: str = Field(default='-1,-1', description='pass_group_team_help')
-    enable_switch_pass_by_name: bool = Field(default=False)
-    pass_group_team_name: str = Field(default='')
+    enable_switch_pass: bool = Field(default=False, title='切换御魂', description='爬塔战斗前是否切换到下方指定御魂分组')
+    pass_group_team: str = Field(default='-1,-1', title='御魂分组', description='格式：预设组,队伍。例如"1,2"表示第一预设组第二个队伍，使用英文逗号')
+    enable_switch_pass_by_name: bool = Field(default=False, title='按名称切换', description='是否通过OCR识别御魂分组名称来切换')
+    pass_group_team_name: str = Field(default='', title='分组名称', description='OCR方式使用的目标分组名称，留空则不切换')
 
-    enable_switch_ap: bool = Field(default=False)
-    ap_group_team: str = Field(default='-1,-1')
-    enable_switch_ap_by_name: bool = Field(default=False)
-    ap_group_team_name: str = Field(default='')
+    enable_switch_boss: bool = Field(default=False, title='Boss战切换御魂', description='Boss战战斗前是否切换到下方指定御魂分组')
+    boss_group_team: str = Field(default='-1,-1', title='Boss战御魂分组', description='格式：预设组,队伍。例如"1,2"表示第一预设组第二个队伍，使用英文逗号')
+    enable_switch_boss_by_name: bool = Field(default=False, title='Boss战按名称切换', description='是否通过OCR识别御魂分组名称来切换')
+    boss_group_team_name: str = Field(default='', title='Boss战分组名称', description='OCR方式使用的目标分组名称，留空则不切换')
 
-    enable_switch_boss: bool = Field(default=False)
-    boss_group_team: str = Field(default='-1,-1')
-    enable_switch_boss_by_name: bool = Field(default=False)
-    boss_group_team_name: str = Field(default='')
-
-    enable_switch_ap100: bool = Field(default=False)
-    ap100_group_team: str = Field(default='-1,-1')
-    enable_switch_ap100_by_name: bool = Field(default=False)
-    ap100_group_team_name: str = Field(default='')
-
+    # @model_validator(mode='after')
     def validate_switch_soul(self):
         label_set = self.get_label_set()
         for label in label_set:
@@ -134,21 +125,10 @@ class SwitchSoulConfig(BaseModel):
                 field.startswith("enable_switch_") and not field.endswith("by_name")}
 
 
-class RichManConfig(ConfigBase):
-    buy_ap: bool = Field(default=False, description='是否购买体力')
-    buy_reward: bool = Field(default=False, description='是否购买奖励积分')
-    buy_ticket: bool = Field(default=False, description='是否购买定向骰子')
-
-
 class ActivityShikigami(ConfigBase):
-    scheduler: Scheduler = Field(default_factory=Scheduler)
-    general_climb: GeneralClimb = Field(default_factory=GeneralClimb)
-    rich_man: RichManConfig = Field(default_factory=RichManConfig)
-    switch_soul_config: SwitchSoulConfig = Field(default_factory=SwitchSoulConfig)
+    scheduler: Scheduler = Field(default_factory=Scheduler, title='任务调度')
+    general_climb: GeneralClimb = Field(default_factory=GeneralClimb, title='通用爬塔')
+    switch_soul_config: SwitchSoulConfig = Field(default_factory=SwitchSoulConfig, title='执行任务前切换御魂')
 
-    pass_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig)
-    ap_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig)
-    boss_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig)
-    ap100_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig)
-
-    hide_fields = dynamic_hide('rich_man')
+    pass_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig, title='战斗配置')
+    boss_battle_conf: GeneralBattleConfig = Field(default_factory=GeneralBattleConfig, title='Boss战战斗配置')

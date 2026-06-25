@@ -72,8 +72,11 @@ Time = Annotated[time,
 
 @classmethod
 def serializer_exclude(cls, value: any, info: SerializationInfo):
-    if info.context and info.context.get('hide', False):
-        return 0xABCDEF
+    try:
+        if hasattr(info, 'context') and info.context and info.context.get('hide', False):
+            return 0xABCDEF
+    except Exception:
+        pass
     return value
 
 

@@ -37,9 +37,9 @@ class GameUi(BaseTask, GameUiAssets):
         GameUiAssets.I_CLOSE_CHAT_WINDOW,
         ActivityShikigamiAssets.I_SKIP_BUTTON,
         BaseTask.I_UI_CONFIRM,
-        BaseTask.I_UI_BACK_YELLOW,
         SixRealmsAssets.I_EXIT_SIXREALMS,
         BaseTask.I_UI_BACK_BLUE,
+        BaseTask.I_UI_BACK_YELLOW,
     ]
 
     def __init__(self, config, device):
@@ -168,7 +168,20 @@ class GameUi(BaseTask, GameUiAssets):
                 seen.add(cache_key)
                 targets.append(target)
         if targets:
-            self.prepare_appear_cache(targets)
+            self._prepare_appear_cache(targets)
+
+    @staticmethod
+    def _prepare_appear_cache(targets: list) -> None:
+        """
+        Pre-load image resources for the given targets to warm up the cache.
+        This avoids loading latency on the first match call.
+        """
+        for target in targets:
+            if hasattr(target, 'load_image'):
+                try:
+                    target.load_image()
+                except Exception:
+                    pass
 
     @staticmethod
     def _action_name(action) -> str:

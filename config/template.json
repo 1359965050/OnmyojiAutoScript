@@ -44,15 +44,6 @@
       "reset_task_datetime_enable": false,
       "reset_task_datetime": "2023-01-01 00:00:00"
     },
-    "harvest_config": {
-      "enable": true,
-      "enable_jade": true,
-      "enable_sign": true,
-      "enable_sign_999": true,
-      "enable_mail": true,
-      "enable_soul": true,
-      "enable_ap": true
-    },
     "login_character_config": {
       "character": ""
     }
@@ -71,15 +62,6 @@
       "costume_shikigami_type": "costume_shikigami_default",
       "costume_sign_type": "costume_sign_default",
       "costume_battle_type": "costume_battle_default"
-    },
-    "team_flow": {
-      "enable": false,
-      "broker": "",
-      "port": 8883,
-      "transport": "TCP",
-      "ca": "",
-      "username": "",
-      "password": ""
     }
   },
   "area_boss": {
@@ -973,9 +955,7 @@
     },
     "secret_config": {
       "secret_gold_50": false,
-      "secret_gold_100": false,
-      "layer_10": false,
-      "layer_9": false
+      "secret_gold_100": false
     },
     "general_battle": {
       "lock_team_enable": false,

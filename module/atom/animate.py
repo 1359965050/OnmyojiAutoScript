@@ -61,6 +61,10 @@ class RuleAnimate(RuleImage):
         self._image = self._last_image
         matched = self.match(image)
         self._last_image = self.corp(image, self.roi_front)
+        # 防止匹配到的 roi_front 越界或尺寸为 0，导致下一次比较时模板无效
+        if (self._last_image is None or
+                self._last_image.shape[0] == 0 or self._last_image.shape[1] == 0):
+            self._last_image = image
 
         if matched:
             if refresh_after_stable:

@@ -129,7 +129,7 @@ async def script_set_log_level(script_name: str, level: str):
         raise HTTPException(status_code=404, detail=f'Script {script_name} not found')
     script_process = mm.script_process[script_name]
     try:
-        script_process.state_queue.put({"action": "set_log_level", "level": level})
+        script_process.command_queue.put({"action": "set_log_level", "level": level})
         return {"script": script_name, "level": level, "status": "ok"}
     except Exception as e:
         logger.error(f'Failed to set log level for {script_name}: {e}')
@@ -149,7 +149,6 @@ async def script_task(script_name: str, task: str, group: str, argument: str, ty
                 value = float(value)
             case 'boolean':
                 if isinstance(value, str):
-                    logger.warning(f'[{script_name}] script argument {argument} value is string, try to convert to bool')
                     if value.lower() in ['true', '1']:
                         value = True
                     elif value.lower() in ['false', '0']:

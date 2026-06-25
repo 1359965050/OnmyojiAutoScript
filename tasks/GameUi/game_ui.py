@@ -151,14 +151,7 @@ class GameUi(NewGameUi):
         return False
 
     def try_close_unknown_page(self, skip_screenshot: bool = True):
-        self.maybe_screenshot(skip_screenshot)
-        timer = Timer(None).start()
-        for close in self.ui_close:
-            if self.appear_then_click(close, interval=1.5):
-                logger.warning('Trying to switch to supported page')
-                logger.info(f'[{timer.current():.1f}s]Click {close} on {self.ui_current} success')
-                return True
-        return False
+        return self.close_unknown_pages(skip_first_screenshot=skip_screenshot)
 
     def _execute_path(self, path: list, timeout_timer):
         for i, current_page in enumerate(path):

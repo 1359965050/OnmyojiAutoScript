@@ -36,6 +36,8 @@ class GameUiAssets:
 	# Image Rule Assets
 	# 关闭聊天窗口 
 	I_CLOSE_CHAT_WINDOW = RuleImage(roi_front=(653,397,18,18), roi_back=(653,397,18,18), threshold=0.91, method="Template matching", file="./tasks/GameUi/additional/additional_close_chat_window.png")
+	# 聊天频道侧边关闭条（原 Restart 收菜资源迁移）
+	I_CHAT_CLOSE_SIDE = RuleImage(roi_front=(639,309,35,100), roi_back=(639,309,35,100), threshold=0.8, method="Template matching", file="./tasks/GameUi/additional/additional_chat_close_side.png")
 
 
 	# Image Rule Assets

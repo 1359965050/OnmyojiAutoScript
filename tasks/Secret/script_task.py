@@ -116,14 +116,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, SecretAssets):
                 self.click_battle()
                 success = self.run_general_battle(self.battle_config, buff=buff)
                 continue
-            elif not first_battle and layer == 9 and con.layer_9:
-                self.click_battle()
-                success = self.run_general_battle(self.battle_config)
-                continue
-            elif not first_battle and layer == 10 and con.layer_10:
-                self.click_battle()
-                success = self.run_general_battle(self.battle_config)
-                break
             elif not first_battle:
                 # 其他层
                 self.click_battle()

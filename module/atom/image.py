@@ -154,7 +154,7 @@ class RuleImage(RuleImageMallResourceMixin):
         mat = self.image
 
         if mat is None or mat.shape[0] == 0 or mat.shape[1] == 0:
-            logger.error(f"Template image is invalid: {mat.shape}")
+            logger.error(f"Template image is invalid: {self.name} {self.file} {mat.shape if mat is not None else None}")
             return False  # 模板无效，匹配失败
 
         res = cv2.matchTemplate(source, mat, cv2.TM_CCOEFF_NORMED)
@@ -197,7 +197,7 @@ class RuleImage(RuleImageMallResourceMixin):
         mat = self.image
 
         if mat is None or mat.shape[0] == 0 or mat.shape[1] == 0:
-            logger.error(f"Template image is invalid: {mat.shape}")
+            logger.error(f"Template image is invalid: {self.name} {self.file} {mat.shape if mat is not None else None}")
             return False
 
         # 预计算模板尺寸
@@ -467,16 +467,4 @@ class RuleImage(RuleImageMallResourceMixin):
         return score >= threshold
 
 if __name__ == "__main__":
-    from dev_tools.assets_test import detect_image
-
-    IMAGE_FILE = './log/test/QQ截图20240223151924.png'
-    from tasks.Restart.assets import RestartAssets
-    jade = RestartAssets.I_HARVEST_JADE
-    jade.method = 'Sift Flann'
-    sign = RestartAssets.I_HARVEST_SIGN
-    sign.method = 'Sift Flann'
-    print(jade.roi_front)
-
-    detect_image(IMAGE_FILE, jade)
-    detect_image(IMAGE_FILE, sign)
-    print(jade.roi_front)
+    pass

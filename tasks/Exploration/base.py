@@ -81,6 +81,12 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         explorationConfig = self._config
         
         try:
+            # 提前关闭可能存在的"确认退出探索"弹窗，避免导航陷入未知页面循环
+            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
+                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
+                logger.info('Confirm exit exploration in pre_process')
+                time.sleep(0.5)
+            
             if explorationConfig.switch_soul_config.enable:
                 self.ui_goto_page(page_shikigami_records)
                 self.run_switch_soul(explorationConfig.switch_soul_config.switch_group_team)
@@ -121,19 +127,21 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 self.appear_then_click(self.I_MAIN_GOTO_EXPLORATION)
                 self.wait_until_appear(self.I_CHECK_EXPLORATION, wait_time=5)
                 return
-            if self.appear(self.I_UI_CONFIRM):
-                self.appear_then_click(self.I_UI_CONFIRM)
+            # 处理确认退出对话框
+            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
+                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
+                logger.info('Confirm exit exploration in force goto')
                 continue
-            if self.appear(self.I_UI_CANCEL):
-                self.appear_then_click(self.I_UI_CANCEL)
+            if self.appear(self.I_UI_CONFIRM, threshold=0.5):
+                self.appear_then_click(self.I_UI_CONFIRM, interval=0.8)
                 continue
-            if self.appear(self.I_UI_BACK_YELLOW):
-                self.appear_then_click(self.I_UI_BACK_YELLOW)
+            if self.appear(self.I_UI_CANCEL, threshold=0.5):
+                self.appear_then_click(self.I_UI_CANCEL, interval=0.8)
                 continue
-            if self.appear(self.I_UI_BACK_RED):
-                self.appear_then_click(self.I_UI_BACK_RED)
+            if self.appear(self.I_UI_BACK_RED, threshold=0.5):
+                self.appear_then_click(self.I_UI_BACK_RED, interval=0.8)
                 continue
-            sleep(0.5)
+            time.sleep(0.5)
 
     def post_process(self):
         self.wait_until_stable(self.I_UI_BACK_RED)
@@ -438,24 +446,18 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         logger.info('Quit explore')
         boss_timer = Timer(15)
         boss_timer.start()
-        
+
         while 1:
             self.screenshot()
-            
+
             # 探索章节标题界面
             if self.appear(self.I_UI_BACK_YELLOW) and self.appear(self.I_E_EXPLORATION_CLICK):
                 break
             # 探索大世界界面
             if self.appear(self.I_CHECK_EXPLORATION) and not self.appear(self.I_E_SETTINGS_BUTTON):
                 break
-  
-            # 防止BOSS打完箱子刚落地，脚本就手快点退出了
-            if self.appear_then_click(self.I_BATTLE_REWARD, interval=1.5):
-                logger.info("Found battle reward during exit, picking it up.")
-                boss_timer.reset()
-                continue
 
-            # 处理确认退出对话框
+            # 处理确认退出对话框（兼容可能出现的弹窗）
             if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
                 self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
                 logger.info('Confirm exit exploration')
@@ -466,23 +468,26 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 logger.info('Confirm exit with UI_CONFIRM')
                 boss_timer.reset()
                 continue
+            if self.appear(self.I_UI_CANCEL, threshold=0.5):
+                self.appear_then_click(self.I_UI_CANCEL, interval=0.8)
+                logger.info('Click cancel dialog')
+                boss_timer.reset()
+                continue
 
-            # 在探索主界面中，需要先点击右上角箭头按钮退出到章节标题界面
-            if self.appear(self.I_E_SETTINGS_BUTTON) or self.appear(self.I_E_AUTO_ROTATE_ON) or self.appear(self.I_E_AUTO_ROTATE_OFF):
-                if self.appear_then_click(self.I_E_EXPLORATION_OPEN, interval=1):
-                    boss_timer.reset()
-                    continue
-            
+            # 点箱子离开：优先点击宝箱，再拾取战斗掉落奖励
+            if self.appear_then_click(self.I_TREASURE_BOX_CLICK, interval=1.5):
+                logger.info("Found treasure box during exit, click it to leave.")
+                boss_timer.reset()
+                continue
+            if self.appear_then_click(self.I_BATTLE_REWARD, interval=1.5):
+                logger.info("Found battle reward during exit, picking it up.")
+                boss_timer.reset()
+                continue
+
             if boss_timer.reached():
-                logger.warning('Exit timeout, force clicking back button')
-                boss_timer.reset()
-                self.click(self.I_UI_BACK_BLUE)
-                continue
-            
-            if self.appear_then_click(self.I_UI_BACK_YELLOW, interval=2):
-                boss_timer.reset()
-                continue
-            
+                logger.warning('Quit explore timeout, stop exit loop')
+                break
+
             if self.appear(self.I_EXPLORATION_TITLE) or self.appear(self.I_CHECK_EXPLORATION):
                 continue
 
