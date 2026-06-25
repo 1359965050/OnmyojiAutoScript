@@ -6,7 +6,7 @@ OAS 魔改版项目上下文（AI 速查精简版）
 
 远程同步：origin 已重新指向个人 fork（https://github.com/1359965050/OnmyojiAutoScript），本地 master 强制推送到 fork，以本地为准。禁止从 upstream（runhey/OnmyojiAutoScript）直接 fetch/pull 覆盖本地改动。
 
-强制离线：/home/update_info 锁定 is_update=False；deploy.yaml 中 AutoUpdate=false。
+自动更新：deploy.yaml 中 AutoUpdate=true、KeepLocalChanges=true，启动时会从个人 fork 自动拉取更新并保留本地改动；/home/update_info 仍返回 is_update=False，前端更新按钮保持禁用，由启动安装器负责后台同步。
 
 推送通知禁用：所有推送通知（Notifier）已在底层硬编码关闭（enable=False）。
 
