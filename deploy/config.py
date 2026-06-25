@@ -34,15 +34,20 @@ class ConfigModel:
     InstallUiautomator2: bool = True
 
     # Ocr
-    UseOcrServer: bool = False
-    StartOcrServer: bool = False
+    StartOcrServer: bool = True
     OcrServerPort: int = 22268
     OcrClientAddress: str = "127.0.0.1:22268"
+    OcrServerWorkerCount: int = 0
 
     # Image
-    StartImageServer: bool = False
-    ImageServerPort: int = 22278
-    ImageClientAddress: str = "127.0.0.1:22278"
+    StartImageServer: bool = True
+    ImageServerPort: int = 22269
+    ImageClientAddress: str = "127.0.0.1:22269"
+    ImageTemplateCacheExpireSeconds: int = 3600
+    ImageTemplateCacheMaxCount: int = 200
+    ImageFrameCacheExpireSeconds: float = 10.0
+    ImageFrameCacheMaxCount: int = 66
+    ImageServerWorkerCount: int = 0
 
     # Update
     EnableReload: bool = True

@@ -10,6 +10,8 @@ OAS 魔改版项目上下文（AI 速查精简版）
 
 推送通知禁用：所有推送通知（Notifier）已在底层硬编码关闭（enable=False）。
 
+不允许自动推送到fork
+
 前后端协同：
 
 后端 API 固定运行于 localhost:7788。

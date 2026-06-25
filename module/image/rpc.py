@@ -79,6 +79,28 @@ def ensure_image_server_started() -> bool:
     return False
 
 
+def ensure_image_server_ready() -> bool:
+    """
+    确保当前运行入口能够连通配置中的图像服务。
+
+    当 `StartImageServer` 为真时，会先尝试自动拉起服务；随后统一通过
+    `ImageProxy` 做一次连接探测，失败时直接抛出 `ScriptError`。
+    """
+    from module.server.setting import State
+
+    deploy_config = State.deploy_config
+    if deploy_config.StartImageServer:
+        ensure_image_server_started()
+
+    address = deploy_config.ImageClientAddress or "127.0.0.1:22278"
+    try:
+        ImageProxy(address)
+        logger.info(f"Image server ready: {address}")
+        return True
+    except Exception as exc:
+        raise ScriptError(f"Image server connection failed: {address}") from exc
+
+
 def shutdown_image_server(timeout: float = 2.0) -> bool:
     global _IMAGE_SERVER_PROCESS
 

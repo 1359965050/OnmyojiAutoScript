@@ -93,21 +93,6 @@ Deploy:
     # [Default] 127.0.0.1:22278
     ImageClientAddress: 127.0.0.1:22278
 
-  Update:
-    # Use auto update and builtin updater feature
-    # Disabled in local standalone version
-    EnableReload: true
-    # Check update every X minute
-    # [Disable] 0
-    # [Default] 5
-    CheckUpdateInterval: 5
-    # Scheduled restart time
-    # If there are updates, OAS will automatically restart and update at this time every day
-    # and run all OAS instances that running before restarted
-    # [Disable] null
-    # [Default] 03:50
-    AutoRestartTime: 03:50
-
   Misc:
     # Enable discord rich presence
     DiscordRichPresence: false

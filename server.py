@@ -28,7 +28,8 @@ import threading
 
 from module.logger import logger
 from module.server.setting import State
-from module.ocr.rpc import ensure_ocr_server_started, shutdown_ocr_server
+from module.image.rpc import ensure_image_server_ready, shutdown_image_server
+from module.ocr.rpc import ensure_ocr_server_ready, shutdown_ocr_server
 
 
 def fun(ev: threading.Event):
@@ -37,15 +38,10 @@ def fun(ev: threading.Event):
     import sys
 
     import uvicorn
-    import uvicorn.loops.asyncio
 
-    # Windows 默认 ProactorEventLoop 在 pipe/subprocess 写入存在竞争断言问题，
-    # 本项目以 socket/websocket 为主，使用 SelectorEventLoop 更稳定。
-    # uvicorn 在 win32 上会显式选择 ProactorEventLoop，需要 monkey-patch。
+    # 不知道干啥的照着抄就行了
     if sys.platform.startswith("win"):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        uvicorn.loops.asyncio.asyncio_loop_factory = \
-            lambda use_subprocess=False: asyncio.SelectorEventLoop
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     State.restart_event = ev
 
@@ -85,14 +81,17 @@ def fun(ev: threading.Event):
     logger.attr("Port", port)
     logger.attr("Reload", ev is not None)
 
-    ensure_ocr_server_started()
+    ensure_image_server_ready()
+    ensure_ocr_server_ready()
 
     try:
         uvicorn.run("module.server.app:fastapi_app",
                     host=host,
                     port=port,
-                    factory=True)
+                    factory=True,
+                    log_config=None)
     finally:
+        shutdown_image_server()
         shutdown_ocr_server()
 
 
