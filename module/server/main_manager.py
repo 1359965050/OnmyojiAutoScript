@@ -125,13 +125,18 @@ class MainManager(ConfigManager):
                 # 如果 已经存在了 对应的协程 跳过
                 # 如果这个进程异常/运行中 那这个协程也应该存在
                 # logger.info(f'检测脚本的process: {name}')
-                if script_p.state == ScriptState.INACTIVE:
-                    continue
                 coroutine_state_name = f'coroutine_state_{name}'
+                coroutine_log_name = f'coroutine_log_{name}'
+                if script_p.state == ScriptState.INACTIVE:
+                    # 进程已停止，取消对应的广播协程，避免僵尸协程空转
+                    for coroutine_name in (coroutine_state_name, coroutine_log_name):
+                        task = tasks.pop(coroutine_name, None)
+                        if task is not None and not task.done():
+                            task.cancel()
+                    continue
                 if coroutine_state_name not in tasks:
                     tasks[coroutine_state_name] = asyncio.create_task(script_p.coroutine_broadcast_state(),
                                                                       name=coroutine_state_name)
-                coroutine_log_name = f'coroutine_log_{name}'
                 if coroutine_log_name not in tasks:
                     tasks[coroutine_log_name] = asyncio.create_task(script_p.coroutine_broadcast_log(),
                                                                     name=coroutine_log_name)

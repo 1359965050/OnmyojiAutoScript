@@ -54,7 +54,7 @@ async def config_rename(old_name: str = '', new_name: str = ''):
         return False
     if old_name in mm.script_process:
         if mm.script_process[old_name].state != ScriptState.INACTIVE:
-            mm.script_process[old_name].stop()
+            await mm.script_process[old_name].stop()
         del mm.script_process[old_name]
     if not mm.rename(old_name, new_name):
         raise HTTPException(status_code=400, detail='Rename failed')
@@ -72,7 +72,7 @@ async def config_delete(name: str = ''):
         raise HTTPException(status_code=400, detail='Delete failed')
     if name in mm.script_process:
         if mm.script_process[name].state != ScriptState.INACTIVE:
-            mm.script_process[name].stop()
+            await mm.script_process[name].stop()
         del mm.script_process[name]
     if not mm.delete(name):
         raise HTTPException(status_code=400, detail='Delete failed')
@@ -104,7 +104,7 @@ async def task_group_copy(task_name: str, group_name: str, dest_config_name: str
 async def script_start(script_name: str):
     if script_name not in mm.script_process:
         mm.script_process[script_name] = ScriptProcess(script_name)
-    mm.script_process[script_name].start()
+    await mm.script_process[script_name].start()
     return
 
 @script_app.get('/{script_name}/stop')
@@ -112,7 +112,7 @@ async def script_stop(script_name: str):
     if script_name not in mm.script_process:
         logger.warning(f'[{script_name}] script process does not exist')
         return
-    mm.script_process[script_name].stop()
+    await mm.script_process[script_name].stop()
     return
 
 @script_app.put('/{script_name}/logger/level')

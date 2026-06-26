@@ -51,6 +51,7 @@ class ConfigMenu:
     @cached_property
     def gui_menu_list(self) -> dict:
         del self.menu['TaskList']
+        self.menu.pop('Tools', None)
         return self.menu
 
 

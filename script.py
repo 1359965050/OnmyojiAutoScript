@@ -39,7 +39,7 @@ _log_switch_lock = threading.Lock()#线程锁
 
 
 class Script:
-    def __init__(self, config_name: str ='oas') -> None:
+    def __init__(self, config_name: str ='oas', stop_event=None) -> None:
         logger.hr('Start', level=0)
         self.server = None
         self.state_queue: Queue = None
@@ -55,6 +55,8 @@ class Script:
         self.last_task_runtime_outcome: dict[str, Any] | None = None
         # 运行loop的线程
         self.loop_thread: Thread = None
+        # 停止事件，用于从外部通知调度器优雅退出
+        self.stop_event = stop_event
 
     @cached_property
     def config(self) -> "Config":
@@ -287,18 +289,16 @@ class Script:
             future (datetime):
 
         Returns:
-            bool: True if wait finished, False if config changed.
+            bool: True if wait finished, False if config changed or stop requested.
         """
         future = future + timedelta(seconds=1)
         self.config.start_watching()
         while 1:
             if datetime.now() > future:
                 return True
-            # if self.stop_event is not None:
-            #     if self.stop_event.is_set():
-            #         logger.info("Update event detected")
-            #         logger.info(f"[{self.config_name}] exited. Reason: Update")
-            #         exit(0)
+            if self.stop_event is not None and self.stop_event.is_set():
+                logger.info(f'[{self.config_name}] stop event detected, exit wait')
+                return True
 
             time.sleep(5)
 
@@ -311,6 +311,9 @@ class Script:
         :return:
         """
         while True:
+            if self.stop_event is not None and self.stop_event.is_set():
+                logger.info(f'[{self.config_name}] stop event detected in get_next_task, exit')
+                return ''
             task = self.config.get_next()
             self.config.task = task
             if self.state_queue:
@@ -426,6 +429,10 @@ class Script:
                 show_window_by_name(target_window_name)
                 
         while 1:
+            if self.stop_event is not None and self.stop_event.is_set():
+                logger.info(f'[{self.config_name}] scheduler loop received stop event, exiting')
+                break
+
             if date.today() > start_day:
                 with _log_switch_lock:
                     logger.set_file_logger(self.config_name, do_cleanup=True)
@@ -435,6 +442,9 @@ class Script:
             try:
                 # Get task
                 task = self.get_next_task()
+                if task == '':
+                    logger.info(f'[{self.config_name}] no next task, scheduler loop exiting')
+                    break
                 # Skip first restart
                 if self.is_first_task and task == 'Restart':
                     logger.info('Skip task `Restart` at scheduler start')

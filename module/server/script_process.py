@@ -32,20 +32,23 @@ class ScriptProcess(ScriptWSManager):
         self.log_queue = multiprocessing.Queue()
         self.state_queue = multiprocessing.Queue()
         self.command_queue = multiprocessing.Queue()
+        self.stop_event = multiprocessing.Event()
         self.state: ScriptState = ScriptState.INACTIVE
         self._process = None
 
     async def start(self):
+        self.stop_event.clear()
         self.state = ScriptState.RUNNING
         await self.broadcast_state({"state": self.state})
         if self._process:
             logger.warning(f'Script {self.config_name} is initialized')
         if self._process and self._process.is_alive():
             logger.warning(f'Script {self.config_name} is already running and first stop it')
-            self.stop()
+            await self.stop()
         self._process = multiprocessing.Process(target=func,
                                                 args=(self.config_name, self.state_queue,
-                                                      self.command_queue, self.log_queue,),
+                                                      self.command_queue, self.log_queue,
+                                                      self.stop_event,),
                                                 name=self.config_name,
                                                 daemon=True
                                                 )
@@ -59,12 +62,24 @@ class ScriptProcess(ScriptWSManager):
             return
         if not self._process.is_alive():
             logger.warning(f'Script {self.config_name} is not running')
+            self._process = None
             return
-        self._process.terminate()
-        self._process.join(timeout=0.7)
+        # 优先尝试优雅停止：通过 stop_event 通知子进程主动退出
+        logger.info(f'Script {self.config_name} stopping gracefully')
+        self.stop_event.set()
+        try:
+            self.command_queue.put({"action": "stop"}, timeout=1)
+        except Exception:
+            pass
+        self._process.join(timeout=5)
         if self._process.is_alive():
-            logger.error(f'Script {self.config_name} subprocess terminate failed')
+            logger.warning(f'Script {self.config_name} graceful stop timeout, terminate')
+            self._process.terminate()
+            self._process.join(timeout=2)
+        if self._process.is_alive():
+            logger.error(f'Script {self.config_name} subprocess terminate failed, force kill')
             self._process.kill()
+            self._process.join(timeout=1)
         self._process = None
 
     async def coroutine_broadcast_state(self):
@@ -128,14 +143,20 @@ class ScriptProcess(ScriptWSManager):
 
 
 def func(config: str, state_queue: multiprocessing.Queue,
-         command_queue: multiprocessing.Queue, log_queue: multiprocessing.Queue) -> None:
+         command_queue: multiprocessing.Queue, log_queue: multiprocessing.Queue,
+         stop_event: multiprocessing.Event) -> None:
+    import threading
+    import time
     # 子进程内同样避免 Windows ProactorEventLoop 的 pipe 竞争断言
     if sys.platform.startswith("win"):
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+    local_stop = threading.Event()
+
     def signal_handler(signum, frame):
         logger.info(f'Script {config} received signal {signum}, exiting gracefully')
+        local_stop.set()
         try:
             # 先 flush 所有 handler，确保本地文件日志落盘
             for h in list(logging.root.handlers) + list(logger.handlers):
@@ -175,8 +196,8 @@ def func(config: str, state_queue: multiprocessing.Queue,
     start_log()
 
     def control_loop():
-        """读取主进程通过 command_queue 下发的控制命令（如调整日志级别）。"""
-        while True:
+        """读取主进程通过 command_queue 下发的控制命令（如调整日志级别、停止）。"""
+        while not local_stop.is_set():
             try:
                 msg = command_queue.get(timeout=1)
                 if not isinstance(msg, dict):
@@ -185,18 +206,21 @@ def func(config: str, state_queue: multiprocessing.Queue,
                 if action == 'set_log_level':
                     from module.logger import set_log_level
                     set_log_level(msg.get('level', 'INFO'))
+                elif action == 'stop':
+                    logger.info(f'Script {config} received stop command')
+                    local_stop.set()
             except QueueEmpty:
+                if stop_event.is_set():
+                    local_stop.set()
                 continue
             except Exception:
                 continue
 
-    import threading
     threading.Thread(target=control_loop, name=f'{config}_control', daemon=True).start()
 
-    import time
     try:
         from script import Script
-        script = Script(config_name=config)
+        script = Script(config_name=config, stop_event=stop_event)
         script.state_queue = state_queue
         script.loop()
     except SystemExit as e:

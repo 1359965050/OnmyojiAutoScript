@@ -1,0 +1,20 @@
+{
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic",
+  "include": [
+    "module",
+    "tasks",
+    "server.py",
+    "script.py",
+    "deploy"
+  ],
+  "exclude": [
+    "OASX-master",
+    "toolkit",
+    "assets",
+    "config",
+    "log",
+    "__pycache__",
+    "**/*.pyc"
+  ]
+}
