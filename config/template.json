@@ -51,8 +51,6 @@
   "global_game": {
     "emergency": {
       "friend_invitation": "accept",
-      "when_network_abnormal": "wait_10s",
-      "when_network_error": "restart",
       "home_client_clear": true
     },
     "costume_config": {

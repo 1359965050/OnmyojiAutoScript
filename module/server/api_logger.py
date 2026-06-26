@@ -11,13 +11,10 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from module.logger import logger
+from module.server.constants import API_LOG_DIR, MAX_API_LOG_FILES, MAX_API_LOG_SIZE
 
 
-API_LOG_DIR = Path(__file__).resolve().parent.parent.parent / "log" / "api"
 API_LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-MAX_API_LOG_FILES = 30
-MAX_API_LOG_SIZE = 5 * 1024 * 1024
 
 
 class ApiLogEntry:

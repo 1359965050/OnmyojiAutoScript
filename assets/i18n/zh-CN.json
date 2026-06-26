@@ -87,5 +87,7 @@
   "quick_exit": "快速退出",
   "quick_exit_help": "战斗结束后快速退出结算界面",
   "battle_timeout": "战斗超时时间",
-  "battle_timeout_help": "超过该时间未结束战斗则判定超时，单位秒，最小 10 秒"
+  "battle_timeout_help": "超过该时间未结束战斗则判定超时，单位秒，最小 10 秒",
+  "login_character_config": "同一账号多个区服配置",
+  "character": "角色名"
 }

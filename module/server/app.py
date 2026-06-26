@@ -17,6 +17,11 @@ from module.server.tool_router import tool_app
 from module.server.api_logger import ApiLoggingMiddleware, api_logger
 from module.server.setting import State
 from module.server.main_manager import mm
+from module.server.constants import (
+    APP_TITLE, APP_DESCRIPTION, APP_VERSION,
+    CORS_ALLOW_ORIGINS, CORS_ALLOW_CREDENTIALS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS,
+    ANNOTATOR_STATIC_PATH, HTTP_500_INTERNAL_SERVER_ERROR,
+)
 from starlette.staticfiles import StaticFiles
 
 
@@ -27,18 +32,18 @@ async def lifespan(app: FastAPI):
     await on_shutdown()
 
 app = FastAPI(
-    title='OAS',
-    description='OAS web service',
-    version='0.0.0',
+    title=APP_TITLE,
+    description=APP_DESCRIPTION,
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    allow_origins=CORS_ALLOW_ORIGINS,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
+    allow_methods=CORS_ALLOW_METHODS,
+    allow_headers=CORS_ALLOW_HEADERS,
 )
 
 app.add_middleware(ApiLoggingMiddleware)
@@ -49,7 +54,7 @@ app.include_router(tool_app)
 
 annotator_static_dir = Path(__file__).resolve().parent / "web" / "annotator" / "static"
 if annotator_static_dir.exists():
-    app.mount("/tool/annotator/static", StaticFiles(directory=str(annotator_static_dir)), name="annotator_static")
+    app.mount(ANNOTATOR_STATIC_PATH, StaticFiles(directory=str(annotator_static_dir)), name="annotator_static")
 
 
 async def on_startup():
@@ -73,7 +78,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     message = ', '.join(str(arg) for arg in exc.args) if exc.args else str(exc)
 
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             'message': message
         },

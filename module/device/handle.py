@@ -349,6 +349,17 @@ class Handle:
         """
         if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
             # 使用正则匹配12 来判定是不是mumu12这并不是一个好的方法
+            # MuMu 12 新版结构变化，根节点可能没有子树或本身就是渲染/设备窗口
+            if self.root_node.name == 'MuMu安卓设备':
+                for node in PreOrderIter(self.root_node):
+                    if node.name == 'MuMuNxDevice':
+                        logger.info('The emulator is MuMu安卓设备 (child: MuMuNxDevice)')
+                        return node.num
+                logger.info('The emulator is MuMu安卓设备 (no child, use parent)')
+                return self.root_node.num
+            if self.root_node.name == 'MuMuNxDevice' or not self.root_node.children:
+                logger.info(f'The emulator is MuMu (single window: {self.root_node.name})')
+                return self.root_node.num
             name = self.root_node.children[0].name
             num = self.root_node.children[0].num
             if name == 'MuMuPlayer':

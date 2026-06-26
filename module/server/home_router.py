@@ -11,32 +11,34 @@ from module.ocr.rpc import shutdown_ocr_server
 from module.server.main_manager import MainManager
 from module.server.updater import Updater
 from module.server.i18n import I18n
+from module.server.constants import HOME_ROUTER_PREFIX, HOME_ROUTER_TAGS
+from module.server.endpoints import HomeEndpoints
 
 home_app = APIRouter(
-    prefix="/home",
-    tags=["home"],
+    prefix=HOME_ROUTER_PREFIX,
+    tags=HOME_ROUTER_TAGS,
 )
 
 
-@home_app.get('/test')
+@home_app.get(HomeEndpoints.TEST)
 async def home_test():
     return {'message': 'test'}
 
 
 #  gcc -Wall -pedantic -shared -fPIC -o group_work.so group_work.c -lwiringPi
-@home_app.get('/home_menu')
+@home_app.get(HomeEndpoints.HOME_MENU)
 async def home_menu():
     return {'Home': [], 'Updater': []}
 
 
-@home_app.get('/kill_server')
+@home_app.get(HomeEndpoints.KILL_SERVER)
 async def kill_server():
     shutdown_ocr_server()
     MainManager.signal_kill_server = True
     return 'success'
 
 
-@home_app.get('/update_info')
+@home_app.get(HomeEndpoints.UPDATE_INFO)
 async def update_info():
     try:
         updater = Updater()
@@ -48,7 +50,7 @@ async def update_info():
         return None
 
 
-@home_app.get('/execute_update')
+@home_app.get(HomeEndpoints.EXECUTE_UPDATE)
 async def execute_update():
     # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启oasx
     try:
@@ -62,7 +64,7 @@ async def execute_update():
         return f'更新异常: {e}'
 
 
-@home_app.put('/chinese_translate')
+@home_app.put(HomeEndpoints.CHINESE_TRANSLATE)
 async def chinese_translate(data: dict = Body(...)):
     try:
         I18n.save_zh_cn(data)
@@ -71,7 +73,7 @@ async def chinese_translate(data: dict = Body(...)):
     return True
 
 
-@home_app.get('/additional_translate')
+@home_app.get(HomeEndpoints.ADDITIONAL_TRANSLATE)
 async def additional_translate() -> dict:
     try:
         data = I18n.load_additions()

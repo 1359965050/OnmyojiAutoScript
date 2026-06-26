@@ -19,6 +19,7 @@ class InferenceEngine(str, Enum):
 class ScreenshotMethod(str, Enum):
     WINDOW_BACKGROUND = 'window_background'
     NEMU_IPC = 'nemu_ipc'
+    UIAUTOMATOR2 = 'uiautomator2'
 
 
 class ControlMethod(str, Enum):

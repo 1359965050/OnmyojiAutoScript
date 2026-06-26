@@ -9,6 +9,10 @@ from module.config.utils import convert_to_underscore
 from module.logger import logger
 from module.server.main_manager import mm
 from module.server.script_process import ScriptProcess, ScriptState
+from module.server.constants import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from module.server.endpoints import (
+    ScriptEndpoints, ScriptWsCommands, ScriptValidation, DateTimeFormats,
+)
 
 from tasks.Component.config_base import TimeDelta
 
@@ -16,33 +20,33 @@ from tasks.Component.config_base import TimeDelta
 script_app = APIRouter()
 
 
-@script_app.get('/test')
+@script_app.get(ScriptEndpoints.TEST)
 async def script_test():
     return 'success'
 
-@script_app.get('/script_menu')
+@script_app.get(ScriptEndpoints.SCRIPT_MENU)
 async def script_menu():
     return mm.config_cache('template').gui_menu_list
 # ----------------------------------   配置文件管理   ----------------------------------
-@script_app.get('/config_list')
+@script_app.get(ScriptEndpoints.CONFIG_LIST)
 async def config_list():
     return mm.all_script_files()
 
-@script_app.post('/config_copy')
+@script_app.post(ScriptEndpoints.CONFIG_COPY)
 async def config_copy(file: str, template: str = 'template'):
     mm.copy(file, template)
     return mm.all_script_files()
 
-@script_app.get('/config_new_name')
+@script_app.get(ScriptEndpoints.CONFIG_NEW_NAME)
 async def config_new_name():
     return mm.generate_script_name()
 
-@script_app.get('/config_all')
+@script_app.get(ScriptEndpoints.CONFIG_ALL)
 async def config_all():
     return mm.all_json_file()
 
 
-@script_app.put('/config')
+@script_app.put(ScriptEndpoints.CONFIG)
 async def config_rename(old_name: str = '', new_name: str = ''):
     """
     update config name
@@ -57,11 +61,11 @@ async def config_rename(old_name: str = '', new_name: str = ''):
             await mm.script_process[old_name].stop()
         del mm.script_process[old_name]
     if not mm.rename(old_name, new_name):
-        raise HTTPException(status_code=400, detail='Rename failed')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Rename failed')
     return True
 
 
-@script_app.delete('/config')
+@script_app.delete(ScriptEndpoints.CONFIG)
 async def config_delete(name: str = ''):
     """
     delete config file
@@ -69,17 +73,17 @@ async def config_delete(name: str = ''):
     :return: True or False
     """
     if name == '' or name == 'template':
-        raise HTTPException(status_code=400, detail='Delete failed')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Delete failed')
     if name in mm.script_process:
         if mm.script_process[name].state != ScriptState.INACTIVE:
             await mm.script_process[name].stop()
         del mm.script_process[name]
     if not mm.delete(name):
-        raise HTTPException(status_code=400, detail='Delete failed')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Delete failed')
     return True
 
 
-@script_app.put('/config/task/copy')
+@script_app.put(ScriptEndpoints.CONFIG_TASK_COPY)
 async def task_copy(task_name: str, dest_config_name: str, source_config_name: str):
     if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
         return False
@@ -89,7 +93,7 @@ async def task_copy(task_name: str, dest_config_name: str, source_config_name: s
     return mm.config_cache(dest_config_name).model.copy_script_task(task_name, source_task)
 
 
-@script_app.put('/config/task/group/copy')
+@script_app.put(ScriptEndpoints.CONFIG_TASK_GROUP_COPY)
 async def task_group_copy(task_name: str, group_name: str, dest_config_name: str, source_config_name: str):
     if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
         return False
@@ -100,14 +104,14 @@ async def task_group_copy(task_name: str, group_name: str, dest_config_name: str
 
 
 # ---------------------------------   脚本实例管理   ----------------------------------
-@script_app.get('/{script_name}/start')
+@script_app.get(ScriptEndpoints.SCRIPT_START)
 async def script_start(script_name: str):
     if script_name not in mm.script_process:
         mm.script_process[script_name] = ScriptProcess(script_name)
     await mm.script_process[script_name].start()
     return
 
-@script_app.get('/{script_name}/stop')
+@script_app.get(ScriptEndpoints.SCRIPT_STOP)
 async def script_stop(script_name: str):
     if script_name not in mm.script_process:
         logger.warning(f'[{script_name}] script process does not exist')
@@ -115,31 +119,30 @@ async def script_stop(script_name: str):
     await mm.script_process[script_name].stop()
     return
 
-@script_app.put('/{script_name}/logger/level')
+@script_app.put(ScriptEndpoints.SCRIPT_LOGGER_LEVEL)
 async def script_set_log_level(script_name: str, level: str):
     """
     热切换指定脚本子进程的日志级别。
     level: DEBUG/INFO/WARNING/ERROR/CRITICAL
     """
-    valid_levels = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
     level = level.upper()
-    if level not in valid_levels:
-        raise HTTPException(status_code=400, detail=f'Invalid level: {level}')
+    if level not in ScriptValidation.VALID_LOG_LEVELS:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=f'Invalid level: {level}')
     if script_name not in mm.script_process:
-        raise HTTPException(status_code=404, detail=f'Script {script_name} not found')
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=f'Script {script_name} not found')
     script_process = mm.script_process[script_name]
     try:
         script_process.command_queue.put({"action": "set_log_level", "level": level})
         return {"script": script_name, "level": level, "status": "ok"}
     except Exception as e:
         logger.error(f'Failed to set log level for {script_name}: {e}')
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@script_app.get('/{script_name}/{task}/args')
+@script_app.get(ScriptEndpoints.SCRIPT_TASK_ARGS)
 async def script_task(script_name: str, task: str):
     return mm.config_cache(script_name).model.script_task(task)
 
-@script_app.put('/{script_name}/{task}/{group}/{argument}/value')
+@script_app.put(ScriptEndpoints.SCRIPT_TASK_ARG_VALUE)
 async def script_task(script_name: str, task: str, group: str, argument: str, types: str, value):
     try:
         match types:
@@ -157,27 +160,27 @@ async def script_task(script_name: str, task: str, group: str, argument: str, ty
             case 'string':
                 pass
             case 'date_time':
-                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                value = datetime.strptime(value, DateTimeFormats.DATETIME)
             case 'time_delta':
                 # strptime 是个好东西，但是不能解析00的天数
                 day = int(value[1])
-                date_time = datetime.strptime(value[3:], '%H:%M:%S')
+                date_time = datetime.strptime(value[3:], DateTimeFormats.TIME)
                 value = TimeDelta(days=day, hours=date_time.hour, minutes=date_time.minute, seconds=date_time.second)
             case 'time':
-                value = datetime.strptime(value, '%H:%M:%S').time()
+                value = datetime.strptime(value, DateTimeFormats.TIME).time()
             case _: pass
     except Exception as e:
         # 类型不正确
-        raise HTTPException(status_code=400, detail=f'Argument type error: {e}')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=f'Argument type error: {e}')
     return mm.config_cache(script_name).model.script_set_arg(task, group, argument, value)
 
 
-@script_app.put('/{script_name}/{task}/sync_next_run')
+@script_app.put(ScriptEndpoints.SCRIPT_SYNC_NEXT_RUN)
 async def sync_next_run(script_name: str, task: str, target_dt: str):
     if script_name not in mm.script_process:
         return False
     config = mm.config_cache(script_name)
-    target = datetime.strptime(target_dt, '%Y-%m-%d %H:%M:%S') if target_dt else None
+    target = datetime.strptime(target_dt, DateTimeFormats.DATETIME) if target_dt else None
     config.task_delay(task=task, success=True, target=target)
     script_process = mm.script_process[script_name]
     config.get_next()
@@ -187,7 +190,7 @@ async def sync_next_run(script_name: str, task: str, target_dt: str):
 
 # -------------------------------------- websocket --------------------------------------
 
-@script_app.websocket("/ws/{script_name}")
+@script_app.websocket(ScriptEndpoints.SCRIPT_WS)
 async def websocket_endpoint(websocket: WebSocket, script_name: str):
     if script_name not in mm.script_process:
         mm.script_process[script_name] = ScriptProcess(script_name)
@@ -205,15 +208,15 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
         while True:
             # 初次进入，广播state schedule
             data = await websocket.receive_text()
-            if data == 'get_state':
+            if data == ScriptWsCommands.GET_STATE:
                 await script_process.broadcast_state({"state": script_process.state})
-            elif data == 'get_schedule':
+            elif data == ScriptWsCommands.GET_SCHEDULE:
                 config = mm.config_cache(script_name)
                 config.get_next()
                 await script_process.broadcast_state({"schedule": config.get_schedule_data()})
-            elif data == 'start':
+            elif data == ScriptWsCommands.START:
                 await script_process.start()
-            elif data == 'stop':
+            elif data == ScriptWsCommands.STOP:
                 await script_process.stop()
 
     except WebSocketDisconnect:
