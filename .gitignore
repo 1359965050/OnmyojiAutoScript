@@ -49,9 +49,8 @@ CLAUDE.md
 .claude/
 openspec/
 
-# Trae Harness runtime artifacts
-.trae/reviews/
-.trae/.harness-state
+# Trae
+.trae/
 
 # Docs
 /docs/
