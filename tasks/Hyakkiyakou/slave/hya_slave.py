@@ -17,7 +17,7 @@ class HyaBuff(int, Enum):
     BUFF_STATE0 = -1  # None
     BUFF_STATE2 = 0  # 式神减速
     BUFF_STATE3 = 1  # 砸豆加速
-    BUFF_STATE5 = 2  # 式神冰冻
+    BUFF_STATE5 = 2  # 式神冰冻（保留枚举但决策层已禁用：冰冻场景模型误识别率过高）
     BUFF_STATE6 = 3  # 概率UP
     BUFF_STATE7 = 4  # 好友UP
 
@@ -110,7 +110,7 @@ class HyaSlave(HyaDevice, HyaColor, HyakkiyakouAssets):
         return [
             self.I_HYA_STATE_BUFF02,  # 式神减速
             self.I_HYA_STATE_BUFF03,  # 砸豆加速
-            self.I_HYA_STATE_BUFF05,  # 冰冻
+            self.I_HYA_STATE_BUFF05,  # 冰冻（识别结果不向决策层使用）
             self.I_HYA_STATE_BUFF06,  # 概率up
             self.I_HYA_STATE_BUFF07,  # 好友UP
         ]

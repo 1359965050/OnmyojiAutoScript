@@ -58,6 +58,7 @@ class GenerateImages(GameUi, HyakkiyakouAssets):
                 break
             if not self.appear(self.I_CHECK_RUN):
                 continue
+            # 冰冻场景样本收集已禁用：模型在该状态下误识别率过高
             # if self.appear(self.I_HFREEZE):
             #     continue
             if save_img_timer.reached():

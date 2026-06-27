@@ -82,9 +82,8 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         
         try:
             # 提前关闭可能存在的"确认退出探索"弹窗，避免导航陷入未知页面循环
-            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
-                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
-                logger.info('Confirm exit exploration in pre_process')
+            self.screenshot()
+            if self._handle_exit_confirm_dialog():
                 time.sleep(0.5)
             
             if explorationConfig.switch_soul_config.enable:
@@ -116,6 +115,39 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
             logger.info('Force navigate to exploration page')
             self._force_goto_exploration()
 
+    def _handle_exit_confirm_dialog(self, reset_timer: Timer = None, skip_screenshot: bool = False) -> bool:
+        """
+        处理"确认退出探索吗？"弹窗，按 图像匹配 -> OCR兜底 -> 固定坐标兜底 的优先级尝试点击确认。
+        :param reset_timer: 点击成功后需要 reset 的计时器
+        :param skip_screenshot: 是否跳过本次截图（调用方已截图时复用当前 image）
+        :return: 如果处理（点击确认）了弹窗返回 True
+        """
+        if not skip_screenshot:
+            self.screenshot()
+        # 1. 图像匹配确认按钮
+        if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
+            self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
+            logger.info('Confirm exit exploration by image rule')
+            if reset_timer:
+                reset_timer.reset()
+            return True
+        # 2. 通用确认按钮兜底
+        if self.appear(self.I_UI_CONFIRM, threshold=0.5):
+            self.appear_then_click(self.I_UI_CONFIRM, interval=0.8)
+            logger.info('Confirm exit exploration by UI_CONFIRM')
+            if reset_timer:
+                reset_timer.reset()
+            return True
+        # 3. OCR识别弹窗标题兜底
+        if self.ocr_appear(self.O_E_EXIT_CONFIRM):
+            # 点击右侧"确认"按钮的大致中心（1280x720 分辨率下）
+            self.device.click(x=760, y=425, control_name='E_EXIT_CONFIRM_OCR_FALLBACK')
+            logger.info('Confirm exit exploration by OCR fallback')
+            if reset_timer:
+                reset_timer.reset()
+            return True
+        return False
+
     def _force_goto_exploration(self):
         timer = Timer(30).start()
         while not timer.reached():
@@ -128,12 +160,7 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 self.wait_until_appear(self.I_CHECK_EXPLORATION, wait_time=5)
                 return
             # 处理确认退出对话框
-            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
-                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
-                logger.info('Confirm exit exploration in force goto')
-                continue
-            if self.appear(self.I_UI_CONFIRM, threshold=0.5):
-                self.appear_then_click(self.I_UI_CONFIRM, interval=0.8)
+            if self._handle_exit_confirm_dialog():
                 continue
             if self.appear(self.I_UI_CANCEL, threshold=0.5):
                 self.appear_then_click(self.I_UI_CANCEL, interval=0.8)
@@ -457,16 +484,8 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
             if self.appear(self.I_CHECK_EXPLORATION) and not self.appear(self.I_E_SETTINGS_BUTTON):
                 break
 
-            # 处理确认退出对话框（兼容可能出现的弹窗）
-            if self.appear(self.I_E_EXIT_CONFIRM, threshold=0.5):
-                self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.8)
-                logger.info('Confirm exit exploration')
-                boss_timer.reset()
-                continue
-            if self.appear(self.I_UI_CONFIRM, threshold=0.5):
-                self.appear_then_click(self.I_UI_CONFIRM, interval=0.8)
-                logger.info('Confirm exit with UI_CONFIRM')
-                boss_timer.reset()
+            # 处理确认退出对话框（图像 + OCR + 固定坐标兜底）
+            if self._handle_exit_confirm_dialog(reset_timer=boss_timer):
                 continue
             if self.appear(self.I_UI_CANCEL, threshold=0.5):
                 self.appear_then_click(self.I_UI_CANCEL, interval=0.8)

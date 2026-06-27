@@ -17,7 +17,7 @@ from module.atom.swipe import RuleSwipe
 from module.base.timer import Timer
 from module.config.config import Config
 from module.device.device import Device
-from module.exception import ScriptError
+from module.exception import ScriptError, TaskEnd
 from module.logger import logger
 from module.ocr.base_ocr import OcrMode
 from tasks.Component.Costume.costume_base import CostumeBase
@@ -61,6 +61,16 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         self.current_count = 0  # 战斗次数
         self._boss_mark_flag = False
 
+    def check_stop(self):
+        """
+        检查当前脚本是否被要求停止，如果是则抛出 TaskEnd 以优雅退出
+        """
+        from script import get_stop_event
+        stop_event = get_stop_event(self.config.config_name)
+        if stop_event is not None and stop_event.is_set():
+            logger.info(f'[{self.config.config_name}] stop requested, task will exit')
+            raise TaskEnd('Stop requested')
+
     def _burst(self) -> bool:
         """
         游戏界面突发异常检测
@@ -103,6 +113,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         if not click_button:
             raise ScriptError(f'Unknown click button type: {invite_type}')
         while 1:
+            self.check_stop()
             self.device.screenshot()
             if not self.appear(target=click_button):
                 logger.info('Deal with invitation done')
@@ -295,6 +306,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             wait_timer = Timer(wait_time)
             wait_timer.start()
         while 1:
+            self.check_stop()
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
@@ -331,6 +343,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def wait_until_disappear(self, target: RuleImage) -> None:
         while 1:
+            self.check_stop()
             self.screenshot()
             if not self.appear(target):
                 break
@@ -352,6 +365,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         pre_roi_front, cur_roi_front = None, None
         origin_roi_back = target.roi_back
         while not timeout_timer.reached():
+            self.check_stop()
             self.maybe_screenshot(skip_first_screenshot)
             skip_first_screenshot = False
             # 当前页面能够匹配到target
@@ -393,6 +407,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         target._match_init = False
         timeout.reset()
         while 1:
+            self.check_stop()
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
@@ -425,6 +440,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             rule = RuleAnimate(rule)
         timeout_timer = Timer(timeout).start() if timeout is not None else None
         while 1:
+            self.check_stop()
             self.screenshot()
 
             if interval:
@@ -598,6 +614,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             return False
         appear = False
         for _ in range(max_swipe):
+            self.check_stop()
             self.screenshot()
             if target.is_image:
                 result = target.image_appear(self.device.image, name=name)
@@ -693,11 +710,13 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         _timer = Timer(10)
         _timer.start()
         while 1:
+            self.check_stop()
             self.screenshot()
 
             if self.ui_reward_appear_click():
                 sleep(0.5)
                 while 1:
+                    self.check_stop()
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):
@@ -735,6 +754,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         """
         timer = Timer(timeout).start() if timeout else None
         while 1:
+            self.check_stop()
             self.screenshot()
             if self.appear(stop):
                 return True
@@ -750,6 +770,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def ui_clicks(self, clicks: list[RuleImage | RuleOcr | RuleClick], stop: RuleImage, interval=1):
         while 1:
+            self.check_stop()
             self.screenshot()
             if self.appear(stop):
                 break
@@ -769,6 +790,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         :return:
         """
         while 1:
+            self.check_stop()
             self.screenshot()
             if not self.appear(click):
                 break
@@ -781,6 +803,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
         """
         while 1:
+            self.check_stop()
             self.screenshot()
             if not self.appear(stop):
                 break
@@ -806,6 +829,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         """
         timer = Timer(timeout).start() if timeout else None
         while 1:
+            self.check_stop()
             self.screenshot()
             if self.appear(stop):
                 return True

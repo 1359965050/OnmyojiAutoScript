@@ -34,6 +34,9 @@ class SoloExploration(BaseExploration):
 
         while 1:
             self.screenshot()
+            # 兜底：处理手动或异常弹出的"确认退出探索"弹窗
+            if self._handle_exit_confirm_dialog(skip_screenshot=True):
+                continue
             scene = self.get_current_scene()
             #
             if scene == Scene.WORLD:
@@ -111,6 +114,9 @@ class SoloExploration(BaseExploration):
 
         while 1:
             self.screenshot()
+            # 兜底：处理手动或异常弹出的"确认退出探索"弹窗
+            if self._handle_exit_confirm_dialog(skip_screenshot=True):
+                continue
             scene = self.get_current_scene()
             # 探索大世界
             if scene == Scene.WORLD:

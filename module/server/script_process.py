@@ -20,6 +20,7 @@ class ScriptState(int, Enum):
     RUNNING = 1
     WARNING = 2
     UPDATING = 3
+    STOPPING = 4
 
 
 class ScriptProcess(ScriptWSManager):
@@ -55,15 +56,23 @@ class ScriptProcess(ScriptWSManager):
         self._process.start()
 
     async def stop(self):
-        self.state = ScriptState.INACTIVE
-        await self.broadcast_state({"state": self.state})
+        if self.state == ScriptState.STOPPING:
+            logger.warning(f'Script {self.config_name} is already stopping')
+            return
         if self._process is None:
             logger.warning(f'Script {self.config_name} process is removed')
+            self.state = ScriptState.INACTIVE
+            await self.broadcast_state({"state": self.state})
             return
         if not self._process.is_alive():
             logger.warning(f'Script {self.config_name} is not running')
             self._process = None
+            self.state = ScriptState.INACTIVE
+            await self.broadcast_state({"state": self.state})
             return
+        # 立即广播 STOPPING，让前端及时进入停止中状态
+        self.state = ScriptState.STOPPING
+        await self.broadcast_state({"state": self.state})
         # 优先尝试优雅停止：通过 stop_event 通知子进程主动退出
         logger.info(f'Script {self.config_name} stopping gracefully')
         self.stop_event.set()
@@ -71,7 +80,7 @@ class ScriptProcess(ScriptWSManager):
             self.command_queue.put({"action": "stop"}, timeout=1)
         except Exception:
             pass
-        self._process.join(timeout=5)
+        self._process.join(timeout=2)
         if self._process.is_alive():
             logger.warning(f'Script {self.config_name} graceful stop timeout, terminate')
             self._process.terminate()
@@ -81,6 +90,8 @@ class ScriptProcess(ScriptWSManager):
             self._process.kill()
             self._process.join(timeout=1)
         self._process = None
+        self.state = ScriptState.INACTIVE
+        await self.broadcast_state({"state": self.state})
 
     async def coroutine_broadcast_state(self):
         try:
