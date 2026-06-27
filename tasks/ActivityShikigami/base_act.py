@@ -169,6 +169,8 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
             if not dest_page:
                 logger.warning(f'{climb_type} page is not supported')
                 continue
+            # 先回活动主页面，处理奖励/未知页面等异常，再进入具体爬塔子页
+            self.goto_page(self.pages.get('page_act'))
             self.goto_page(dest_page)
             config_label = 'pass' if climb_type == 'ap' else climb_type
             cur_battle_conf = getattr(self.conf, f'{config_label}_battle_conf')
@@ -256,7 +258,8 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
         elif enable_switch:
             group_team = getattr(conf, f"{config_label}_group_team")
             self.run_switch_soul(group_team)
-        self.goto_page(self.pages.get(f"page_act_{self.climb_type}"))
+        # 换御魂后先回活动主页面，再由主循环切回具体爬塔子页
+        self.goto_page(self.pages.get('page_act'))
 
     def lock_team(self, battle_conf: GeneralBattleConfig):
         """
