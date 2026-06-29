@@ -32,6 +32,7 @@ from module.server.i18n import I18n
 from module.image.rpc import ensure_image_server_ready
 from module.ocr.rpc import ensure_ocr_server_ready
 from module.script import ScriptRuntimeController, ScriptRuntimeDecision
+from module.utils.power_manager import PowerManager
 from tasks.Restart.server_update import delay_pending_tasks_for_server_update, is_server_update_window
 from module.server.log_service import build_error_log_dir_name
 
@@ -489,8 +490,12 @@ class Script:
                 self.device.click_record_clear()
                 logger.hr(task, level=0)
                 self.config.model.running_task = task
-                success = self.run(inflection.camelize(task))
-                self.config.model.running_task = ''
+                PowerManager.acquire()
+                try:
+                    success = self.run(inflection.camelize(task))
+                finally:
+                    PowerManager.release()
+                    self.config.model.running_task = ''
                 logger.info(f'Scheduler: End task `{task}`')
                 self.is_first_task = False
 
@@ -528,6 +533,7 @@ class Script:
                 else:
                     break
         finally:
+            PowerManager.release()
             _script_stop_events.pop(self.config_name, None)
             logger.info(f'Scheduler loop exited: {self.config_name}')
 
