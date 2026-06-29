@@ -16,6 +16,10 @@ Deploy:
     # [CN user] Use your local http proxy (http://127.0.0.1:{port}) or socks5 proxy (socks5://127.0.0.1:{port})
     # [Other] Use null
     GitProxy: null
+    # GitHub mirror prefix for faster fetch in mainland China
+    # [CN user] Use 'https://gh.sixyin.com/' or other github mirror
+    # [Other] Use null
+    GitMirror: null
     # Update OAS at startup
     # [Local standalone] Use false
     AutoUpdate: true

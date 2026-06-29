@@ -17,6 +17,7 @@ class ConfigModel:
     Branch: str = "master"
     GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
     GitProxy: Optional[str] = None
+    GitMirror: Optional[str] = None
     SSLVerify: bool = False
     AutoUpdate: bool = True
     KeepLocalChanges: bool = True

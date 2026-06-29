@@ -48,8 +48,11 @@ class GitManager(DeployConfig):
 
     def git_repository_init(
             self, repo, source='origin', branch='master',
-            proxy='', ssl_verify=True, keep_changes=False
+            proxy='', ssl_verify=True, keep_changes=False, mirror=None
     ):
+        if mirror:
+            repo = f"{mirror.rstrip('/')}/{repo}"
+            logger.info(f'Using GitHub mirror: {mirror}')
         logger.hr('Git Init', 1)
         if not self.execute(f'"{self.git}" init', allow_failure=True):
             self.remove('./.git/config')
@@ -129,4 +132,5 @@ class GitManager(DeployConfig):
             proxy=self.GitProxy,
             ssl_verify=self.SSLVerify,
             keep_changes=self.KeepLocalChanges,
+            mirror=self.GitMirror,
         )
