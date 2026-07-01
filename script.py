@@ -24,7 +24,7 @@ from multiprocessing.queues import Queue
 from module.config.utils import convert_to_underscore
 from module.config.config import Config
 from module.device.env import IS_WINDOWS
-from module.base.utils import load_module
+from module.base.utils import load_module, ensure_time
 from module.base.decorator import del_cached_property
 from module.logger import logger
 from module.exception import *
@@ -313,7 +313,7 @@ class Script:
                 logger.info(f'[{self.config_name}] stop event detected, exit wait')
                 return True
 
-            time.sleep(5)
+            time.sleep(1)
 
             if self.config.should_reload():
                 return False
@@ -415,7 +415,27 @@ class Script:
             module_path = str(Path.cwd() / 'tasks' / command / (module_name + '.py'))
             logger.info(f'module_path: {module_path}, module_name: {module_name}')
             task_module = load_module(module_name, module_path)
-            task_module.ScriptTask(config=self.config, device=self.device).run()
+            task = task_module.ScriptTask(config=self.config, device=self.device)
+
+            # 任务执行期间将 device.sleep 包装为可中断版本，使停止请求能尽快响应
+            original_sleep = self.device.sleep
+
+            def _sleep_with_stop(second):
+                total = ensure_time(second)
+                elapsed = 0.0
+                interval = 0.5
+                while elapsed < total:
+                    step = min(interval, total - elapsed)
+                    original_sleep(step)
+                    elapsed += step
+                    if self.stop_event is not None and self.stop_event.is_set():
+                        raise TaskEnd('Stop requested during sleep')
+
+            self.device.sleep = _sleep_with_stop
+            try:
+                task.run()
+            finally:
+                self.device.sleep = original_sleep
         except TaskEnd:
             logger.info(f'Task `{command}` ended by stop request')
             return True

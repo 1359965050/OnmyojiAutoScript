@@ -3,7 +3,6 @@ from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.ActivityShikigami.base_act import BaseAct
 from tasks.ActivityShikigami.descriptor import EventDescriptor
 import tasks.ActivityShikigami.page as pages
-from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.Component.RightActivity.assets import RightActivityAssets
 from tasks.GameUi.action import conditional_action
 from tasks.GameUi.page import random_click
@@ -48,12 +47,3 @@ class NormalClimbAct(BaseAct):
         # 门票和体力互相切换
         page_act_pass.connect(page_act_ap, ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH, key="page_act_pass->page_act_ap")
         page_act_ap.connect(page_act_pass, ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH, key="page_act_ap->page_act_pass")
-
-    def lock_team(self, battle_conf: GeneralBattleConfig):
-        enable = battle_conf.lock_team_enable
-        if enable:
-            logger.info(f'Lock {self.climb_type} team')
-            self.ui_click(self.I_AP_UNLOCK, stop=self.I_AP_LOCK, interval=1.5)
-            return
-        logger.info(f'Unlock {self.climb_type} team')
-        self.ui_click(self.I_AP_LOCK, stop=self.I_AP_UNLOCK, interval=1.5)

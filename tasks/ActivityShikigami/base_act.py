@@ -216,6 +216,24 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
         if self.enter_battle():
             self.count_map[self.climb_type] += 1
             self.run_general_battle(getattr(self.conf, f'{self.config_label}_battle_conf'))
+            if self.climb_type == 'boss':
+                self.close_boss_result()
+
+    def close_boss_result(self) -> bool:
+        """
+        boss 战结束后关闭结果展示页（右上角红色叉号）
+        """
+        logger.info('Close boss result page')
+        timeout = Timer(10).start()
+        while not timeout.reached():
+            self.check_stop()
+            self.screenshot()
+            if not self.appear(self.I_BOSS_RESULT_CLOSE):
+                return True
+            if self.appear_then_click(self.I_BOSS_RESULT_CLOSE, interval=1):
+                continue
+        logger.warning('Close boss result page timeout')
+        return False
 
     def enter_battle(self):
         click_times, max_times = 0, random.randint(3, 5)
@@ -233,7 +251,9 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
             if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=1) or \
                     self.appear_then_click(self.I_UI_CONFIRM, interval=1):
                 continue
-            if self.ocr_appear_click(self.O_FIRE, interval=1.5):
+            # boss 模式使用专门的 OCR ROI，其他模式使用通用 O_FIRE
+            fire_ocr = self.O_FIRE_BOSS if self.climb_type == 'boss' else self.O_FIRE
+            if self.ocr_appear_click(fire_ocr, interval=1.5):
                 self.device.click_record_clear()
                 click_times += 1
                 logger.info(f'Try click fire, remain times[{max_times - click_times}]')
@@ -261,25 +281,37 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
         # 换御魂后先回活动主页面，再由主循环切回具体爬塔子页
         self.goto_page(self.pages.get('page_act'))
 
+    def _toggle_lock(self, lock: bool) -> bool:
+        """
+        切换阵容锁定状态，兼容常规锁图标与 AP/BOSS 专用锁图标
+        :param lock: True 锁定, False 解锁
+        :return: 是否成功
+        """
+        lock_icons = [self.I_LOCK, self.I_AP_LOCK]
+        unlock_icons = [self.I_UNLOCK, self.I_AP_UNLOCK]
+        target_icons = lock_icons if lock else unlock_icons
+        opposite_icons = unlock_icons if lock else lock_icons
+
+        timeout = Timer(10).start()
+        while not timeout.reached():
+            self.check_stop()
+            self.screenshot()
+            if any(self.appear(icon) for icon in target_icons):
+                return True
+            for icon in opposite_icons:
+                if self.appear_then_click(icon, interval=1.5):
+                    break
+        logger.warning(f'{"Lock" if lock else "Unlock"} team timeout for {self.climb_type}')
+        return False
+
     def lock_team(self, battle_conf: GeneralBattleConfig):
         """
         根据配置判断当前爬塔类型是否锁定阵容, 并执行锁定或解锁
         """
         enable = battle_conf.lock_team_enable
-        if enable:
-            logger.info(f'Lock {self.climb_type} team')
-            match self.climb_type:
-                case 'ap' | 'boss':
-                    self.ui_click(self.I_AP_UNLOCK, stop=self.I_AP_LOCK, interval=1.5)
-                case _:
-                    self.ui_click(self.I_UNLOCK, stop=self.I_LOCK, interval=1.5)
-            return
-        logger.info(f'Unlock {self.climb_type} team')
-        match self.climb_type:
-            case 'ap' | 'boss':
-                self.ui_click(self.I_AP_LOCK, stop=self.I_AP_UNLOCK, interval=1.5)
-            case _:
-                self.ui_click(self.I_LOCK, stop=self.I_UNLOCK, interval=1.5)
+        action = 'Lock' if enable else 'Unlock'
+        logger.info(f'{action} {self.climb_type} team')
+        self._toggle_lock(enable)
 
     def check_tickets_enough(self) -> bool:
         """

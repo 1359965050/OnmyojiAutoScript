@@ -12,7 +12,7 @@ from module.server.config import DeployConfig
 
 
 DEFAULT_GIT_TIMEOUT = 5
-DEFAULT_FETCH_TIMEOUT = 15
+DEFAULT_FETCH_TIMEOUT = 3
 FETCH_RETRY = 2
 
 

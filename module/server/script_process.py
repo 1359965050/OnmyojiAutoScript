@@ -6,6 +6,8 @@ import sys, os
 import signal
 import multiprocessing
 import logging
+import asyncio
+import threading
 from queue import Empty as QueueEmpty
 from asyncio import CancelledError, sleep
 from enum import Enum
@@ -21,6 +23,7 @@ class ScriptState(int, Enum):
     WARNING = 2
     UPDATING = 3
     STOPPING = 4
+    STARTING = 5
 
 
 class ScriptProcess(ScriptWSManager):
@@ -36,62 +39,109 @@ class ScriptProcess(ScriptWSManager):
         self.stop_event = multiprocessing.Event()
         self.state: ScriptState = ScriptState.INACTIVE
         self._process = None
+        self._state_lock = threading.Lock()
 
-    async def start(self):
-        self.stop_event.clear()
-        self.state = ScriptState.RUNNING
-        await self.broadcast_state({"state": self.state})
-        if self._process:
-            logger.warning(f'Script {self.config_name} is initialized')
-        if self._process and self._process.is_alive():
-            logger.warning(f'Script {self.config_name} is already running and first stop it')
-            await self.stop()
-        self._process = multiprocessing.Process(target=func,
-                                                args=(self.config_name, self.state_queue,
-                                                      self.command_queue, self.log_queue,
-                                                      self.stop_event,),
-                                                name=self.config_name,
-                                                daemon=True
-                                                )
-        self._process.start()
-
-    async def stop(self):
-        if self.state == ScriptState.STOPPING:
-            logger.warning(f'Script {self.config_name} is already stopping')
+    async def _stop_process(self, process: multiprocessing.Process):
+        """终止指定子进程；不修改实例状态。join 使用 run_in_executor 避免阻塞事件循环。"""
+        if process is None or not process.is_alive():
             return
-        if self._process is None:
-            logger.warning(f'Script {self.config_name} process is removed')
-            self.state = ScriptState.INACTIVE
-            await self.broadcast_state({"state": self.state})
-            return
-        if not self._process.is_alive():
-            logger.warning(f'Script {self.config_name} is not running')
-            self._process = None
-            self.state = ScriptState.INACTIVE
-            await self.broadcast_state({"state": self.state})
-            return
-        # 立即广播 STOPPING，让前端及时进入停止中状态
-        self.state = ScriptState.STOPPING
-        await self.broadcast_state({"state": self.state})
-        # 优先尝试优雅停止：通过 stop_event 通知子进程主动退出
         logger.info(f'Script {self.config_name} stopping gracefully')
         self.stop_event.set()
         try:
-            self.command_queue.put({"action": "stop"}, timeout=1)
+            self.command_queue.put_nowait({"action": "stop"})
         except Exception:
             pass
-        self._process.join(timeout=2)
-        if self._process.is_alive():
-            logger.warning(f'Script {self.config_name} graceful stop timeout, terminate')
-            self._process.terminate()
-            self._process.join(timeout=2)
-        if self._process.is_alive():
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, process.join, 2)
+        if process.is_alive():
+            logger.debug(f'Script {self.config_name} graceful stop timeout, terminate')
+            process.terminate()
+            await loop.run_in_executor(None, process.join, 2)
+        if process.is_alive():
             logger.error(f'Script {self.config_name} subprocess terminate failed, force kill')
-            self._process.kill()
-            self._process.join(timeout=1)
-        self._process = None
-        self.state = ScriptState.INACTIVE
+            process.kill()
+            await loop.run_in_executor(None, process.join, 1)
+
+    async def start(self):
+        # 第一阶段：检查并占用停止态，防止并发 start/stop 冲突
+        with self._state_lock:
+            if self.state in (ScriptState.RUNNING, ScriptState.STARTING):
+                logger.warning(f'Script {self.config_name} already running/starting')
+                return
+            if self.state == ScriptState.STOPPING:
+                logger.warning(f'Script {self.config_name} is stopping, please wait')
+                return
+            old_process = self._process
+            self._process = None
+            self.state = ScriptState.STOPPING
+
+        try:
+            # 第二阶段：在锁外终止旧进程，避免阻塞事件循环
+            if old_process is not None and old_process.is_alive():
+                await self._stop_process(old_process)
+
+            # 第三阶段：启动新进程
+            with self._state_lock:
+                # 若状态已被其他操作改变，则放弃本次启动
+                if self.state != ScriptState.STOPPING:
+                    return
+                self.stop_event.clear()
+                self.state = ScriptState.STARTING
+            await self.broadcast_state({"state": self.state})
+
+            new_process = multiprocessing.Process(target=func,
+                                                  args=(self.config_name, self.state_queue,
+                                                        self.command_queue, self.log_queue,
+                                                        self.stop_event,),
+                                                  name=self.config_name,
+                                                  daemon=True
+                                                  )
+            new_process.start()
+            await asyncio.sleep(0.3)
+
+            with self._state_lock:
+                if self.state != ScriptState.STARTING:
+                    # 启动期间被停止，终止刚创建的进程
+                    new_process.terminate()
+                    return
+                self._process = new_process
+                if new_process.is_alive():
+                    self.state = ScriptState.RUNNING
+                else:
+                    self._process = None
+                    logger.error(f'Script {self.config_name} failed to start')
+                    self.state = ScriptState.WARNING
+            await self.broadcast_state({"state": self.state})
+        except Exception as e:
+            logger.exception(f'Script {self.config_name} start failed: {e}')
+            with self._state_lock:
+                if self.state in (ScriptState.STOPPING, ScriptState.STARTING):
+                    self._process = None
+                    self.state = ScriptState.WARNING
+            await self.broadcast_state({"state": self.state})
+
+    async def stop(self):
+        process = None
+        with self._state_lock:
+            if self.state == ScriptState.INACTIVE:
+                return
+            if self.state == ScriptState.STOPPING:
+                logger.warning(f'Script {self.config_name} is already stopping')
+                return
+            process = self._process
+            self._process = None
+            self.state = ScriptState.STOPPING
         await self.broadcast_state({"state": self.state})
+
+        try:
+            await self._stop_process(process)
+        except Exception as e:
+            logger.exception(f'Script {self.config_name} stop failed: {e}')
+        finally:
+            with self._state_lock:
+                if self.state == ScriptState.STOPPING:
+                    self.state = ScriptState.INACTIVE
+            await self.broadcast_state({"state": self.state})
 
     async def coroutine_broadcast_state(self):
         try:
@@ -99,17 +149,40 @@ class ScriptProcess(ScriptWSManager):
                 if self.state == ScriptState.INACTIVE:
                     await sleep(1)
                     continue
+
+                # 进程看门狗：检测子进程是否意外退出
+                state_changed = False
+                new_state = None
+                with self._state_lock:
+                    process = self._process
+                    state = self.state
+                    if (process is not None and not process.is_alive()
+                            and state not in (ScriptState.STOPPING, ScriptState.INACTIVE)):
+                        exitcode = process.exitcode
+                        logger.warning(
+                            f'Script {self.config_name} exited unexpectedly, exitcode={exitcode}'
+                        )
+                        self._process = None
+                        new_state = ScriptState.INACTIVE if exitcode == 0 else ScriptState.WARNING
+                        self.state = new_state
+                        state_changed = True
+                if state_changed:
+                    await self.broadcast_state({"state": new_state})
+                    await sleep(0.5)
+                    continue
+
                 await sleep(0.1)
                 try:
                     if self.state_queue.empty():
-                        await sleep(1)
+                        await sleep(0.5)
                         continue
                     data = self.state_queue.get_nowait()
                     if not data:
                         await sleep(0.5)
                         continue
                     if 'state' in data and data['state'] == ScriptState.WARNING:
-                        self.state = ScriptState.WARNING
+                        with self._state_lock:
+                            self.state = ScriptState.WARNING
                     await self.broadcast_state(data)
                 except QueueEmpty as e:
                     logger.warning(f'QueueEmpty: {e}')
@@ -119,7 +192,7 @@ class ScriptProcess(ScriptWSManager):
                     logger.error(f'Error: {e}')
                     continue
         except CancelledError as e:
-            logger.warning(f'{self.config_name} state coroutine is cancelled')
+            logger.debug(f'{self.config_name} state coroutine is cancelled')
             return
 
     async def coroutine_broadcast_log(self):
@@ -149,7 +222,7 @@ class ScriptProcess(ScriptWSManager):
                     await sleep(0.5)
                     continue
         except CancelledError as e:
-            logger.warning(f'{self.config_name} log coroutine is cancelled')
+            logger.debug(f'{self.config_name} log coroutine is cancelled')
             return
 
 
@@ -210,7 +283,7 @@ def func(config: str, state_queue: multiprocessing.Queue,
         """读取主进程通过 command_queue 下发的控制命令（如调整日志级别、停止）。"""
         while not local_stop.is_set():
             try:
-                msg = command_queue.get(timeout=1)
+                msg = command_queue.get(timeout=0.1)
                 if not isinstance(msg, dict):
                     continue
                 action = msg.get('action')

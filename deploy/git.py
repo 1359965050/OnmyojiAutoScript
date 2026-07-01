@@ -46,6 +46,40 @@ class GitManager(DeployConfig):
             logger.warning(f"Failed to get git revision for {ref}: {e}")
             return None
 
+    def _git_fetch_with_timeout(self, source='origin', branch='master', timeout=3):
+        """
+        带超时的 git fetch，避免网络不可达时长时间阻塞。
+
+        Returns:
+            bool: True if fetch success, False if timeout or failed.
+        """
+        command = f'"{self.git}" fetch {source} {branch}'
+        command = command.replace(r"\\", "/").replace("\\", "/").replace('"', '"')
+        logger.info(command)
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                shell=True,
+                timeout=timeout,
+            )
+            if result.returncode == 0:
+                logger.info('[ success ]')
+                return True
+            logger.info(f'[ allowed failure ], error_code: {result.returncode}')
+            if result.stderr:
+                logger.info(result.stderr.strip())
+            return False
+        except subprocess.TimeoutExpired:
+            logger.info(f'[ timeout ] git fetch exceeded {timeout}s, skip network update')
+            return False
+        except Exception as e:
+            logger.info(f'[ allowed failure ], error: {e}')
+            return False
+
     def git_repository_init(
             self, repo, source='origin', branch='master',
             proxy='', ssl_verify=True, keep_changes=False, mirror=None
@@ -78,12 +112,26 @@ class GitManager(DeployConfig):
             self.execute(f'"{self.git}" remote add {source} {repo}')
 
         logger.hr('Fetch Repository Branch', 1)
-        self.execute(f'"{self.git}" fetch {source} {branch}')
+        fetch_success = self._git_fetch_with_timeout(source, branch, timeout=3)
 
         logger.hr('Check Version', 1)
         local_commit = self._git_revision('HEAD')
-        remote_commit = self._git_revision(f'{source}/{branch}')
-        if local_commit and remote_commit and local_commit == remote_commit:
+        remote_commit = self._git_revision(f'{source}/{branch}') if fetch_success else None
+
+        if not remote_commit:
+            if local_commit:
+                logger.warning(
+                    f'Cannot reach remote repository, using local version ({local_commit[:8]}), skip update'
+                )
+                logger.hr('Show Version', 1)
+                self.execute(f'"{self.git}" --no-pager log --no-merges -1', allow_failure=True)
+                return
+            else:
+                logger.error('No local code available and cannot fetch remote repository')
+                self.show_error(f'"{self.git}" fetch {source} {branch}')
+                raise ExecutionError
+
+        if local_commit and local_commit == remote_commit:
             logger.info(f'Local version equals remote version ({local_commit[:8]}), skip update')
             logger.hr('Show Version', 1)
             self.execute(f'"{self.git}" --no-pager log --no-merges -1')
