@@ -23,12 +23,9 @@ from tasks.Restart.config import Restart
 from tasks.GlobalGame.config import GlobalGame
 # 每日任务-----------------------------------------------------------------------------------------------------
 from tasks.AreaBoss.config import AreaBoss
-from tasks.ExperienceYoukai.config import ExperienceYoukai
-from tasks.GoldYoukai.config import GoldYoukai
 from tasks.KekkaiUtilize.config import KekkaiUtilize
 from tasks.KekkaiActivation.config import KekkaiActivation
 from tasks.DemonEncounter.config import DemonEncounter
-from tasks.DailyTrifles.config import DailyTrifles
 # ----------------------------------------------------------------------------------------------------------------------
 from tasks.Orochi.config import Orochi
 from tasks.Sougenbi.config import Sougenbi
@@ -71,14 +68,11 @@ class ConfigModel(ConfigBase):
 
     # 这些是每日任务的
     area_boss: AreaBoss = Field(default_factory=AreaBoss)
-    experience_youkai: ExperienceYoukai = Field(default_factory=ExperienceYoukai)
-    gold_youkai: GoldYoukai = Field(default_factory=GoldYoukai)
     realm_raid: RealmRaid = Field(default_factory=RealmRaid)
     ryou_toppa: RyouToppa = Field(default_factory=RyouToppa)
     kekkai_utilize: KekkaiUtilize = Field(default_factory=KekkaiUtilize)
     kekkai_activation: KekkaiActivation = Field(default_factory=KekkaiActivation)
     demon_encounter: DemonEncounter = Field(default_factory=DemonEncounter)
-    daily_trifles: DailyTrifles = Field(default_factory=DailyTrifles)
     exploration: Exploration = Field(default_factory=Exploration)
 
     # 这些是刷御魂的

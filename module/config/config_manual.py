@@ -10,7 +10,7 @@ class ConfigManual:
     SCHEDULER_PRIORITY = """
         Restart
         > KekkaiUtilize > KekkaiActivation > DemonEncounter
-        > AreaBoss > GoldYoukai > ExperienceYoukai > RealmRaid > RyouToppa > DailyTrifles > Exploration
+        > AreaBoss > RealmRaid > RyouToppa > Exploration
         > Dokan > AbyssShadows > Hunt > GuildBanquet > DemonRetreat > GuildActivityMonitor
         > Orochi > Sougenbi > FallenSun > EternitySea > SixRealms
         > ActivityShikigami

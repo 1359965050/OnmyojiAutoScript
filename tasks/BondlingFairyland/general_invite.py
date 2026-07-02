@@ -32,7 +32,7 @@ class RoomType(str, Enum):
     NORMAL_3 = 'normal_3'
     # 永生之海不一样
     ETERNITY_SEA = 'eternity_sea'
-    # 经验妖怪和金币妖怪
+    # 五人的房间
     NORMAL_5 = 'normal_5'
 
 

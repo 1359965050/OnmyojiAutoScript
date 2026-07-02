@@ -164,8 +164,6 @@
     </message>
     <message><source>Daily Task</source><translation>日常任务</translation></message>
     <message><source>AreaBoss</source><translation>地狱鬼王</translation></message>
-    <message><source>GoldYoukai</source><translation>金币妖怪</translation></message>
-    <message><source>ExperienceYoukai</source><translation>经验妖怪</translation></message>
     <message><source>Nian</source><translation>年兽</translation></message>
     <message><source>Soul Zones</source><translation>御魂副本</translation></message>
     <message><source>Orochi</source><translation>八岐大蛇</translation></message>
@@ -187,7 +185,6 @@
 	<message><source>KekkaiUtilize</source><translation>结界蹭卡</translation></message>
 	<message><source>KekkaiActivation</source><translation>结界挂卡</translation></message>
 	<message><source>DemonEncounter</source><translation>封魔之时</translation></message>
-	<message><source>DailyTrifles</source><translation>每日琐事</translation></message>
 	<message><source>TalismanPass</source><translation>花合战</translation></message>
 	<message><source>SoulsTidy</source><translation>御魂整理</translation></message>
 	<message><source>Pets</source><translation>小猫咪</translation></message>
@@ -208,8 +205,6 @@
     <name>TaskList</name>
 	    <message><source>Daily Task</source><translation>日常任务</translation></message>
     <message><source>AreaBoss</source><translation>地狱鬼王</translation></message>
-    <message><source>GoldYoukai</source><translation>金币妖怪</translation></message>
-    <message><source>ExperienceYoukai</source><translation>经验妖怪</translation></message>
     <message><source>Nian</source><translation>年兽</translation></message>
     <message><source>Soul Zones</source><translation>御魂副本</translation></message>
     <message><source>Orochi</source><translation>八岐大蛇</translation></message>
@@ -231,7 +226,6 @@
 	<message><source>KekkaiUtilize</source><translation>结界蹭卡</translation></message>
 	<message><source>KekkaiActivation</source><translation>结界挂卡</translation></message>
 	<message><source>DemonEncounter</source><translation>封魔之时</translation></message>
-	<message><source>DailyTrifles</source><translation>每日琐事</translation></message>
 	<message><source>TalismanPass</source><translation>花合战</translation></message>
 	<message><source>SoulsTidy</source><translation>御魂整理</translation></message>
 	<message><source>Pets</source><translation>小猫咪</translation></message>
@@ -590,15 +584,6 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
 </context>	
 <context>
     <name>Args</name>
-	<message><source>DailyTriflesConfig</source><translation>琐事</translation></message>	
-	<message><source>One Summon</source><translation>每日召唤</translation></message>	
-	<message><source>Guild Wish</source><translation>寮祈愿（还不知道可以写什么）</translation></message>	
-	<message><source>Friend Love</source><translation>友情点</translation></message>	
-	<message><source>Store Sign</source><translation>商店签到</translation></message>	
-	<message><source>store_sign_help</source><translation>就那个签到50次得黑蛋的</translation></message>	
-</context>	
-<context>
-    <name>Args</name>
 	<message><source>ThousandThings</source><translation>千物宝箱</translation></message>	
 	<message><source>Mystery Amulet</source><translation>神秘咒符</translation></message>
 	<message><source>Black Daruma Fragment</source><translation>御行达摩碎片</translation></message>	
@@ -678,11 +663,10 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
 	<message><source>PetsConfig</source><translation>宠物</translation></message>
 	<message><source>Pets Happy</source><translation>其乐融融</translation></message>
 	<message><source>Pets Feast</source><translation>饕餮大餐</translation></message>
-	<message><source>GoldYoukaiConfig</source><translation>金币妖怪</translation></message>
 </context>	
 <context>
     <name>Args</name>
-	<message><source>ShopConfig</source><translation>购买</translation></message>	
+		<message><source>ShopConfig</source><translation>购买</translation></message>	
 	<message><source>Shop Kaiko 3</source><translation>三星太鼓</translation></message>	
 	<message><source>Shop Kaiko 4</source><translation>四星太鼓</translation></message>
 	<message><source>ShareConfig</source><translation>分享</translation></message>

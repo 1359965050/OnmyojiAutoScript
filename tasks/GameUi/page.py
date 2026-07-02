@@ -4,7 +4,6 @@ import traceback
 
 from module.atom.click import RuleClick
 from tasks.BondlingFairyland.assets import BondlingFairylandAssets
-from tasks.DailyTrifles.assets import DailyTriflesAssets
 from tasks.GlobalGame.assets import GlobalGameAssets as GGA
 from tasks.GameUi.action import conditional_action
 from tasks.GameUi.assets import GameUiAssets as G
@@ -157,41 +156,62 @@ page_town.link(button=G.I_TOWN_GOTO_HYAKKIYAKOU, destination=page_hyakkiyakou)
 
 page_shikigami_records = Page(G.I_CHECK_RECORDS)
 page_shikigami_records.additional = [G.I_AD_DISAPPEAR, G.I_RECORDS_CLOSE, GGA.I_UI_CANCEL_SAMLL]
+page_shikigami_records.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                                  action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_shikigami_records.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_SHIKIGAMI_RECORDS, destination=page_shikigami_records)
 
 page_onmyodo = Page(G.I_CHECK_ONMYODO)
+page_onmyodo.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                        action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_onmyodo.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_ONMYODO, destination=page_onmyodo)
 
 page_friends = Page(G.I_CHECK_FRIENDS)
+page_friends.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                        action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_friends.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_FRIENDS, destination=page_friends)
 
 page_daily = Page(G.I_CHECK_DAILY)
+page_daily.add_enter_failure_hooks(
+    conditional_action(condition=G.I_CHECK_MAIN, action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA),
+    conditional_action(condition=lambda task: not task.appear(G.I_CHECK_MAIN),
+                       action=lambda task: task.ui_click(click=random_click(ltrb=(False, False, False, True)),
+                                                         stop=GGA.I_UI_BACK_YELLOW)))
 page_daily.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_DAILY, destination=page_daily)
 
-page_mall = Page(check_button=[G.I_CHECK_MALL, DailyTriflesAssets.I_ROOM_GIFT])
+page_mall = Page(check_button=G.I_CHECK_MALL)
 page_mall.additional = [G.I_AD_CLOSE_RED, GGA.I_UI_CANCEL_SAMLL, G.I_BACK_Y]
+page_mall.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                     action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_mall.link(button=G.I_BACK_YOLLOW, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_MALL, destination=page_mall)
 
 page_guild = Page(G.I_CHECK_GUILD)
 page_guild.additional = [KekkaiUtilizeAssets.I_PLANT_TREE_CLOSE, G.I_CLOSE_CHAT_WINDOW]
+page_guild.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                      action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_guild.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_GUILD, destination=page_guild)
 
 page_team = Page(G.I_CHECK_TEAM)
+page_team.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                     action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_team.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_TEAM, destination=page_team)
 
 page_collection = Page(G.I_CHECK_COLLECTION)
 page_collection.additional = [GGA.I_UI_CANCEL_SAMLL]
+page_collection.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                           action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_collection.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_COLLECTION, destination=page_collection)
 
 page_travel = Page(G.I_CHECK_TRAVEL)
+page_travel.add_enter_failure_hooks(conditional_action(condition=G.I_CHECK_MAIN,
+                                                       action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_travel.link(button=G.I_BACK_Y, destination=page_main)
 page_main.link(button=G.I_MAIN_GOTO_TRAVEL, destination=page_travel)
 

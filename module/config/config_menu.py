@@ -19,24 +19,15 @@ class ConfigMenu:
         # 全局设置
         self.menu['GlobalSettings'] = ['EmulatorSettings', 'Restart', 'GameSettings']
         # 刷御魂
-        self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea', 'SixRealms']
+        self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea']
         # 日常的任务
-        self.menu["Daily Task"] = ['DailyTrifles', 'AreaBoss', 'GoldYoukai', 'ExperienceYoukai',
-                                   'DemonEncounter']
-        # 很肝的任务
-        self.menu["Liver Emperor Exclusive"] = [
-            "BondlingFairyland",
-            "EvoZone",
-            "GoryouRealm",
-            "Exploration",
-            "Hyakkiyakou",
-            "HeroTest"
-        ]
+        self.menu["Daily Task"] = ['AreaBoss', 'DemonEncounter', 'BondlingFairyland', 'EvoZone',
+                                   'Exploration', 'GoryouRealm', 'Hyakkiyakou']
         # 阴阳寮
         self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan',
                               'Hunt' , 'AbyssShadows', 'GuildBanquet', 'DemonRetreat', 'GuildActivityMonitor']
         # 每周任务
-        self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles']
+        self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles', 'SixRealms', 'HeroTest']
         # 活动的任务
         self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials']
 
