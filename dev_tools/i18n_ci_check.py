@@ -35,10 +35,7 @@ def generate_schema() -> None:
         "open('schema_debug.json', 'w', encoding='utf-8'), "
         "ensure_ascii=False, indent=2)"
     )
-    result = run(["toolkit/python.exe", "-c", code])
-    if result != 0:
-        # Fallback to plain python if toolkit python is not available.
-        result = run([sys.executable, "-c", code])
+    result = run([sys.executable, "-c", code])
     if result != 0:
         raise SystemExit(f"Failed to generate {SCHEMA_DEBUG}")
 
@@ -48,7 +45,7 @@ def main() -> int:
         generate_schema()
 
     # 1. Ensure generated files are up to date.
-    result = run(["toolkit/python.exe", "dev_tools/i18n_sync.py", "--check"])
+    result = run([sys.executable, "dev_tools/i18n_sync.py", "--check"])
     if result != 0:
         print(
             "\n❌ Generated translation files are out of date. "
@@ -59,7 +56,7 @@ def main() -> int:
 
     # 2. Ensure no missing, conflicting, or redundant translations.
     result = run(
-        ["toolkit/python.exe", "dev_tools/i18n_check.py", "--check-redundant"]
+        [sys.executable, "dev_tools/i18n_check.py", "--check-redundant"]
     )
     if result != 0:
         print(
