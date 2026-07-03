@@ -118,9 +118,9 @@ page_heian_kitan = Page(G.I_CHECK_HEIAN_KITAN)
 page_heian_kitan.link(button=G.I_CHECK_HEIAN_KITAN, destination=page_exploration)
 page_exploration.link(button=G.I_EXPLORATION_GOTO_HEIAN_KITAN, destination=page_heian_kitan)
 
-page_six_gates = Page(G.O_CHECK_SIX_GATES)
+page_six_gates = Page(G.I_CHECK_SIX_GATES)
 page_six_gates.link(button=G.I_SIX_GATES_GOTO_EXPLORATION, destination=page_exploration)
-page_exploration.link(button=G.O_EXPLORATION_GOTO_SIX_GATES, destination=page_six_gates)
+page_exploration.link(button=G.I_EXPLORATION_GOTO_SIX_GATES, destination=page_six_gates)
 
 page_bondling_fairyland = Page(BondlingFairylandAssets.I_BALL_AREA)
 page_bondling_fairyland.link(button=G.I_BACK_YOLLOW, destination=page_exploration)

@@ -29,7 +29,7 @@ class ConfigMenu:
         # 每周任务
         self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles', 'SixRealms', 'HeroTest']
         # 活动的任务
-        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials']
+        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials', 'GuaGuaArtRoom']
 
     @cached_property
     def gui_menu(self) -> str:

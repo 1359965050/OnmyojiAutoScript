@@ -64,12 +64,27 @@ async def execute_update():
         return f'更新异常: {e}'
 
 
-@home_app.put(HomeEndpoints.CHINESE_TRANSLATE)
-async def chinese_translate(data: dict = Body(...)):
+@home_app.get(HomeEndpoints.CHINESE_TRANSLATE)
+async def chinese_translate():
+    """Return the backend-managed Chinese translations.
+
+    The frontend used to push translations via PUT; now the backend owns the
+    single source of truth and only serves the generated file.
+    """
     try:
-        I18n.save_zh_cn(data)
+        return I18n.load_zh_cn()
     except Exception as e:
         logger.error(e)
+    return {}
+
+
+@home_app.put(HomeEndpoints.CHINESE_TRANSLATE)
+async def chinese_translate_put(data: dict = Body(...)):
+    """Compatibility endpoint for older frontends that still push translations.
+
+    The backend no longer accepts runtime overrides; the generated file from
+    i18n_cn.dart is the source of truth.
+    """
     return True
 
 

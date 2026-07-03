@@ -17,6 +17,7 @@ from module.server.tool_router import tool_app
 from module.server.api_logger import ApiLoggingMiddleware, api_logger
 from module.server.setting import State
 from module.server.main_manager import mm
+from module.server.i18n import I18n
 from module.server.constants import (
     APP_TITLE, APP_DESCRIPTION, APP_VERSION,
     CORS_ALLOW_ORIGINS, CORS_ALLOW_CREDENTIALS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS,
@@ -63,12 +64,18 @@ async def on_startup():
     :return:
     """
     logger.info('OAS web service startup done')
+    try:
+        I18n.sync_to_frontend_cache()
+        I18n.start_watching(interval=30)
+    except Exception as e:
+        logger.warning(f'Failed to sync translations to frontend cache: {e}')
     if app.state.script_instances:
         await mm.restart_processes(app.state.script_instances)
 
 
 async def on_shutdown():
     logger.info('OAS web service shutdown done')
+    I18n.stop_watching()
 
 
 @app.exception_handler(Exception)

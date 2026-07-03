@@ -1,0 +1,30 @@
+name: Translation Check
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'OASX-master/lib/config/translation/**'
+      - 'module/config/config_model.py'
+      - 'tasks/**/config.py'
+      - 'module/config/config_menu.py'
+      - 'dev_tools/i18n_*.py'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'OASX-master/lib/config/translation/**'
+      - 'module/config/config_model.py'
+      - 'tasks/**/config.py'
+      - 'module/config/config_menu.py'
+      - 'dev_tools/i18n_*.py'
+
+jobs:
+  i18n-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run translation CI check (sync, missing, collisions, redundant)
+        shell: powershell
+        run: |
+          python dev_tools/i18n_ci_check.py

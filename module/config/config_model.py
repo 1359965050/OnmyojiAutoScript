@@ -43,6 +43,7 @@ from tasks.GuildActivityMonitor.config import GuildActivityMonitor
 from tasks.ActivityShikigami.config import ActivityShikigami
 from tasks.MetaDemon.config import MetaDemon
 from tasks.DyeTrials.config import DyeTrials
+from tasks.GuaGuaArtRoom.config import GuaGuaArtRoom
 # ----------------------------------------------------------------------------------------------------------------------
 
 # 肝帝专属---------------------------------------------------------------------------------------------------------------
@@ -86,6 +87,7 @@ class ConfigModel(ConfigBase):
     activity_shikigami: ActivityShikigami = Field(default_factory=ActivityShikigami)
     meta_demon: MetaDemon = Field(default_factory=MetaDemon)
     dye_trials: DyeTrials = Field(default_factory=DyeTrials)
+    gua_gua_art_room: GuaGuaArtRoom = Field(default_factory=GuaGuaArtRoom)
 
     # 这些是肝帝专属
     bondling_fairyland: BondlingFairyland = Field(default_factory=BondlingFairyland)

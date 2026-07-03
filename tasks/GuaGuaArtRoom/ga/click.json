@@ -1,0 +1,14 @@
+[
+  {
+    "itemName": "random_left",
+    "roiFront": "17,84,104,356",
+    "roiBack": "17,81,106,365",
+    "description": "左侧随机点击区域"
+  },
+  {
+    "itemName": "random_right",
+    "roiFront": "1133,88,131,361",
+    "roiBack": "1131,84,133,363",
+    "description": "右侧随机点击区域"
+  }
+]

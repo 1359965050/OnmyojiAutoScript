@@ -42,15 +42,11 @@ class ActivityShikigamiAssets:
 	I_ACT_FIRE = RuleImage(roi_front=(1132,602,84,45), roi_back=(1080,530,192,190), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_act_fire.png")
 	# boss挑战标志 
 	I_AS_BOSS_FIRE = RuleImage(roi_front=(1130,590,92,47), roi_back=(1080,530,192,190), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_as_boss_fire.png")
-	# boss 战结束后结果页右上角的红色叉号
-	I_BOSS_RESULT_CLOSE = RuleImage(roi_front=(1153,43,32,30), roi_back=(1100,20,160,100), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_boss_result_close.png")
 
 
 	# Ocr Rule Assets
-	# 挑战按钮OCR识别 
+	# 挑战 
 	O_FIRE = RuleOcr(roi=(962,529,308,171), area=(964,530,309,171), mode="Full", method="Default", keyword="挑战", name="fire")
-	# boss挑战按钮OCR识别，积胜纳福/毗沙门天页面挑战按钮位于右下角（覆盖挑战徽章、×N 次数及每日进度区域）
-	O_FIRE_BOSS = RuleOcr(roi=(1050,560,230,180), area=(1050,560,230,180), mode="Full", method="Default", keyword="挑战", name="fire_boss")
 	# 体力的数量检测 
 	O_REMAIN_AP = RuleOcr(roi=(748,14,95,34), area=(748,14,95,34), mode="DigitCounter", method="Default", keyword="", name="remain_ap")
 	# 活动体力的剩余检测 
@@ -60,8 +56,7 @@ class ActivityShikigamiAssets:
 	# 活动票数（没有百分比） 
 	O_REMAIN_PASS2 = RuleOcr(roi=(750,17,88,29), area=(750,17,88,29), mode="Digit", method="Default", keyword="", name="remain_pass2")
 	# boss剩余攻击次数 
-	# 手动修正 ROI：原 ROI 只截取到 /200，漏掉前面的次数，导致 OCR 返回 None
-	O_REMAIN_BOSS = RuleOcr(roi=(1130,670,100,30), area=(1130,670,100,30), mode="DigitCounter", method="Default", keyword="", name="remain_boss")
+	O_REMAIN_BOSS = RuleOcr(roi=(1192,670,70,30), area=(1192,670,70,30), mode="DigitCounter", method="Default", keyword="", name="remain_boss")
 
 
 	# Image Rule Assets
@@ -81,6 +76,8 @@ class ActivityShikigamiAssets:
 	I_AS_TO_PASS = RuleImage(roi_front=(624,505,38,35), roi_back=(273,141,759,475), threshold=0.65, method="Template matching", file="./tasks/ActivityShikigami/as/as_as_to_pass.png")
 	# 确认跳过 
 	I_CONFIRM_SKIP = RuleImage(roi_front=(707,442,137,38), roi_back=(656,397,231,124), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_confirm_skip.png")
+	#  
+	I_RM_CHECK_BOSS = RuleImage(roi_front=(988,599,75,29), roi_back=(952,546,142,115), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_rm_check_boss.png")
 	# 活动页2标志 
 	I_AS_CHECK_MAIN_2 = RuleImage(roi_front=(566,10,151,36), roi_back=(505,0,256,92), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_as_check_main_2.png")
 	# 打开眼睛按钮 

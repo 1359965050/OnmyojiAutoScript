@@ -18,7 +18,7 @@ class ConfigManual:
         > Hyakkiyakou
         > Secret > WeeklyTrifles
         > RichMan
-        > MetaDemon > DyeTrials
+        > MetaDemon > DyeTrials > GuaGuaArtRoom
         """
 
     DEVICE_OVER_HTTP = False
