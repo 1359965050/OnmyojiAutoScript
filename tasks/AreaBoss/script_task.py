@@ -58,14 +58,14 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             self.switch_to_famous()
 
         if con.boss_number - boss_fought == 3:
-            self.boss_fight(self.I_BATTLE_1)
-            self.boss_fight(self.I_BATTLE_2)
-            self.boss_fight(self.I_BATTLE_3)
+            self.boss_fight(self.I_BATTLE_1, ultra=True)
+            self.boss_fight(self.I_BATTLE_2, ultra=True)
+            self.boss_fight(self.I_BATTLE_3, ultra=True)
         elif con.boss_number - boss_fought == 2:
-            self.boss_fight(self.I_BATTLE_1)
-            self.boss_fight(self.I_BATTLE_2)
+            self.boss_fight(self.I_BATTLE_1, ultra=True)
+            self.boss_fight(self.I_BATTLE_2, ultra=True)
         elif con.boss_number - boss_fought == 1:
-            self.boss_fight(self.I_BATTLE_1)
+            self.boss_fight(self.I_BATTLE_1, ultra=True)
         # 退出
         self.goto_page(page_main)
         self.set_next_run(task='AreaBoss', success=True, finish=False)
@@ -145,21 +145,22 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             return True
 
         if ultra:
-            if not self.get_difficulty():  # 在普通界面
-                # 出现了极, 则直接切换到极地鬼
+            # 判断是否能切换到极地鬼
+            if not self.get_difficulty():
+                # 如何可以切换，直接切换
                 if self.appear(self.I_AB_DIFFICULTY_NORMAL):
                     self.switch_difficulty(True)
-                elif self.config.area_boss.boss.Attack_60:  # 没有出现极则一次没打过, 拉到60级再打
+                elif self.config.area_boss.boss.Attack_60:
                     self.switch_to_level_60()
-                    if not self.start_fight():  # 60级没打过退出吧
+                    if not self.start_fight():
                         logger.warning("you are so weakness!")
                         self.wait_until_appear(self.I_AB_CLOSE_RED)
                         self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                         return False
-                    self.switch_difficulty(True)  # 打过了切换到极
-                else:  # 普通地鬼且没有开启打60级
+                else:
                     self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                     return False
+                # 切换到 极地鬼
 
             # 调整悬赏层数
             match reward_floor:

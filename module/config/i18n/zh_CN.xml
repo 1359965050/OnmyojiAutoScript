@@ -3446,6 +3446,10 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>雪月华庭</translation>
         </message>
         <message>
+            <source>costume_main_15</source>
+            <translation>茨心乐园</translation>
+        </message>
+        <message>
             <source>costume_shikigami_10</source>
             <translation>今宵胧明</translation>
         </message>
