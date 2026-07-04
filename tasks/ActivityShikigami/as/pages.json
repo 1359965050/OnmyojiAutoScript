@@ -36,15 +36,6 @@
     "description": "点击进入boss战斗页面"
   },
   {
-    "itemName": "check_battle_boss",
-    "imageName": "as_check_battle_boss.png",
-    "roiFront": "42,316,47,35",
-    "roiBack": "0,216,156,224",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "boss界面标志"
-  },
-  {
     "itemName": "battle_main_to_records",
     "imageName": "as_battle_main_to_records.png",
     "roiFront": "1015,560,39,42",

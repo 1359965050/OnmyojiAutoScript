@@ -27,9 +27,9 @@ class GuaGuaArtRoomAssets:
 	# 获取颜料页面检测 
 	I_CHECK_PAINT_COLLECTION = RuleImage(roi_front=(166,22,129,35), roi_back=(160,18,140,45), threshold=0.7, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_check_paint_collection.png")
 	# 获取颜料页右下角挑战按钮 
-	I_PAINT_CHALLENGE = RuleImage(roi_front=(1115,595,99,74), roi_back=(1090,570,150,130), threshold=0.7, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_paint_challenge.png")
+	I_PAINT_CHALLENGE = RuleImage(roi_front=(1115,595,99,74), roi_back=(1090,570,150,130), threshold=0.8, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_paint_challenge.png")
 	# 颜料上限弹窗前往提交按钮 
-	I_GO_SUBMIT = RuleImage(roi_front=(698,418,132,40), roi_back=(680,400,170,80), threshold=0.7, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_go_submit.png")
+	I_GO_SUBMIT = RuleImage(roi_front=(698,418,132,40), roi_back=(680,400,170,80), threshold=0.8, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_go_submit.png")
 	# 活动主页面提交颜料按钮 
 	I_SUBMIT_PAINT = RuleImage(roi_front=(1151,593,117,129), roi_back=(1130,570,160,160), threshold=0.7, method="Template matching", file="./tasks/GuaGuaArtRoom/ga/ga_submit_paint.png")
 

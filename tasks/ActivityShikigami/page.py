@@ -23,7 +23,7 @@ page_act_pass = Page(ActivityShikigamiAssets.I_CLIMB_MODE_PASS)
 page_act_pass.connect(page_act, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_act_pass->page_act")
 # BOSS爬塔页面
 # 使用 boss 挑战按钮作为页面检测，不同活动的 boss 页布局可能变化，但右下角挑战按钮相对稳定
-page_act_boss = Page(ActivityShikigamiAssets.I_AS_BOSS_FIRE)
+page_act_boss = Page(ActivityShikigamiAssets.I_AS_BOSS_FIRE, priority=60)
 page_act_boss.connect(page_act, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_act_boss->page_act")
 page_act.connect(page_act_boss, ActivityShikigamiAssets.I_TO_BATTLE_BOSS, key="page_act->page_act_boss")
 
@@ -41,7 +41,7 @@ def create_event_pages(desc: EventDescriptor) -> dict[str, Page]:
     # 子模式页面（使用通用资产）
     p_act_ap = Page(ActivityShikigamiAssets.I_CLIMB_MODE_AP, key='page_act_ap', register=False)
     p_act_pass = Page(ActivityShikigamiAssets.I_CLIMB_MODE_PASS, key='page_act_pass', register=False)
-    p_act_boss = Page(ActivityShikigamiAssets.I_AS_BOSS_FIRE, key='page_act_boss', register=False)
+    p_act_boss = Page(ActivityShikigamiAssets.I_AS_BOSS_FIRE, key='page_act_boss', register=False, priority=60)
 
     # 正向导航连接：活动主界面 → 子模式页面
     p_act.connect(p_act_ap, ActivityShikigamiAssets.I_TO_BATTLE_AP, key="page_act->page_act_ap")

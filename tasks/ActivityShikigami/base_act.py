@@ -222,7 +222,11 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
     def close_boss_result(self) -> bool:
         """
         boss 战结束后关闭结果展示页（右上角红色叉号）
+        部分活动无独立结果页，若未配置 I_BOSS_RESULT_CLOSE 则跳过
         """
+        if not hasattr(self, 'I_BOSS_RESULT_CLOSE'):
+            logger.info('No I_BOSS_RESULT_CLOSE configured, skip close boss result page')
+            return True
         logger.info('Close boss result page')
         timeout = Timer(10).start()
         while not timeout.reached():
@@ -251,9 +255,8 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
             if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=1) or \
                     self.appear_then_click(self.I_UI_CONFIRM, interval=1):
                 continue
-            # boss 模式使用专门的 OCR ROI，其他模式使用通用 O_FIRE
-            fire_ocr = self.O_FIRE_BOSS if self.climb_type == 'boss' else self.O_FIRE
-            if self.ocr_appear_click(fire_ocr, interval=1.5):
+            # 活动各模式挑战按钮均使用通用 O_FIRE ROI（boss 无单独 OCR 定义）
+            if self.ocr_appear_click(self.O_FIRE, interval=1.5):
                 self.device.click_record_clear()
                 click_times += 1
                 logger.info(f'Try click fire, remain times[{max_times - click_times}]')
@@ -327,6 +330,11 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
             remain_times = self.O_REMAIN_AP.ocr_digit(self.device.image)
         if self.climb_type == 'boss':
             cur, remain_times, total = self.O_REMAIN_BOSS.ocr_digit_counter(self.device.image)
+            # 容错：OCR 只识别到 "/total"（缺少 current）时，会返回 (0, 0, total)
+            # 活动 BOSS 次数显示为 "已打次数/可打次数"，0/total 表示还可打 total 次
+            if cur == 0 and remain_times == 0 and total > 0:
+                remain_times = total
+                logger.info(f'[REMAIN_BOSS] OCR missing current count, assume remain {remain_times}/{total}')
         # 上一次识别的票的数量和这一次识别的数量差距大于1, 则认为票数量有误, 允许继续挑战
         if self.pre_tickets_map[self.climb_type] - remain_times > 1:
             self.pre_tickets_map[self.climb_type] -= 1

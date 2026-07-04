@@ -2,6 +2,7 @@
 # @author runhey
 # github https://github.com/runhey
 from datetime import datetime, timedelta, time
+from time import sleep
 import random  # type: ignore
 from module.atom.image import RuleImage
 
@@ -38,7 +39,7 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
         self.open_exp_buff()
         self.switch_hero(self.conf.herotest.layer)
         self.init_pages()
-        self.ui_goto_page(self.page_hero_mode)
+        self.goto_hero_mode()
         self.check_and_lock_team()
         while True:
             if self.limit_time is not None and self.limit_time + self.start_time < datetime.now():
@@ -47,7 +48,7 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
             if self.current_count >= self.limit_count:
                 logger.info("Count out")
                 break
-            self.ui_goto_page(self.page_hero_mode)
+            self.goto_hero_mode()
             if not self.can_run(self.conf.herotest.layer):
                 break
             entered = self.enter_battle()
@@ -156,28 +157,28 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
     def hero2_skill_wait(self):
         if not self.appear(self.I_BCMJ_SKILL_ADD_CONFIRM):
             return False
-        
+
         # Local imports to avoid namespace issues and prevent runtime errors
         from time import sleep
         from module.atom.ocr import RuleOcr
-        
+
         # 1. Define OCR rule for the skill names row (1280x720 coordinate system)
         # The text is located at Y ≈ 360 to Y ≈ 390. We use Y = 330 to Y = 420 for robust coverage.
         skill_ocr = RuleOcr(roi=(0, 330, 1280, 90), area=(0, 330, 1280, 90), mode="Full", method="Default", keyword="", name="hero2_skills_ocr")
-        
+
         # 2. Selection priority list (substring matching)
         # Fanyin is the top priority: "泛音"
         # Others in order: "凝啸" -> "叩弦" -> "遏云" -> "音迹"
         priority_keywords = ["泛音", "凝啸", "叩弦", "遏云", "音迹"]
-        
+
         # 3. Try to detect and select skill dynamically via OCR
         click_count = 0
         while True:
             self.screenshot()
-            
+
             # Run OCR on the screen area
             results = skill_ocr.detect_and_ocr(self.device.image)
-            
+
             # Find the best match according to our priority list
             matched_res = None
             for keyword in priority_keywords:
@@ -188,7 +189,7 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
                         break
                 if matched_res:
                     break
-            
+
             # If a preferred skill is matched, calculate absolute coordinate and click it
             if matched_res:
                 box = matched_res.box
@@ -196,12 +197,12 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
                 box_y = (box[0][1] + box[2][1]) / 2
                 click_x = int(box_x + skill_ocr.roi[0])
                 click_y = int(box_y + skill_ocr.roi[1])
-                
+
                 logger.info(f"Clicking matched skill at ({click_x}, {click_y})")
                 self.device.click(x=click_x, y=click_y)
                 sleep(1.0)
                 break
-                
+
             # Fallback if no matching skill detected or after a few attempts
             click_count += 1
             if click_count >= 5:
@@ -211,7 +212,7 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
                 self.device.click(x=fallback_x, y=fallback_y)
                 sleep(1.0)
                 break
-                
+
         self.ui_click_until_disappear(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1.5)
         return True
 
@@ -318,23 +319,58 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
             self.ui_click(lock_img, unlock_img, interval=0.8)
 
     def init_pages(self):
-        """初始化页面"""
+        """初始化页面
+        复用全局注册的 page_hero_mode / page_hero_skill_reward，
+        仅根据当前 layer 设置从 page_hero_test 进入模式页的入口按钮。
+        """
+        self.page_hero_mode = pages.page_hero_mode
         match self.conf.herotest.layer:
             case Layer.YANWU:
-                self.page_hero_mode = pages.Page(self.I_CHECK_HERO1_EXP)
+                self._hero_mode_entry = self.I_GBB
+                self._hero_mode_fallback_click = (113, 410)
                 pages.page_hero_test.link(button=self.I_GBB, destination=self.page_hero_mode)
             case Layer.MIJING:
-                self.page_hero_mode = pages.Page(self.I_CHECK_HERO1_SKILL)
+                self._hero_mode_entry = self.I_BCMJ
+                self._hero_mode_fallback_click = (1105, 413)
                 pages.page_hero_test.link(button=self.I_BCMJ, destination=self.page_hero_mode)
             case Layer.CHUANCHENG:
-                self.page_hero_mode = pages.Page(self.I_CHECK_HERO2_EXP)
+                self._hero_mode_entry = self.I_ENTER_CCSL
+                self._hero_mode_fallback_click = (322, 318)
                 pages.page_hero_test.link(button=self.I_ENTER_CCSL, destination=self.page_hero_mode)
             case Layer.MENGXU:
-                self.page_hero_mode = pages.Page(self.I_CHECK_HERO2_SKILL)
+                self._hero_mode_entry = self.I_ENTER_MXMJ
+                self._hero_mode_fallback_click = (1095, 400)
                 pages.page_hero_test.link(button=self.I_ENTER_MXMJ, destination=self.page_hero_mode)
             case _:
                 raise ValueError(f'Unknown Layer {Layer}')
+        # 返回链接已在 page.py 全局设置，这里确保指向正确
         self.page_hero_mode.link(button=self.I_BACK_YOLLOW, destination=pages.page_hero_test)
+
+    def goto_hero_mode(self):
+        """进入当前英杰模式页，先检查是否已在模式页，否则尝试识别入口按钮，失败则用固定坐标兜底点击"""
+        self.screenshot()
+        if self.ui_page_appear(self.page_hero_mode):
+            logger.info('Already at hero mode page')
+            return
+        entry = self._hero_mode_entry
+        fallback = self._hero_mode_fallback_click
+        # 先尝试 3 次模板识别点击
+        for attempt in range(3):
+            self.screenshot()
+            if self.appear_then_click(entry, interval=1):
+                logger.info(f'Hero mode entry clicked by template (attempt {attempt + 1})')
+                if self.ui_wait_until_appear(self.page_hero_mode, timeout=8):
+                    return
+                # 点击了但页面没跳转，继续尝试
+                continue
+            # 模板没识别到，短暂等待后重试
+            sleep(0.5)
+        # 兜底：直接点入口中心坐标
+        logger.warning('Hero mode entry template failed, use fallback coordinate click')
+        x, y = fallback
+        self.device.click(x=x, y=y)
+        if not self.ui_wait_until_appear(self.page_hero_mode, timeout=10):
+            logger.warning('Fallback click did not arrive at hero mode page')
 
 
 if __name__ == "__main__":

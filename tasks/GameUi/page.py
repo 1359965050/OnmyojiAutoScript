@@ -9,6 +9,7 @@ from tasks.GameUi.action import conditional_action
 from tasks.GameUi.assets import GameUiAssets as G
 from tasks.GameUi.matcher import any_of
 from tasks.GameUi.page_definition import Page as NewPage, PageRegistry
+from tasks.HeroTest.assets import HeroTestAssets
 from tasks.KekkaiUtilize.assets import KekkaiUtilizeAssets
 from tasks.Restart.assets import RestartAssets
 from tasks.base_task import BaseTask as BT
@@ -129,6 +130,25 @@ page_exploration.link(button=G.I_EXPLORATION_GOTO_BONDLING_FAIRYLAND, destinatio
 page_hero_test = Page(G.I_CHECK_HERO_TEST)
 page_hero_test.link(button=G.I_BACK_YOLLOW, destination=page_exploration)
 page_exploration.link(button=G.I_EXPLORATION_GOTO_HERO_TEST, destination=page_hero_test)
+
+# 英杰试炼各模式子页面（鬼兵演武、兵藏秘境、传承试炼、梦虚秘境）
+page_hero_mode = Page([
+    HeroTestAssets.I_CHECK_HERO1_EXP,
+    HeroTestAssets.I_CHECK_HERO2_EXP,
+    HeroTestAssets.I_CHECK_HERO1_SKILL,
+    HeroTestAssets.I_CHECK_HERO2_SKILL,
+    HeroTestAssets.I_BCMJ_BATTLE,
+    HeroTestAssets.I_BCMJ_LOCK,
+    HeroTestAssets.I_BCMJ_UNLOCK,
+], priority=30)
+page_hero_mode.link(button=G.I_BACK_YOLLOW, destination=page_hero_test)
+
+# 英杰试炼技能/属性奖励选择界面（兵藏秘境、梦虚秘境战斗后）
+page_hero_skill_reward = Page(HeroTestAssets.I_BCMJ_SKILL_ADD_CONFIRM)
+page_hero_skill_reward.link(
+    button=HeroTestAssets.I_BCMJ_SKILL_ADD_CONFIRM,
+    destination=page_hero_mode
+)
 
 page_demon_encounter = Page(G.I_CHECK_DEMON_ENCOUNTER)
 page_demon_encounter.link(button=G.I_BACK_YOLLOW, destination=page_town)

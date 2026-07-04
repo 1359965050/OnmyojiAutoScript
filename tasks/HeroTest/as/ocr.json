@@ -10,12 +10,12 @@
   },
   {
     "itemName": "art_war_card",
-    "roiFront": "712,21,98,36",
-    "roiBack": "712,21,98,36",
+    "roiFront": "742,32,63,17",
+    "roiBack": "742,32,63,17",
     "mode": "DigitCounter",
     "method": "Default",
     "keyword": "",
-    "description": "兵藏秘境兵道帖"
+    "description": "兵道帖"
   },
   {
     "itemName": "art_war_card_plus",
