@@ -90,13 +90,15 @@ class Script:
         """
         return None
 
-    def save_error_log(self):
+    def save_error_log(self, e: Exception | None = None):
         """
         保存错误现场到 ./log/error/<script_name>_<timestamp_ms>。
 
         保存内容包括:
         - 最近一段截图, 文件名为时间戳 PNG。
         - 当前脚本日志的截取内容, 文件名为 log.txt。
+        - 错误上下文快照: 任务名、页面状态、设备信息、配置。
+        - 完整 traceback（如果传入异常对象）。
 
         说明:
         - 新错误目录名会带上脚本名, 便于前端区分不同脚本产生的错误。
@@ -105,18 +107,28 @@ class Script:
         from module.base.utils import save_image
         from module.handler.sensitive_info import (handle_sensitive_image,
                                                    handle_sensitive_logs)
+        import traceback
         if self.config.script.error.save_error:
             if not os.path.exists('./log/error'):
                 os.mkdir('./log/error')
-            # 用统一规则生成错误目录名, 目录格式为 <script_name>_<timestamp_ms>。
             folder_name = build_error_log_dir_name(self.config_name, int(time.time() * 1000))
             folder = f'./log/error/{folder_name}'
             logger.warning(f'Saving error: {folder}')
             os.mkdir(folder)
+
             for data in self.device.screenshot_deque:
                 image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
                 image = handle_sensitive_image(data['image'])
                 save_image(image, f'{folder}/{image_time}.png')
+
+            try:
+                latest = self.device.screenshot()
+                image_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S-%f')
+                image = handle_sensitive_image(latest)
+                save_image(image, f'{folder}/{image_time}.png')
+            except Exception:
+                pass
+
             with open(logger.log_file, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
                 start = 0
@@ -126,7 +138,47 @@ class Script:
                         start = index
                 lines = lines[start - 2:]
                 lines = handle_sensitive_logs(lines)
+
+            context_lines = []
+            context_lines.append('=' * 60 + '\n')
+            context_lines.append('ERROR CONTEXT SNAPSHOT\n')
+            context_lines.append('=' * 60 + '\n')
+            context_lines.append(f'Time: {datetime.now().isoformat()}\n')
+            context_lines.append(f'Script: {self.config_name}\n')
+            context_lines.append(f'Running Task: {self.config.model.running_task}\n')
+            context_lines.append(f'Next Task: {self.config.task.command if self.config.task else "None"}\n')
+            try:
+                context_lines.append(f'Device: {self.device.__class__.__name__}\n')
+            except Exception:
+                context_lines.append('Device: Unknown\n')
+            try:
+                context_lines.append(f'Package: {self.device.package}\n')
+            except Exception:
+                context_lines.append('Package: Unknown\n')
+            try:
+                context_lines.append(f'Screen Size: {getattr(self.device, "screen_size", getattr(self.device, "screenshot_size", "Unknown"))}\n')
+            except Exception:
+                context_lines.append('Screen Size: Unknown\n')
+            try:
+                context_lines.append(f'Error Count: {self.config.script.error.error_count}\n')
+            except Exception:
+                context_lines.append('Error Count: Unknown\n')
+            try:
+                context_lines.append(f'Failure Record: {json.dumps(self.failure_record, ensure_ascii=False)}\n')
+            except Exception:
+                context_lines.append('Failure Record: Unknown\n')
+            context_lines.append('=' * 60 + '\n')
+
+            if e:
+                try:
+                    context_lines.append('\n=== FULL TRACEBACK ===\n')
+                    context_lines.append(traceback.format_exc())
+                    context_lines.append('=' * 60 + '\n')
+                except Exception:
+                    context_lines.append('\n=== TRACEBACK FAILED ===\n')
+
             with open(f'{folder}/log.txt', 'w', encoding='utf-8') as f:
+                f.writelines(context_lines)
                 f.writelines(lines)
 
     def init_server(self, port: int) -> int:
@@ -524,7 +576,7 @@ class Script:
 
         if isinstance(e, (GameStuckError, GameTooManyClickError)):
             logger.error(e)
-            self.save_error_log()
+            self.save_error_log(e=e)
             self.exception_handler(e=e, command=command)
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
             logger.warning('If you are playing by hand, please stop Alas')
@@ -536,7 +588,7 @@ class Script:
 
         if isinstance(e, GameBugError):
             logger.warning(e)
-            self.save_error_log()
+            self.save_error_log(e=e)
             self.exception_handler(e=e, command=command)
             logger.warning('An error has occurred in Azur Lane game client, Alas is unable to handle')
             logger.warning(f'Restarting {self.device.package} to fix it')
@@ -553,7 +605,7 @@ class Script:
                 logger.info('GotoMain failed during server update window, delayed pending tasks and reschedule')
                 return False
             logger.critical('Game page unknown')
-            self.save_error_log()
+            self.save_error_log(e=e)
             self.exception_handler(e=e, command=command)
             self.config.notifier.push(
                 title=f'{I18n.trans_zh_cn(command)}{command}',
@@ -586,7 +638,7 @@ class Script:
         # generic
         logger.exception(e)
         self.exception_handler(e=e, command=command)
-        self.save_error_log()
+        self.save_error_log(e=e)
         self.config.notifier.push(
             title=f'{I18n.trans_zh_cn(command)}{command}',
             content=f"<{self.config_name}> Exception occured",

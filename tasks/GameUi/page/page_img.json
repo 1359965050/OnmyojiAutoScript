@@ -27,15 +27,6 @@
     "description": "description"
   },
   {
-    "itemName": "check_exploration",
-    "imageName": "page_check_exploration.png",
-    "roiFront": "681,12,27,36",
-    "roiBack": "661,0,70,61",
-    "method": "Template matching",
-    "threshold": 0.65,
-    "description": "description"
-  },
-  {
     "itemName": "exploration_goto_awake_zone",
     "imageName": "page_exploration_goto_awake_zone.png",
     "roiFront": "65,632,50,41",

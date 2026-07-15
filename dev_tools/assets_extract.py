@@ -7,7 +7,7 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
-from module.logger import logger
+from module.logger import logger, set_file_logger
 
 MODULE_FOLDER = 'tasks'
 ASSETS_FILE = 'assets.py'
@@ -429,4 +429,5 @@ class AllAssetsExtractor:
 
 
 if __name__ == "__main__":
+    set_file_logger('assets')
     AllAssetsExtractor()

@@ -258,6 +258,9 @@ class RichFileHandler(RichHandler):
 
 # Add file logger
 pyw_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+# python -c "..." 命令的 argv[0] 为 '-c'，改为有意义的名称
+if pyw_name == '-c':
+    pyw_name = 'tool'
 
 
 def set_file_logger(name=pyw_name, *, do_cleanup=False):
@@ -516,6 +519,3 @@ logger.set_func_logger = set_func_logger
 logger.rule = rule
 logger.print = print
 logger.log_file: str
-
-logger.set_file_logger()
-logger.hr('Start', level=0)

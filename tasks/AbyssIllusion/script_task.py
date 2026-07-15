@@ -77,18 +77,18 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssIllusionAssets):
     def _switch_soul(self, switch_soul_config):
         """根据配置切换御魂"""
         if switch_soul_config.enable:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.get_current_page()
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul(switch_soul_config.switch_group_team)
         if switch_soul_config.enable_switch_by_name:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.get_current_page()
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul_by_name(
                 switch_soul_config.group_name,
                 switch_soul_config.team_name
             )
-        self.ui_get_current_page()
-        self.ui_goto(page_main)
+        self.get_current_page()
+        self.goto_page(page_main)
 
     def _check_timeout(self, start_time: datetime):
         """超时检测，运行超过 1 小时强制退出"""

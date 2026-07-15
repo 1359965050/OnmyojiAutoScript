@@ -2,8 +2,8 @@
   {
     "itemName": "main_goto_act",
     "imageName": "ai_main_goto_act.png",
-    "roiFront": "1180,300,60,64",
-    "roiBack": "1160,134,100,393",
+    "roiFront": "1170,195,70,80",
+    "roiBack": "1155,180,100,110",
     "method": "Template matching",
     "threshold": 0.7,
     "description": "庭院右侧进入狭间幻境活动入口"

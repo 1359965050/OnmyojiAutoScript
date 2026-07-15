@@ -1,23 +1,5 @@
 [
   {
-    "itemName": "harvest_mail",
-    "imageName": "dt_harvest_mail.png",
-    "roiFront": "337,505,37,25",
-    "roiBack": "38,396,1128,157",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "邮件小图标"
-  },
-  {
-    "itemName": "harvest_mail_copy",
-    "imageName": "dt_harvest_mail_copy.png",
-    "roiFront": "257,509,29,21",
-    "roiBack": "192,382,928,190",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "另一种邮件图标"
-  },
-  {
     "itemName": "harvest_mail_all",
     "imageName": "dt_harvest_mail_all.png",
     "roiFront": "69,579,80,67",
@@ -45,12 +27,12 @@
     "description": "确认收取邮件"
   },
   {
-    "itemName": "dt_harvest_mail_copy2",
-    "imageName": "dt_harvest_mail_copy2.png",
-    "roiFront": "1158,18,22,20",
-    "roiBack": "1127,0,61,56",
+    "itemName": "dt_harvest_mail_copy",
+    "imageName": "dt_harvest_mail_copy.png",
+    "roiFront": "1156,15,29,21",
+    "roiBack": "1127,0,80,60",
     "method": "Template matching",
-    "threshold": 0.9,
-    "description": "右上角的邮件图标"
+    "threshold": 0.7,
+    "description": "邮件图标"
   }
 ]

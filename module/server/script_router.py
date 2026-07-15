@@ -247,6 +247,8 @@ async def task_group_copy(task_name: str, group_name: str, dest_config_name: str
 # ---------------------------------   脚本实例管理   ----------------------------------
 @script_app.get('/{script_name}/start')
 async def script_start(script_name: str):
+    if script_name == 'template':
+        raise HTTPException(status_code=400, detail='Cannot start template config')
     if script_name not in mm.script_process:
         mm.script_process[script_name] = ScriptProcess(script_name)
     mm.script_process[script_name].start()

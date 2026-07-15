@@ -1106,11 +1106,6 @@
           "title": "Draw Mystery Pattern",
           "type": "boolean"
         },
-        "guild_wish": {
-          "default": false,
-          "title": "Guild Wish",
-          "type": "boolean"
-        },
         "luck_msg": {
           "default": false,
           "title": "Luck Msg",
@@ -1121,11 +1116,6 @@
           "description": "store_sign_help",
           "title": "Store Sign",
           "type": "boolean"
-        },
-        "buy_sushi_count": {
-          "default": -1,
-          "title": "Buy Sushi Count",
-          "type": "integer"
         }
       },
       "title": "DailyTriflesConfig",
@@ -1703,11 +1693,6 @@
           "title": "Summon Dt",
           "type": "date_time"
         },
-        "guild_wish_dt": {
-          "default": "2023-01-01T00:00:00",
-          "title": "Guild Wish Dt",
-          "type": "date_time"
-        },
         "luck_msg_dt": {
           "default": "2023-01-01T00:00:00",
           "title": "Luck Msg Dt",
@@ -1716,11 +1701,6 @@
         "store_sign_dt": {
           "default": "2023-01-01T00:00:00",
           "title": "Store Sign Dt",
-          "type": "date_time"
-        },
-        "sushi_dt": {
-          "default": "2023-01-01T00:00:00",
-          "title": "Sushi Dt",
           "type": "date_time"
         }
       },

@@ -19,7 +19,7 @@ class AbyssIllusionAssets:
 
 	# Image Rule Assets
 	# 庭院右侧进入狭间幻境活动入口 
-	I_MAIN_GOTO_ACT = RuleImage(roi_front=(1180,300,60,64), roi_back=(1160,134,100,393), threshold=0.7, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_main_goto_act.png")
+	I_MAIN_GOTO_ACT = RuleImage(roi_front=(1170,195,70,80), roi_back=(1155,180,100,110), threshold=0.7, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_main_goto_act.png")
 	# 活动主界面检测 
 	I_CHECK_ACT_MAIN = RuleImage(roi_front=(60,15,170,50), roi_back=(50,10,190,60), threshold=0.7, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_check_act_main.png")
 	# 活动主界面狭间幻境入口按钮 
@@ -27,11 +27,11 @@ class AbyssIllusionAssets:
 	# 狭间幻境挑战界面检测 
 	I_CHECK_ABYSS_ILLUSION_MAIN = RuleImage(roi_front=(70,15,220,50), roi_back=(60,10,240,60), threshold=0.7, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_check_abyss_illusion_main.png")
 	# 狭间幻境挑战按钮 
-	I_CHALLENGE = RuleImage(roi_front=(1090,570,150,110), roi_back=(1070,550,190,150), threshold=0.8, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_challenge.png")
+	I_CHALLENGE = RuleImage(roi_front=(1130,569,73,64), roi_back=(1120,559,93,84), threshold=0.8, method="Template matching", file="./tasks/AbyssIllusion/ai/ai_challenge.png")
 
 
 	# Ocr Rule Assets
 	# 挑战券数量 
-	O_REMAIN_TICKETS = RuleOcr(roi=(1160,20,100,40), area=(1160,20,100,40), mode="DigitCounter", method="Default", keyword="", name="remain_tickets")
+	O_REMAIN_TICKETS = RuleOcr(roi=(1169,30,52,28), area=(1159,20,72,48), mode="DigitCounter", method="Default", keyword="", name="remain_tickets")
 
 

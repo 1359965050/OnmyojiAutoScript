@@ -24,18 +24,14 @@ class DailyTriflesAssets:
 
 
 	# Image Rule Assets
-	# 邮件小图标 
-	I_HARVEST_MAIL = RuleImage(roi_front=(337,505,37,25), roi_back=(38,396,1128,157), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail.png")
-	# 另一种邮件图标 
-	I_HARVEST_MAIL_COPY = RuleImage(roi_front=(257,509,29,21), roi_back=(192,382,928,190), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_copy.png")
 	# 全部收取 
 	I_HARVEST_MAIL_ALL = RuleImage(roi_front=(69,579,80,67), roi_back=(28,551,142,144), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_all.png")
 	# 一键已读所有邮件 
 	I_READ_ALL_MAIL = RuleImage(roi_front=(180,605,130,35), roi_back=(149,588,182,72), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_read_all_mail.png")
 	# 确认收取邮件 
 	I_HARVEST_MAIL_CONFIRM = RuleImage(roi_front=(687,543,168,64), roi_back=(687,543,168,64), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_confirm.png")
-	# 右上角的邮件图标 
-	I_DT_HARVEST_MAIL_COPY2 = RuleImage(roi_front=(1158,18,22,20), roi_back=(1127,0,61,56), threshold=0.9, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_copy2.png")
+	# 邮件图标 
+	I_DT_HARVEST_MAIL_COPY = RuleImage(roi_front=(1156,15,29,21), roi_back=(1127,0,80,60), threshold=0.7, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_copy.png")
 
 
 	# Image Rule Assets
@@ -69,15 +65,6 @@ class DailyTriflesAssets:
 	I_GIFT_RECOMMEND = RuleImage(roi_front=(1183,454,53,64), roi_back=(1162,77,98,457), threshold=0.7, method="Template matching", file="./tasks/DailyTrifles/store/store_gift_recommend.png")
 	# 免费一抽领黑蛋 
 	I_GIFT_SIGN = RuleImage(roi_front=(186,191,115,83), roi_back=(130,129,891,473), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/store/store_gift_sign.png")
-	# 体力 
-	I_SPECIAL_SUSHI = RuleImage(roi_front=(180,130,800,460), roi_back=(180,130,800,460), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/store/store_sushi.png")
-	# 购买时货币类型为勾玉 
-	I_STORE_COST_TYPE_JADE = RuleImage(roi_front=(600,490,50,60), roi_back=(600,490,50,60), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/store/store_cost_type_jade.png")
-
-
-	# Ocr Rule Assets
-	# 商店Special购买体力所需勾玉数量，roiBack为动态调整，故此设置为0，0，0，0 
-	O_STORE_SUSHI_PRICE = RuleOcr(roi=(0,0,0,0), area=(0,0,0,0), mode="Digit", method="Default", keyword="", name="store_sushi_price")
 
 
 	# Image Rule Assets

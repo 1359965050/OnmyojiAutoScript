@@ -84,9 +84,10 @@ def name_to_function(name):
     Returns:
         Function:
     """
-    function = Function({})
+    function = Function("", {})
     function.command = name
     function.enable = True
+    function.priority = 0
     return function
 
 
@@ -237,9 +238,11 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.attr("Task", task)
             return task
         else:
-            logger.critical("No task waiting or pending")
-            logger.critical("Please enable at least one task")
-            raise RequestHumanTakeover
+            logger.warning("No task waiting or pending, returning Idle")
+            self.task = name_to_function("Idle")
+            self.task.next_run = datetime.now() + timedelta(seconds=60)
+            logger.attr("Task", self.task)
+            return self.task
 
     def get_schedule_data(self) -> dict[str, dict]:
         """

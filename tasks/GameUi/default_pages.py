@@ -195,6 +195,11 @@ page_hyakkiyakou.connect(page_town, GlobalGameAssets.I_UI_BACK_RED, key="page_hy
 page_town.connect(page_hyakkiyakou, GameUiAssets.I_TOWN_GOTO_HYAKKIYAKOU, key="page_town->page_hyakkiyakou")
 
 
+# 邮件页面。
+page_mail = Page(RestartAssets.I_HARVEST_MAIL_TITLE, category="global", priority=25)
+page_mail.connect(page_main, GlobalGameAssets.I_UI_BACK_RED, key="page_mail->page_main")
+page_main.connect(page_mail, DailyTriflesAssets.I_DT_HARVEST_MAIL_COPY, key="page_main->page_mail")
+
 # 探索主页。
 page_exploration = Page(GameUiAssets.I_CHECK_EXPLORATION, category="global")
 page_exploration.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_exploration->page_main")

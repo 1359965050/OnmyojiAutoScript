@@ -593,7 +593,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>enable_switch_layer_soul_help</source>
-            <translation>使用八岐大蛇任务御魂的配置</translation>
+            <translation>使用下方独立配置的御魂配置</translation>
         </message>
         <message>
             <source>demon_kiryou_utahime_enable</source>
@@ -953,10 +953,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>General</source>
             <translation>通用</translation>
-        </message>
-        <message>
-            <source>Tools</source>
-            <translation>工具</translation>
         </message>
         <message>
             <source>Image Rule</source>
@@ -1594,10 +1590,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>One Summon</source>
             <translation>每日召唤</translation>
-        </message>
-        <message>
-            <source>Guild Wish</source>
-            <translation>寮祈愿（还不知道可以写什么）</translation>
         </message>
         <message>
             <source>Friend Love</source>
@@ -2379,10 +2371,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>购买奖励</translation>
         </message>
         <message>
-            <source>buy_sushi_count</source>
-            <translation>购买寿司次数</translation>
-        </message>
-        <message>
             <source>buy_ticket</source>
             <translation>购买门票</translation>
         </message>
@@ -2557,14 +2545,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>frog_minority</source>
             <translation>呱太少数派</translation>
-        </message>
-        <message>
-            <source>guild_wish</source>
-            <translation>阴阳寮祈愿</translation>
-        </message>
-        <message>
-            <source>guild_wish_dt</source>
-            <translation>祈愿设置</translation>
         </message>
         <message>
             <source>harvest_soul</source>
@@ -2841,10 +2821,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>sup_account_list</source>
             <translation>副号账号列表</translation>
-        </message>
-        <message>
-            <source>sushi_dt</source>
-            <translation>寿司日常</translation>
         </message>
         <message>
             <source>svr</source>
@@ -3656,6 +3632,10 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
     </context>
     <context>
         <name>_cn_switch_soul</name>
+        <message>
+            <source>switch_soul_enable</source>
+            <translation>切换御魂</translation>
+        </message>
         <message>
             <source>switch_group_team</source>
             <translation>御魂装配分组设置</translation>

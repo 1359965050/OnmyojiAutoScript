@@ -16,15 +16,9 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["*"]
 CORS_ALLOW_HEADERS = ["*"]
 
-# Static resource mount paths
-ANNOTATOR_STATIC_PATH = "/tool/annotator/static"
-
 # Router prefixes and OpenAPI tags
 HOME_ROUTER_PREFIX = "/home"
 HOME_ROUTER_TAGS = ["home"]
-
-TOOL_ROUTER_PREFIX = "/tool"
-TOOL_ROUTER_TAGS = ["tool"]
 
 # Common HTTP status codes
 HTTP_400_BAD_REQUEST = 400

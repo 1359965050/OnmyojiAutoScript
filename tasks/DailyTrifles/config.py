@@ -14,14 +14,24 @@ class SummonType(str, Enum):
     recall = '今忆召唤'
 
 
+class PetsConfig(ConfigBase):
+    # 快速喂养
+    pets_feast: bool = Field(default=True)
+    enable_orochi_ten_once: bool = Field(default=False)
+    # 御魂切换配置（平铺，避免嵌套子模型导致前端 schema 解析问题）
+    switch_soul_enable: bool = Field(default=False)
+    switch_group_team: str = Field(default='-1,-1', description='switch_group_team_help')
+    enable_switch_by_name: bool = Field(default=False, description='enable_switch_by_name_help')
+    group_name: str = Field(default='')
+    team_name: str = Field(default='')
+
+
 class DoneRecord(ConfigBase):
     courtyard_affairs_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
     pickup_email_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
     summon_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
-    guild_wish_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
     luck_msg_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
     store_sign_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
-    sushi_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
 
 
 class DailyTriflesConfig(BaseModel):
@@ -34,11 +44,8 @@ class DailyTriflesConfig(BaseModel):
     summon_type: SummonType = Field(default=SummonType.default, description='召唤类型')
     # 是否绘制神秘图案
     draw_mystery_pattern: bool = Field(title='Draw Mystery Pattern', default=False, description='是否绘制神秘图案')
-    guild_wish: bool = Field(title='Guild Wish', default=False)
     luck_msg: bool = Field(title='Luck Msg', default=False)
     store_sign: bool = Field(title='Store Sign', default=False, description='store_sign_help')
-    # 每天购买体力数量
-    buy_sushi_count: int = Field(title='Buy Sushi Count', default=-1)
 
     hide_fields = dynamic_hide('draw_mystery_pattern')
 
@@ -46,6 +53,7 @@ class DailyTriflesConfig(BaseModel):
 class DailyTrifles(ConfigBase):
     scheduler: Scheduler = Field(default_factory=Scheduler)
     trifles_config: DailyTriflesConfig = Field(default_factory=DailyTriflesConfig)
+    pets_config: PetsConfig = Field(default_factory=PetsConfig)
     done_record: DoneRecord = Field(default_factory=DoneRecord)
 
     hide_fields = dynamic_hide('done_record')
