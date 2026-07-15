@@ -80,6 +80,40 @@ class GitManager(DeployConfig):
             logger.info(f'[ allowed failure ], error: {e}')
             return False
 
+    def _git_pull_with_timeout(self, source='origin', branch='master', timeout=3):
+        """
+        带超时的 git pull，避免网络不可达时长时间阻塞。
+
+        Returns:
+            bool: True if pull success, False if timeout or failed.
+        """
+        command = f'"{self.git}" pull --ff-only {source} {branch}'
+        command = command.replace(r"\\", "/").replace("\\", "/").replace('"', '"')
+        logger.info(command)
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                shell=True,
+                timeout=timeout,
+            )
+            if result.returncode == 0:
+                logger.info('[ success ]')
+                return True
+            logger.info(f'[ allowed failure ], error_code: {result.returncode}')
+            if result.stderr:
+                logger.info(result.stderr.strip())
+            return False
+        except subprocess.TimeoutExpired:
+            logger.info(f'[ timeout ] git pull exceeded {timeout}s, skip network update')
+            return False
+        except Exception as e:
+            logger.info(f'[ allowed failure ], error: {e}')
+            return False
+
     def git_repository_init(
             self, repo, source='origin', branch='master',
             proxy='', ssl_verify=True, keep_changes=False, mirror=None
@@ -149,7 +183,7 @@ class GitManager(DeployConfig):
                 os.remove(lock_file)
         if keep_changes:
             if self.execute(f'"{self.git}" stash', allow_failure=True):
-                self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+                self._git_pull_with_timeout(source, branch, timeout=3)
                 if self.execute(f'"{self.git}" stash pop', allow_failure=True):
                     pass
                 else:
@@ -158,10 +192,10 @@ class GitManager(DeployConfig):
             else:
                 logger.info('Stash failed, this may be the first installation, drop changes instead')
                 self.execute(f'"{self.git}" reset --hard {source}/{branch}')
-                self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+                self._git_pull_with_timeout(source, branch, timeout=3)
         else:
             self.execute(f'"{self.git}" reset --hard {source}/{branch}')
-            self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+            self._git_pull_with_timeout(source, branch, timeout=3)
 
         logger.hr('Show Version', 1)
         self.execute(f'"{self.git}" --no-pager log --no-merges -1')

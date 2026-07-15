@@ -187,9 +187,9 @@ class Updater(DeployConfig, GitManager, PipManager):
     def execute_pull(self) -> bool:
         source = "origin"
         for _ in range(FETCH_RETRY):
-            if self.execute(
-                    f'"{self.git}" pull {source} {self.Branch} --no-rebase', allow_failure=True
-            ):
+            command = f'"{self.git}" pull {source} {self.Branch} --no-rebase'
+            res = self.execute_command(command, timeout=3)
+            if res is not None and res.returncode == 0:
                 # Pull succeeded, invalidate fetch cache so the next info query reflects the new state.
                 self._update_fetch_cache(False)
                 self._fetch_cache['last_fetch_time'] = None
