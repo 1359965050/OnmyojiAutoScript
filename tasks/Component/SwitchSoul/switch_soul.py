@@ -7,10 +7,7 @@ from typing import Union
 from module.atom.click import RuleClick
 from module.atom.long_click import RuleLongClick
 from module.atom.ocr import RuleOcr
-from module.base.timer import Timer
 from tasks.base_task import BaseTask
-from tasks.Component.GeneralInvite.assets import GeneralInviteAssets
-from tasks.Component.GeneralInvite.config_invite import InviteConfig, InviteNumber, FindMode
 from tasks.Component.SwitchSoul.assets import SwitchSoulAssets
 from module.logger import logger
 
@@ -55,8 +52,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
                 break
             if self.appear(self.I_SOU_TEAM_PRESENT):
                 break
-            if self.appear(self.I_SOUL_PRESET):
-                self.click(self.I_SOUL_PRESET, interval=3)
+            if self.appear_then_click(self.I_SOUL_PRESET, interval=2):
                 continue
         logger.info('Click preset in switch soul')
 
@@ -246,11 +242,6 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         logger.info('Swipe up to find target team')
 
         # 选中分组
-        while 1:
-            self.screenshot()
-            self.O_SS_TEAM_NAME.keyword = teamName
-            if self.ocr_appear_click(self.O_SS_TEAM_NAME):
-                break
         logger.info(f'Select team {teamName}')
         # 切换御魂
         cnt_click: int = 0
@@ -284,7 +275,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         if not appear:
             return False
 
-        x1, y1, w1, h1 = target.area
+        x1, y1 = target.coord()
         x, y = action.coord()
 
         self.device.click(x=x, y=y1, control_name=target.name)

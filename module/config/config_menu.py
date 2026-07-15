@@ -16,20 +16,25 @@ class ConfigMenu:
         # 总览
         self.menu["Overview"] = []
         self.menu['TaskList'] = []
-        # 全局设置
-        self.menu['GlobalSettings'] = ['EmulatorSettings', 'Restart', 'GameSettings']
+        # 脚本设置
+        self.menu['Script'] = ['Script', 'GlobalGame', 'Restart']
         # 刷御魂
-        self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea']
+        self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea', 'SixRealms', 'OtherWorldTwilight']
         # 日常的任务
-        self.menu["Daily Task"] = ['AreaBoss', 'DemonEncounter', 'BondlingFairyland', 'EvoZone',
-                                   'Exploration', 'GoryouRealm', 'Hyakkiyakou']
+        self.menu["Daily Task"] = ['DailyTrifles', 'AreaBoss', 'GoldYoukai', 'ExperienceYoukai', 'Nian',
+                                   'TalismanPass', 'DemonEncounter', 'Pets', 'SoulsTidy', 'Delegation', 'WantedQuests',
+                                   'Tako', 'AutoCheckinBigGod']
+        # 很肝的任务
+        self.menu["Liver Emperor Exclusive"] = ["BondlingFairyland", "EvoZone", "GoryouRealm", "Exploration", "Hyakkiyakou", "HeroTest", "FindJade", "MemoryScrolls"]
         # 阴阳寮
-        self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan',
+        self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan', 'CollectiveMissions',
                               'Hunt' , 'AbyssShadows', 'GuildBanquet', 'DemonRetreat', 'GuildActivityMonitor']
         # 每周任务
-        self.menu["Weekly Task"] = ['RichMan', 'Secret', 'WeeklyTrifles', 'SixRealms', 'HeroTest']
+        self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'MysteryShop', 'Duel']
         # 活动的任务
-        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'DyeTrials', 'GuaGuaArtRoom']
+        self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'FrogBoss', 'FloatParade', 'Quiz', 'KittyShop', 'DyeTrials', 'GuguArtStudio', 'AbyssIllusion']
+        # 开发工具
+        self.menu["Tools"] = ['Image Rule', 'Ocr Rule', 'Click Rule', 'Long Click Rule', 'Swipe Rule', 'List Rule']
 
     @cached_property
     def gui_menu(self) -> str:
@@ -42,7 +47,7 @@ class ConfigMenu:
     @cached_property
     def gui_menu_list(self) -> dict:
         del self.menu['TaskList']
-        self.menu.pop('Tools', None)
+        del self.menu['Tools']
         return self.menu
 
 

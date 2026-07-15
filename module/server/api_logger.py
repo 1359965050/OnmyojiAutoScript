@@ -1,224 +1,266 @@
-from __future__ import annotations
-
-import asyncio
+# This Python file uses the following encoding: utf-8
+import inspect
 import json
+import logging
 import time
-from datetime import datetime
+from datetime import date
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+from urllib.parse import parse_qs
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.routing import APIRoute
+from fastapi.responses import FileResponse
+from starlette.responses import Response, StreamingResponse
 
-from module.logger import logger
-from module.server.constants import API_LOG_DIR, MAX_API_LOG_FILES, MAX_API_LOG_SIZE
-
-
-API_LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-
-class ApiLogEntry:
-    __slots__ = ("timestamp", "method", "path", "status_code", "duration", "client_ip", "user_agent", "request_body", "response_body")
-
-    def __init__(
-        self,
-        timestamp: datetime,
-        method: str,
-        path: str,
-        status_code: int,
-        duration: float,
-        client_ip: str,
-        user_agent: str = "",
-        request_body: Optional[str] = None,
-        response_body: Optional[str] = None,
-    ):
-        self.timestamp = timestamp
-        self.method = method
-        self.path = path
-        self.status_code = status_code
-        self.duration = duration
-        self.client_ip = client_ip
-        self.user_agent = user_agent
-        self.request_body = request_body
-        self.response_body = response_body
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "timestamp": self.timestamp.isoformat(),
-            "method": self.method,
-            "path": self.path,
-            "status_code": self.status_code,
-            "duration": round(self.duration * 1000, 2),
-            "client_ip": self.client_ip,
-            "user_agent": self.user_agent,
-            "request_body": self.request_body,
-            "response_body": self.response_body,
-        }
-
-    def to_line(self) -> str:
-        return json.dumps(self.to_dict(), ensure_ascii=False)
+from module.logger import file_formatter
 
 
-class ApiLogger:
-    def __init__(self):
-        self._lock = asyncio.Lock()
-        self._current_file: Optional[Path] = None
-        self._file_size = 0
+API_LOGGER_NAME = "oas.api"
+_TEXT_PREVIEW_LIMIT = 240
+_LIST_PREVIEW_LIMIT = 20
+_DICT_PREVIEW_LIMIT = 200
 
-    def _get_log_file_path(self) -> Path:
-        today = datetime.now().date()
-        return API_LOG_DIR / f"{today}_api.txt"
 
-    def _rotate_log_file(self) -> None:
-        current = self._get_log_file_path()
-        if current.exists() and current.stat().st_size > MAX_API_LOG_SIZE:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup = API_LOG_DIR / f"{current.stem}_{timestamp}{current.suffix}"
-            current.rename(backup)
+api_logger = logging.getLogger(API_LOGGER_NAME)
+api_logger.setLevel(logging.INFO)
+api_logger.propagate = False
 
-        self._current_file = current
-        self._file_size = current.stat().st_size if current.exists() else 0
 
-    def _cleanup_old_files(self) -> None:
-        try:
-            files = sorted(API_LOG_DIR.glob("*_api.txt"), key=lambda p: p.stat().st_mtime, reverse=True)
-            for old_file in files[MAX_API_LOG_FILES:]:
-                old_file.unlink()
-        except Exception:
-            pass
+def _build_api_file_handler(log_file: str) -> logging.FileHandler:
+    handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
+    handler.setFormatter(file_formatter)
+    handler._oas_api_handler = True
+    handler._oas_api_log_file = log_file
+    return handler
 
-    async def log(self, entry: ApiLogEntry) -> None:
-        async with self._lock:
-            self._rotate_log_file()
 
-            if self._current_file is None:
-                self._current_file = self._get_log_file_path()
+def ensure_api_logger() -> logging.Logger:
+    log_dir = Path("./log")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = str(log_dir / f"{date.today().isoformat()}_api.txt")
 
-            line = entry.to_line() + "\n"
+    current_handler = None
+    for handler in list(api_logger.handlers):
+        if getattr(handler, "_oas_api_handler", False):
+            if getattr(handler, "_oas_api_log_file", "") == log_file:
+                current_handler = handler
+                continue
+            api_logger.removeHandler(handler)
             try:
-                with open(self._current_file, "a", encoding="utf-8") as f:
-                    f.write(line)
-                self._file_size += len(line)
-            except Exception as e:
-                logger.error(f"Failed to write API log: {e}")
+                handler.close()
+            except Exception:
+                pass
 
-            self._cleanup_old_files()
+    if current_handler is None:
+        api_logger.addHandler(_build_api_file_handler(log_file))
 
-    def get_recent_logs(self, limit: int = 100) -> list[Dict[str, Any]]:
-        log_file = self._get_log_file_path()
-        if not log_file.exists():
-            return []
+    api_logger.log_file = log_file
+    return api_logger
 
-        try:
-            with open(log_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
 
-            entries = []
-            for line in reversed(lines[-limit:]):
-                try:
-                    data = json.loads(line)
-                    entries.append(data)
-                except json.JSONDecodeError:
-                    pass
+def _summarize_text(text: str) -> str | dict[str, Any]:
+    if len(text) <= _TEXT_PREVIEW_LIMIT:
+        return text
+    return {
+        "type": "text",
+        "length": len(text),
+        "preview": text[:_TEXT_PREVIEW_LIMIT] + "...",
+    }
 
-            return entries[::-1]
-        except Exception:
-            return []
 
-    def get_stats(self) -> Dict[str, Any]:
-        log_file = self._get_log_file_path()
-        if not log_file.exists():
-            return {"total_requests": 0, "error_count": 0, "avg_duration_ms": 0}
+def _is_large_text_key(key: str) -> bool:
+    lowered = str(key).lower()
+    return "base64" in lowered or "content" in lowered and "image" in lowered
 
-        try:
-            with open(log_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
 
-            total_requests = 0
-            error_count = 0
-            total_duration = 0.0
+def summarize_data(value: Any, *, key: str = "", depth: int = 0) -> Any:
+    if depth > 4:
+        return "<max_depth>"
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, bytes):
+        return {"type": "bytes", "length": len(value)}
+    if isinstance(value, str):
+        if _is_large_text_key(key):
+            return {"type": "text", "length": len(value), "preview": value[:64] + ("..." if len(value) > 64 else "")}
+        return _summarize_text(value)
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        items = list(value.items())
+        for index, (sub_key, sub_value) in enumerate(items):
+            if index >= _DICT_PREVIEW_LIMIT:
+                result["__truncated_keys__"] = len(items) - _DICT_PREVIEW_LIMIT
+                break
+            result[str(sub_key)] = summarize_data(sub_value, key=str(sub_key), depth=depth + 1)
+        return result
+    if isinstance(value, (list, tuple, set)):
+        items = list(value)
+        result = [summarize_data(item, depth=depth + 1) for item in items[:_LIST_PREVIEW_LIMIT]]
+        if len(items) > _LIST_PREVIEW_LIMIT:
+            result.append({"__truncated_items__": len(items) - _LIST_PREVIEW_LIMIT})
+        return result
 
-            for line in lines:
-                try:
-                    data = json.loads(line)
-                    total_requests += 1
-                    if data.get("status_code", 200) >= 400:
-                        error_count += 1
-                    total_duration += data.get("duration", 0)
-                except json.JSONDecodeError:
-                    pass
+    try:
+        encoded = jsonable_encoder(value)
+    except Exception:
+        return _summarize_text(str(value))
+    if encoded is value:
+        return _summarize_text(str(value))
+    return summarize_data(encoded, key=key, depth=depth + 1)
 
-            avg_duration = total_duration / total_requests if total_requests > 0 else 0
 
-            return {
-                "total_requests": total_requests,
-                "error_count": error_count,
-                "avg_duration_ms": round(avg_duration, 2),
-                "log_file_size": log_file.stat().st_size,
+async def build_request_summary(request: Request) -> dict[str, Any]:
+    summary: dict[str, Any] = {
+        "method": request.method,
+        "url": str(request.url),
+        "path_params": summarize_data(dict(request.path_params)),
+        "query_params": summarize_data(dict(request.query_params)),
+    }
+
+    body = await request.body()
+    if not body:
+        return summary
+
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    body_summary: Any
+    try:
+        if content_type == "application/json":
+            body_summary = summarize_data(json.loads(body.decode("utf-8")))
+        elif content_type == "application/x-www-form-urlencoded":
+            parsed = parse_qs(body.decode("utf-8"), keep_blank_values=True)
+            normalized = {
+                key: values[0] if len(values) == 1 else values
+                for key, values in parsed.items()
             }
-        except Exception:
-            return {"total_requests": 0, "error_count": 0, "avg_duration_ms": 0}
+            body_summary = summarize_data(normalized)
+        elif content_type.startswith("text/"):
+            body_summary = _summarize_text(body.decode("utf-8", errors="replace"))
+        else:
+            body_summary = {
+                "content_type": content_type or "application/octet-stream",
+                "length": len(body),
+            }
+    except Exception as exc:
+        body_summary = {"error": f"body_summary_failed: {exc}", "length": len(body)}
+
+    summary["body"] = body_summary
+    return summary
 
 
-api_logger = ApiLogger()
+def summarize_response(response: Response) -> dict[str, Any]:
+    summary: dict[str, Any] = {
+        "response_type": type(response).__name__,
+        "status_code": response.status_code,
+    }
+
+    media_type = getattr(response, "media_type", None)
+    if media_type:
+        summary["media_type"] = media_type
+
+    if isinstance(response, FileResponse):
+        summary["file"] = {
+            "filename": getattr(response, "filename", None),
+            "path": str(getattr(response, "path", "")),
+        }
+        return summary
+
+    if isinstance(response, StreamingResponse):
+        return summary
+
+    body = getattr(response, "body", None)
+    if body is None:
+        return summary
+
+    if isinstance(body, memoryview):
+        body = body.tobytes()
+
+    if isinstance(body, bytes):
+        if not body:
+            summary["body"] = ""
+            return summary
+        decoded = body.decode("utf-8", errors="replace")
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            try:
+                summary["body"] = summarize_data(json.loads(decoded))
+            except Exception:
+                summary["body"] = _summarize_text(decoded)
+        else:
+            summary["body"] = _summarize_text(decoded)
+        return summary
+
+    summary["body"] = summarize_data(body)
+    return summary
 
 
-class ApiLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:
-        start_time = time.time()
-        timestamp = datetime.now()
+def _serialize_payload(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
 
-        client_ip = request.client.host if request.client else "unknown"
-        user_agent = request.headers.get("user-agent", "")
 
-        request_body = None
-        try:
-            if request.method in ("POST", "PUT", "PATCH"):
-                body = await request.body()
-                try:
-                    decoded = body.decode("utf-8")
-                    if len(decoded) < 2000:
-                        request_body = decoded
-                    else:
-                        request_body = f"[Too large: {len(decoded)} bytes]"
-                except Exception:
-                    request_body = "[Binary data]"
-        except Exception:
-            pass
+def log_http_access(payload: dict[str, Any]) -> None:
+    logger = ensure_api_logger()
+    status_code = int(payload.get("response", {}).get("status_code", 200))
+    message = f"HTTP {_serialize_payload(payload)}"
+    if status_code >= 500:
+        logger.error(message)
+    elif status_code >= 400:
+        logger.warning(message)
+    else:
+        logger.info(message)
 
-        try:
-            response = await call_next(request)
-            status_code = response.status_code
-        except Exception as exc:
-            status_code = 500
-            duration = time.time() - start_time
 
-            entry = ApiLogEntry(
-                timestamp=timestamp,
-                method=request.method,
-                path=request.url.path,
-                status_code=status_code,
-                duration=duration,
-                client_ip=client_ip,
-                user_agent=user_agent,
-                request_body=request_body,
-                response_body=str(exc),
-            )
-            await api_logger.log(entry)
-            raise
+def log_ws_event(message: str, level: str = "info") -> None:
+    logger = ensure_api_logger()
+    getattr(logger, level, logger.info)(f"{message}")
 
-        duration = time.time() - start_time
 
-        entry = ApiLogEntry(
-            timestamp=timestamp,
-            method=request.method,
-            path=request.url.path,
-            status_code=status_code,
-            duration=duration,
-            client_ip=client_ip,
-            user_agent=user_agent,
-            request_body=request_body,
-        )
-        await api_logger.log(entry)
+async def build_exception_response(request: Request, exc: Exception) -> Response | None:
+    handlers = request.app.exception_handlers
+    if hasattr(exc, "status_code") and exc.status_code in handlers:
+        handler = handlers[exc.status_code]
+        result = handler(request, exc)
+        return await result if inspect.isawaitable(result) else result
 
-        return response
+    for cls in type(exc).__mro__:
+        handler = handlers.get(cls)
+        if handler is None:
+            continue
+        result = handler(request, exc)
+        return await result if inspect.isawaitable(result) else result
+    return None
+
+
+class ApiLoggingRoute(APIRoute):
+    def get_route_handler(self):
+        original_route_handler = super().get_route_handler()
+
+        async def custom_route_handler(request: Request) -> Response:
+            started_at = time.perf_counter()
+            request_summary = await build_request_summary(request)
+            exc: Exception | None = None
+
+            try:
+                response = await original_route_handler(request)
+            except Exception as error:
+                exc = error
+                response = await build_exception_response(request, error)
+                if response is None:
+                    raise
+
+            elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
+            payload = {
+                "request": request_summary,
+                "response": summarize_response(response),
+                "elapsed_ms": elapsed_ms,
+            }
+            if exc is not None:
+                payload["exception"] = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            log_http_access(payload)
+            return response
+
+        return custom_route_handler

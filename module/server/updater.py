@@ -12,35 +12,14 @@ from module.server.config import DeployConfig
 
 
 DEFAULT_GIT_TIMEOUT = 5
-DEFAULT_FETCH_TIMEOUT = 3
+DEFAULT_FETCH_TIMEOUT = 15
 FETCH_RETRY = 2
-FETCH_CACHE_TTL = 60  # seconds
 
 
 class Updater(DeployConfig, GitManager, PipManager):
-    # Class-level cache so all instances share the same network state.
-    # This prevents the frontend from hammering git fetch when the network is unreachable.
-    _fetch_cache = {
-        'last_fetch_time': None,
-        'last_fetch_success': None,
-    }
-
     def __init__(self, file=DEPLOY_CONFIG):
         super().__init__(file=file)
         self.state = 0
-
-    @classmethod
-    def _is_fetch_cached(cls) -> bool:
-        last_time = cls._fetch_cache['last_fetch_time']
-        if last_time is None:
-            return False
-        elapsed = (datetime.datetime.now() - last_time).total_seconds()
-        return elapsed < FETCH_CACHE_TTL
-
-    @classmethod
-    def _update_fetch_cache(cls, success: bool):
-        cls._fetch_cache['last_fetch_time'] = datetime.datetime.now()
-        cls._fetch_cache['last_fetch_success'] = success
 
     @property
     def delay(self):
@@ -116,12 +95,7 @@ class Updater(DeployConfig, GitManager, PipManager):
         source = "origin"
         return self.get_commit(f"{source}/{self.Branch}")
 
-    def fetch_remote(self, force: bool = False) -> bool:
-        if not force and self._is_fetch_cached():
-            cached = self._fetch_cache['last_fetch_success']
-            logger.info(f"Using cached fetch result (success={cached}), skip network fetch")
-            return cached
-
+    def fetch_remote(self) -> bool:
         source = "origin"
         for _ in range(FETCH_RETRY):
             result = self.execute_command(
@@ -129,13 +103,11 @@ class Updater(DeployConfig, GitManager, PipManager):
                 timeout=DEFAULT_FETCH_TIMEOUT,
             )
             if result is not None and result.returncode == 0:
-                self._update_fetch_cache(True)
                 return True
             if result is not None:
                 logger.warning(f"Git fetch failed: {result.stderr.strip()}")
 
-        self._update_fetch_cache(False)
-        logger.warning("Git fetch failed, using local version")
+        logger.warning("Git fetch failed")
         return False
 
     def revision_distance(self, left: str, right: str) -> tuple[int, int] | None:
@@ -152,13 +124,12 @@ class Updater(DeployConfig, GitManager, PipManager):
             logger.warning(f"Unexpected git rev-list output: {log.strip()}")
             return None
 
-    def get_update_info(self, force: bool = False) -> dict:
+    def get_update_info(self) -> dict:
         is_update = False
         source = "origin"
         remote_revision = f"{source}/{self.Branch}"
-        commits = None
 
-        if self.fetch_remote(force=force):
+        if self.fetch_remote():
             distance = self.revision_distance("HEAD", remote_revision)
             if distance is None:
                 is_update = False
@@ -168,13 +139,8 @@ class Updater(DeployConfig, GitManager, PipManager):
                 if ahead:
                     logger.info("Local branch has commits not in upstream, skip update")
                 logger.info("New update available" if is_update else "No update")
-            commits = self.get_commit(remote_revision, n=15)
 
-        # If fetch failed or remote commit info is unavailable, fall back to local history.
-        if not commits:
-            logger.info("Remote commit info unavailable, falling back to local commit history")
-            commits = self.get_commit("HEAD", n=15)
-
+        commits = self.get_commit(remote_revision, n=15)
         latest_commit = commits[0] if commits and isinstance(commits, list) else commits
         return {
             'is_update': is_update,

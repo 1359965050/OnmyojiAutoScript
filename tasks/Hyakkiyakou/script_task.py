@@ -2,13 +2,8 @@
 # @author runhey
 # github https://github.com/runhey
 import time
-from collections import Counter
-
-import cv2
-import numpy as np
 
 from datetime import datetime, timedelta
-from numpy import uint8, fromfile
 from random import choice
 from cached_property import cached_property
 # Use cmd to install: ./toolkit/python.exe -m pip install -i https://pypi.org/simple/ oashya --trusted-host pypi.org
@@ -26,25 +21,7 @@ from tasks.GameUi.page import page_hyakkiyakou, page_main, page_onmyodo
 from tasks.Hyakkiyakou.config import InferenceEngine, ModelPrecision
 from tasks.Hyakkiyakou.agent.agent import Agent
 from tasks.Hyakkiyakou.slave.hya_slave import HyaSlave
-from tasks.Hyakkiyakou.debugger import Debugger
-
-
-def plot_save(image, boxes):
-    color_palette = np.random.uniform(0, 255, size=(226, 3))
-    for box in boxes:
-        _cls = box[0]
-        _scores = box[1]
-        _x, _y, _w, _h = box[2]
-        x1 = int(_x - _w / 2)
-        y1 = int(_y - _h / 2)
-        x2 = int(_x + _w / 2)
-        y2 = int(_y + _h / 2)
-        cv2.rectangle(image, (x1, y1), (x2, y2), color_palette[_cls], 2)
-        #
-        cv2.putText(image, f'{_cls} {_scores:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color_palette[_cls],
-                    2)
-    save_file = './tasks/Hyakkiyakou/temp/image.png'
-    cv2.imwrite(save_file, image)
+from module.hyakkiyakou import Debugger
 
 
 class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
@@ -112,7 +89,7 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         hya_interval = debug_config.hya_interval
         hya_save_result = debug_config.hya_save_result
         if hya_interval <= 100 or hya_interval >= 1000:
-            raise RequestHumanTakeover('screenshot_interval must be between 100 and 1000')
+            raise RequestHumanTakeover('screenshot_interval must be between 1000 and 10000')
         self.set_fast_screenshot_interval(hya_interval)
         return Debugger(info_enable=debug_config.hya_info, 
                         continuous_learning=debug_config.continuous_learning,
@@ -124,9 +101,9 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         limit_time = self._config.hyakkiyakou_config.hya_limit_time
         self.limit_time: timedelta = timedelta(hours=limit_time.hour, minutes=limit_time.minute,
                                                seconds=limit_time.second)
-        self.ui_goto_page(page_onmyodo)
+        self.goto_page(page_onmyodo)
         self.switch_onmyoji(self._config.hyakkiyakou_config.hya_onmyoji)
-        self.ui_goto_page(page_hyakkiyakou)
+        self.goto_page(page_hyakkiyakou)
 
         while 1:
             if hya_count >= self.limit_count:
@@ -188,13 +165,8 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         """
         # 截一张当前图
         self.screenshot()
-        # 裁剪中间 ROI（0.1~0.9 高, 0.25~0.75 宽），减少背景干扰
-        h, w = self.device.image.shape[:2]
-        roi = self.device.image[int(h*0.1):int(h*0.9), int(w*0.25):int(w*0.75)]
-        # oashya 模型要求输入 640x640，resize 后传入
-        roi = cv2.resize(roi, (640, 640))
         # 这里 response 随便给一个默认值即可，主线战斗里是 last_action
-        tracks = self.tracker(image=roi, response=[0, 0, False, 10])
+        tracks = self.tracker(image=self.device.image, response=[0, 0, False, 10])
         best_score = -1
         best_class = -1
         for _id, _class, _conf, _cx, _cy, _w, _h, _v in tracks:
@@ -204,8 +176,8 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 best_class = _class
         if best_class != -1:
             logger.info(
-                f'Hyakki select: detect {id2name(best_class)} '
-                f'with rarity score {best_score}'
+                f'Hyakki select: detect {id2name(_class)} '
+                f'with rarity score {score}'
             )
         else:
             logger.warning('Hyakki select: no valid shikigami detected on title screen')
@@ -215,7 +187,6 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         """
         在鬼王选择界面依次点三个候选，识别稀有度，最终选择最高稀有度的那个。
         要求：当前已经在 I_HTITLE 画面。
-        改进：对每个候选连续识别多帧，按稀有度众数投票，降低单帧误识别。
         """
         candidates = [self.C_HSELECT_1, self.C_HSELECT_2, self.C_HSELECT_3]
         logger.info('Start selecting boss')
@@ -226,23 +197,15 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         for idx, btn in enumerate(candidates):
             # 点一下第 idx 个候选，让它成为当前选中的式神
             self.click(btn, interval=0.1)
-            time.sleep(2)  # 给界面一点刷新时间（含入场动画）
-            # 多帧投票：截 3 帧，取稀有度众数；平票时取较高稀有度
-            frame_scores = []
-            for _ in range(3):
-                score, cls = self._detect_current_rarity()
-                frame_scores.append(score)
-                time.sleep(0.3)
-            score_counts = Counter(frame_scores)
-            voted_score = sorted(frame_scores, key=lambda s: (score_counts[s], s), reverse=True)[0]
-            scores.append(voted_score)
-            logger.info(f'Hyakki select candidate {idx + 1} frame scores: {frame_scores}, voted: {voted_score}')
-            if voted_score > best_score:
-                best_score = voted_score
+            time.sleep(1)  # 给界面一点刷新时间
+            score, cls = self._detect_current_rarity()
+            scores.append(score)
+            if score > best_score:
+                best_score = score
                 best_idx = idx
-
-        # 如果三个都识别失败了会选第一个
-        logger.info(f'Hyakki select final scores: {scores}, choose index {best_idx + 1}')
+        
+        #所以如果三个都识别失败了会选第一个
+        logger.info(f'Hyakki select scores: {scores}, choose index {best_idx + 1}') 
 
         # 记录一下，后面如果需要兜底再点一次可以用
         self._best_boss_button = candidates[best_idx]
@@ -270,7 +233,7 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
             if self.appear_then_click(self.I_HSTART, interval=2):
                 continue
             if not self.appear(self.I_HSELECTED) and getattr(self, '_best_boss_button', None) is not None:
-                self.click(self._best_boss_button, interval=2) # 保险：如果因为某些原因还没处于“已选中”状态，就再点一次最佳按钮
+                self.click(self._best_boss_button, interval=2)  # 保险：如果因为某些原因还没处于“已选中”状态，就再点一次最佳按钮
                 continue
         self.device.stuck_record_add('BATTLE_STATUS_S')
         # 正式开始
@@ -290,14 +253,18 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 init_bean_flag = True
                 self.bean_05to10()
                 time.sleep(0.5)
-            # 冰冻（BUFF_005）特化策略已禁用：
-            # 模型在冰冻状态下误识别率极高，大量式神会被错认为 SP 蝉冰雪女，
-            # 导致投豆决策严重失常。因此不再检测冰冻 buff 图标，
-            # 也不向决策层传递 freeze 状态，统一按常规流程处理。
-            self.slave_state = self.update_state()
-            tracks = self.tracker(image=self.device.image, response=last_action)
-            last_action = self.agent.decision(tracks=tracks, state=self.slave_state)
-            self.do_action(last_action, state=self.slave_state)
+            #修改：在这里不再区分freeze，而是将状态传到decision用于执行冻结策略
+            #目前被禁用了 因为冰冻状态下检测正确率约等于0 全是蝉冰雪女 =.=
+            if not self.appear(self.I_HFREEZE):
+                # -------------------------------------------------------
+                freeze = self.appear(self.I_HFREEZE)
+                self.slave_state = self.update_state()
+                tracks = self.tracker(image=self.device.image, response=last_action)
+                last_action = self.agent.decision(tracks=tracks, state=self.slave_state, freeze=freeze)
+                self.do_action(last_action, state=self.slave_state)
+            else:
+                # TODO freeze state
+                tracks = []
 
             # debug
             if self._config.debug_config.hya_show:
@@ -345,4 +312,3 @@ if __name__ == '__main__':
     # from debugger import test_track
     # test_track(show=False)
     pass
-

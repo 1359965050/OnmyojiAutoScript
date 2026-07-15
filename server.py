@@ -27,8 +27,8 @@ else:
 import threading
 
 from module.logger import logger
-from module.server.setting import State
 from module.image.rpc import ensure_image_server_ready, shutdown_image_server
+from module.server.setting import State
 from module.ocr.rpc import ensure_ocr_server_ready, shutdown_ocr_server
 
 

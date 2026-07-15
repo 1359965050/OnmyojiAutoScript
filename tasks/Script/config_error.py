@@ -19,6 +19,8 @@ class Error(BaseModel):
         description='',
         ge=1,
     )
-
+    notify_enable: bool = Field(default=False,
+                                description='')
+    notify_config: MultiLine = Field(default='provider: null', description='notify_config_help')
 
 

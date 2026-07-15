@@ -164,13 +164,6 @@ def convert_to_underscore(text: str) -> str:
     :param text:
     :return:
     """
-    if text in ['ScriptConfig', 'script_config', 'scriptConfig']:
-        return 'script'
-    # 菜单显示名称到实际任务字段的映射
-    if text in ['EmulatorSettings', 'emulator_settings']:
-        return 'script'
-    if text in ['GameSettings', 'game_settings']:
-        return 'global_game'
     if '_' in text:
         # If text already contains underscore, assume it's in the correct format
         return text

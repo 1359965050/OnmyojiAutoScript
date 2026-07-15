@@ -8,17 +8,18 @@ class ConfigManual:
     """
 
     SCHEDULER_PRIORITY = """
-        Restart
+        Restart > SoulsTidy
         > KekkaiUtilize > KekkaiActivation > DemonEncounter
-        > AreaBoss > RealmRaid > RyouToppa > Exploration
+        > AreaBoss > GoldYoukai > ExperienceYoukai > Nian > Tako > AutoCheckinBigGod > RealmRaid > RyouToppa > DailyTrifles > Exploration
         > Dokan > AbyssShadows > Hunt > GuildBanquet > DemonRetreat > GuildActivityMonitor
-        > Orochi > Sougenbi > FallenSun > EternitySea > SixRealms
-        > ActivityShikigami
+        > Orochi > OrochiMoans > OrochiJudgement > Sougenbi > FallenSun > EternitySea > SixRealms > OtherWorldTwilight
+        > ActivityShikigami > WantedQuests
         > BondlingFairyland > EvoZone > GoryouRealm > HeroTest
-        > Hyakkiyakou
-        > Secret > WeeklyTrifles
-        > RichMan
-        > MetaDemon > DyeTrials > GuaGuaArtRoom
+        > CollectiveMissions
+        > Pets > TalismanPass > Delegation > Hyakkiyakou
+        > Secret > WeeklyTrifles > MysteryShop > Duel 
+        > TrueOrochi > RichMan
+        > MetaDemon > FrogBoss > FloatParade > Quiz > KittyShop > DyeTrials > MemoryScrolls > GuguArtStudio > AbyssIllusion
         """
 
     DEVICE_OVER_HTTP = False

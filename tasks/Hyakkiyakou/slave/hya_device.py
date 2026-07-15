@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime
 
 from module.base.timer import Timer
+from module.image import get_image_client
 from module.logger import logger
 from module.base.utils import point2str
 from module.exception import RequestHumanTakeover, GameStuckError
@@ -11,11 +12,6 @@ from tasks.base_task import BaseTask
 from tasks.Hyakkiyakou.config import ScreenshotMethod, ControlMethod
 
 def image_black(img) -> bool:
-    if img is None or img.size == 0:
-        return True
-    h, w = img.shape[:2]
-    if h < 720 or w < 1280:
-        return True
     for y, x in [(0, 0), (719, 1279), (719, 0), (0, 1279)]:
         if np.all(img[y, x] != 0):
             return False
@@ -36,35 +32,11 @@ class HyaDevice(BaseTask):
     def fast_screenshot(self, screenshot: ScreenshotMethod):
         self.hya_screenshot_interval.wait()
         self.hya_screenshot_interval.reset()
-
-        def _fallback_uiautomator2():
-            logger.warning('Fallback to uiautomator2 screenshot')
-            self.device.image = self.device.screenshot_uiautomator2()
-
-        root_handle_valid = hasattr(self.device, 'root_handle_num') and self.device.root_handle_num != 0
-
-        try:
-            if screenshot == ScreenshotMethod.WINDOW_BACKGROUND and root_handle_valid:
-                self.device.image = self.device.screenshot_window_background()
-            elif screenshot == ScreenshotMethod.NEMU_IPC and hasattr(self.device, 'screenshot_nemu_ipc'):
-                self.device.image = self.device.screenshot_nemu_ipc()
-            else:
-                if screenshot == ScreenshotMethod.WINDOW_BACKGROUND and not root_handle_valid:
-                    logger.warning('window_background screenshot requires valid handle')
-                self.device.image = self.device.screenshot_uiautomator2()
-        except Exception as e:
-            logger.warning(f'{screenshot} screenshot failed: {e}, fallback to uiautomator2')
-            _fallback_uiautomator2()
-
-        # 如果截到的图异常（黑屏/空/尺寸不对），回退到 uiautomator2 再试一次
+        self.device.image = self.device.screenshot_window_background() if screenshot == ScreenshotMethod.WINDOW_BACKGROUND else self.device.screenshot_nemu_ipc()
+        self.device.image_frame_id = None
         if image_black(self.device.image):
-            logger.warning('Screenshot image is black or empty, fallback to uiautomator2')
-            _fallback_uiautomator2()
-
-        if image_black(self.device.image):
-            logger.error('Screenshot image is still black or empty after fallback')
+            logger.error('Screenshot image is black, try again')
             raise RequestHumanTakeover('Screenshot image is black, try again')
-
         if self.hya_fs_check_timer.reached():
             logger.error('Fast screenshot check timer reached')
             logger.error('Five minutes have not ended, the game is probably stuck, please check the game')
@@ -79,24 +51,8 @@ class HyaDevice(BaseTask):
         )
         if control_method == ControlMethod.MINITOUCH:
             self.device.click_minitouch(x=x, y=y)
-            return
-
-        control_handle_valid = (
-            hasattr(self.device, 'root_node')
-            and self.device.root_node is not None
-            and self.device.root_node.children
-        )
-
-        if control_method == ControlMethod.WINDOW_MESSAGE and control_handle_valid:
-            try:
-                self.device.click_window_message(x=x, y=y, fast=True)
-            except Exception as e:
-                logger.warning(f'window_message click failed: {e}, fallback to minitouch')
-                self.device.click_minitouch(x=x, y=y)
         else:
-            if control_method == ControlMethod.WINDOW_MESSAGE and not control_handle_valid:
-                logger.warning('window_message click requires valid control handle list, fallback to minitouch')
-            self.device.click_minitouch(x=x, y=y)
+            self.device.click_window_message(x=x, y=y, fast=True)
 
     def set_fast_screenshot_interval(self, interval: float):
         """

@@ -9,9 +9,9 @@ from module.logger import logger
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.DyeTrials.assets import DyeTrialsAssets
-from tasks.GameUi.assets import GameUiAssets
 from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_main, page_shikigami_records
+from tasks.Restart.assets import RestartAssets
 
 """ 灵染 试炼 """
 
@@ -24,21 +24,17 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DyeTrialsAssets):
 
         # 自动换御魂
         if cfg.switch_soul_config.enable:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul(cfg.switch_soul_config.switch_group_team)
         if cfg.switch_soul_config.enable_switch_by_name:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul_by_name(cfg.switch_soul_config.group_name, cfg.switch_soul_config.team_name)
 
-        self.ui_get_current_page()
-        self.ui_goto(page_main)
+        self.goto_page(page_main)
 
         self.get_all()
 
-        self.ui_get_current_page()
-        self.ui_goto(page_main)
+        self.goto_page(page_main)
 
         self.set_next_run(task='DyeTrials', success=True, finish=True)
         raise TaskEnd('DyeTrials')
@@ -64,10 +60,14 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DyeTrialsAssets):
             if boss_timer.reached():
                 self.config.notifier.push(title='超鬼王', message='识别超时退出')
                 break
+            # 关闭获得皮肤提示弹窗
+            if self.appear_then_click(self.I_FP_CLOSE_GET_SKIN, interval=0.8):
+                logger.warning('Maybe already get skin, close tip')
+                continue
             # 获得奖励
             if self.ui_reward_appear_click():
                 boss_timer.reset()
-            if self.appear_then_click(GameUiAssets.I_CHAT_CLOSE_SIDE):
+            if self.appear_then_click(RestartAssets.I_HARVEST_CHAT_CLOSE):
                 boss_timer.reset()
                 continue
             if self.appear(self.I_FP_CHALLENGE, interval=1):
@@ -99,3 +99,4 @@ if __name__ == '__main__':
     t.screenshot()
 
     t.run()
+

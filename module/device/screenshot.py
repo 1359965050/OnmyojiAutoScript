@@ -11,13 +11,13 @@ from PIL import Image
 from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.base.utils import get_color, image_size, limit_in, save_image
-from module.device.env import IS_WINDOWS
 from module.device.method.adb import Adb
 from module.device.method.windows import Window
 from module.device.method.droidcast import DroidCast
 from module.device.method.scrcpy import Scrcpy
 from module.device.method.nemu_ipc import NemuIpc
 from module.exception import RequestHumanTakeover, ScriptError
+from module.image.rpc import get_image_client
 from module.logger import logger
 
 
@@ -28,6 +28,7 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
     _screenshot_interval = Timer(0.1)
     _last_save_time = {}
     image: np.ndarray
+    image_frame_id: str | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,7 +45,7 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
             'DroidCast': self.screenshot_droidcast,
             'DroidCast_raw': self.screenshot_droidcast_raw,
             'scrcpy': self.screenshot_scrcpy,
-            'window_background': self.screenshot_window_background if IS_WINDOWS else None,
+            'window_background': self.screenshot_window_background,
             'nemu_ipc': self.screenshot_nemu_ipc
         }
 
@@ -62,6 +63,8 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
                 self.screenshot_adb  # 第二个参数默认的是screenshot_adb
             )
             self.image = method()
+            frame_info = get_image_client().register_frame(self.image, self.config.config_name)
+            self.image_frame_id = frame_info["frame_id"]
 
             # if self.config.Emulator_ScreenshotDedithering:
             #     # This will take 40-60ms

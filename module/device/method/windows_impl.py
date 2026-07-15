@@ -8,7 +8,6 @@ import time
 
 from math import dist
 from cached_property import cached_property
-from anytree import PreOrderIter
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
                       SetForegroundWindow, IsWindowVisible, GetDC, GetParent,
@@ -93,16 +92,6 @@ class Window(Handle):
         result = []
         if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
             result.append(self.root_node.num)
-            # MuMu 12 新版结构变化：根节点是设备窗口，子节点是渲染窗口
-            if self.root_node.name == 'MuMu安卓设备':
-                for node in PreOrderIter(self.root_node):
-                    if node.name == 'MuMuNxDevice':
-                        result.append(node.num)
-                        return result
-                return result
-            # 如果根节点本身就是渲染窗口或没有子树
-            if self.root_node.name == 'MuMuNxDevice' or not self.root_node.children:
-                return result
             result.append(self.root_node.children[0].num)
             return result
         elif self.emulator_family == EmulatorFamily.FAMILY_NOX:

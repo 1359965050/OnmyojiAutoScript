@@ -1,3 +1,23 @@
+class CampaignEnd(Exception):
+    pass
+
+
+class MapDetectionError(Exception):
+    pass
+
+
+class MapWalkError(Exception):
+    pass
+
+
+class MapEnemyMoved(Exception):
+    pass
+
+
+class CampaignNameError(Exception):
+    pass
+
+
 class ScriptError(Exception):
     # This is likely to be a mistake of developers, but sometimes a random issue
     pass
@@ -12,7 +32,8 @@ class GameStuckError(Exception):
 
 
 class GameBugError(Exception):
-    # 游戏客户端发生异常，脚本无法处理，需要重启修复
+    # An error has occurred in Azur Lane game client. Alas is unable to handle.
+    # A restart should fix it.
     pass
 
 

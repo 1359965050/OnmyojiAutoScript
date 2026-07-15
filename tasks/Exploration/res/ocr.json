@@ -1,8 +1,8 @@
 [
   {
     "itemName": "e_exploration_level_number",
-    "roiFront": "1064,206,121,337",
-    "roiBack": "1064,206,121,337",
+    "roiFront": "1065,203,124,352",
+    "roiBack": "1065,203,124,352",
     "mode": "Full",
     "method": "Default",
     "keyword": "",
@@ -19,8 +19,8 @@
   },
   {
     "itemName": "realm_raid_number",
-    "roiFront": "1144,11,72,38",
-    "roiBack": "1144,11,72,38",
+    "roiFront": "739,11,78,37",
+    "roiBack": "739,11,78,37",
     "mode": "DigitCounter",
     "method": "Default",
     "keyword": "",
@@ -28,8 +28,8 @@
   },
   {
     "itemName": "realm_raid_number1",
-    "roiFront": "1144,11,72,38",
-    "roiBack": "1144,11,72,38",
+    "roiFront": "936,10,82,36",
+    "roiBack": "936,10,82,36",
     "mode": "DigitCounter",
     "method": "Default",
     "keyword": "",

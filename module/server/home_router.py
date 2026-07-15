@@ -1,94 +1,112 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+import asyncio
 import json
+import threading
 from fastapi import APIRouter, Body
 from pathlib import Path
 
 from module.config.utils import write_file
+from module.image.rpc import ensure_image_server_ready, get_image_client, shutdown_image_server
 from module.logger import logger
-from module.ocr.rpc import shutdown_ocr_server
+from module.server.api_logger import ApiLoggingRoute
+from module.ocr.rpc import ensure_ocr_server_ready, get_ocr_client, shutdown_ocr_server
 from module.server.main_manager import MainManager
 from module.server.updater import Updater
 from module.server.i18n import I18n
-from module.server.constants import HOME_ROUTER_PREFIX, HOME_ROUTER_TAGS
-from module.server.endpoints import HomeEndpoints
 
 home_app = APIRouter(
-    prefix=HOME_ROUTER_PREFIX,
-    tags=HOME_ROUTER_TAGS,
+    prefix="/home",
+    tags=["home"],
+    route_class=ApiLoggingRoute,
 )
+update_info_lock = threading.Lock()
 
 
-@home_app.get(HomeEndpoints.TEST)
+@home_app.get('/test')
 async def home_test():
     return {'message': 'test'}
 
 
 #  gcc -Wall -pedantic -shared -fPIC -o group_work.so group_work.c -lwiringPi
-@home_app.get(HomeEndpoints.HOME_MENU)
+@home_app.get('/home_menu')
 async def home_menu():
-    return {'Home': [], 'Updater': []}
+    return {'Home': [], 'Updater': [], 'Tool': []}
 
 
-@home_app.get(HomeEndpoints.KILL_SERVER)
+@home_app.get('/image_server_info')
+async def image_server_info():
+    ensure_image_server_ready()
+    return get_image_client(refresh=True).get_server_info()
+
+
+@home_app.get('/ocr_server_info')
+async def ocr_server_info():
+    ensure_ocr_server_ready()
+    return get_ocr_client(refresh=True).get_server_info()
+
+
+@home_app.post('/notify_test')
+async def notify_test(setting: str, title: str, content: str):
+    from module.notify.notify import Notifier
+    try:
+        notifier = Notifier(setting, True)
+        if notifier.push(title=title, content=content):
+            del notifier
+            return True
+        else:
+            del notifier
+            return False
+    except Exception as e:
+        logger.exception(e)
+        return str(e)
+
+
+@home_app.get('/kill_server')
 async def kill_server():
+    shutdown_image_server()
     shutdown_ocr_server()
     MainManager.signal_kill_server = True
     return 'success'
 
 
-@home_app.get(HomeEndpoints.UPDATE_INFO)
+@home_app.get('/update_info')
 async def update_info():
     try:
-        updater = Updater()
-        result = updater.get_update_info()
-        result['branch'] = updater.current_branch()
-        return result
+        return await asyncio.to_thread(_get_update_info)
     except Exception as e:
         logger.error(e)
         return None
 
 
-@home_app.get(HomeEndpoints.EXECUTE_UPDATE)
+def _get_update_info():
+    with update_info_lock:
+        updater = Updater()
+        return updater.get_update_info()
+
+
+@home_app.get('/execute_update')
 async def execute_update():
     # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启oasx
     try:
         updater = Updater()
-        success = updater.execute_pull()
-        if success:
-            return '更新成功，请重启 OASX。'
-        return '更新失败，请检查网络或 git 配置。'
+        updater.execute_pull()
     except Exception as e:
         logger.error(e)
-        return f'更新异常: {e}'
+    return '手动更新将会立即结束运行中的脚本服务, 最后你还需重启oasx'
 
 
-@home_app.get(HomeEndpoints.CHINESE_TRANSLATE)
-async def chinese_translate():
-    """Return the backend-managed Chinese translations.
-
-    The frontend used to push translations via PUT; now the backend owns the
-    single source of truth and only serves the generated file.
-    """
+@home_app.put('/chinese_translate')
+async def chinese_translate(data: dict = Body(...)):
     try:
-        return I18n.load_zh_cn()
+        I18n.save_zh_cn(data)
     except Exception as e:
         logger.error(e)
-    return {}
-
-
-@home_app.put(HomeEndpoints.CHINESE_TRANSLATE)
-async def chinese_translate_put(data: dict = Body(...)):
-    """Compatibility endpoint for older frontends that still push translations.
-
-    The backend no longer accepts runtime overrides; the generated file from
-    i18n_cn.dart is the source of truth.
-    """
     return True
 
 
-@home_app.get(HomeEndpoints.ADDITIONAL_TRANSLATE)
+@home_app.get('/additional_translate')
 async def additional_translate() -> dict:
     try:
         data = I18n.load_additions()

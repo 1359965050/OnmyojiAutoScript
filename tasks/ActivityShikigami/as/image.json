@@ -45,6 +45,15 @@
     "description": "切换按键"
   },
   {
+    "itemName": "climb_mode_ap100",
+    "imageName": "as_climb_mode_ap100.png",
+    "roiFront": "1186,665,22,25",
+    "roiBack": "1055,495,202,219",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "100体爬塔标志"
+  },
+  {
     "itemName": "ap_unlock",
     "imageName": "as_ap_unlock.png",
     "roiFront": "788,656,22,25",

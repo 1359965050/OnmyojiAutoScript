@@ -15,6 +15,7 @@ class Trifles(BaseModel):
     share_collect: bool = Field(default=True, description='share_collect_help')
     share_area_boss: bool = Field(default=True, description='share_area_boss_help')
     share_secret: bool = Field(default=True, description='share_secret_help')
+    broken_amulet: int = Field(title='Broken Amulet', default=100, description='trifles_broken_amulet_help')
 
 
 class WeeklyTrifles(ConfigBase):

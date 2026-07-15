@@ -10,26 +10,26 @@
   },
   {
     "itemName": "art_war_card",
-    "roiFront": "742,32,63,17",
-    "roiBack": "742,32,63,17",
+    "roiFront": "712,21,98,36",
+    "roiBack": "712,21,98,36",
     "mode": "DigitCounter",
     "method": "Default",
     "keyword": "",
-    "description": "兵道帖"
+    "description": "兵藏秘境兵道帖"
   },
   {
     "itemName": "art_war_card_plus",
     "roiFront": "916,25,90,29",
     "roiBack": "916,25,90,29",
-    "mode": "Digit",
+    "mode": "SINGLE",
     "method": "Default",
     "keyword": "",
     "description": "兵道帖机密"
   },
   {
     "itemName": "fire",
-    "roiFront": "1129,594,94,53",
-    "roiBack": "1129,594,94,53",
+    "roiFront": "1130,585,92,55",
+    "roiBack": "1126,576,100,99",
     "mode": "Single",
     "method": "Default",
     "keyword": "挑战",

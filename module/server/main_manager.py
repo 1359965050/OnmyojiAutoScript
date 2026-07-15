@@ -16,13 +16,10 @@ from module.server.config_manager import ConfigManager
 
 
 class MainManager(ConfigManager):
+    # config_cache: Config = None  # 缓存当前切换的配置
     script_process: dict[str: ScriptProcess] = None  # 脚本进程
     push_data_thread: Thread = None  # 数据推送线程
     signal_kill_server: bool = False
-    _configs: dict[str, Config] = {}
-    _cache_hits = 0
-    _cache_misses = 0
-    _cache_reloads = 0
 
     def __init__(self) -> None:
         super().__init__()
@@ -45,43 +42,9 @@ class MainManager(ConfigManager):
     #         self.config_cache = Config(config_name)
     #     return self.config_cache
 
-    @classmethod
-    def config_cache(cls, name: str) -> Config:
-        if name not in cls._configs:
-            cls._cache_misses += 1
-            config = Config(name)
-            config.start_watching()
-            cls._configs[name] = config
-        else:
-            config = cls._configs[name]
-            if config.should_reload():
-                cls._cache_reloads += 1
-                config.reload()
-                config.start_watching()
-            else:
-                cls._cache_hits += 1
-        return config
-
-    @classmethod
-    def get_cache_stats(cls) -> dict:
-        total = cls._cache_hits + cls._cache_misses + cls._cache_reloads
-        hit_rate = (cls._cache_hits / total * 100) if total > 0 else 0.0
-        return {
-            "cache_hits": cls._cache_hits,
-            "cache_misses": cls._cache_misses,
-            "cache_reloads": cls._cache_reloads,
-            "cache_entries": len(cls._configs),
-            "hit_rate": round(hit_rate, 2),
-            "config_names": list(cls._configs.keys()),
-        }
-
-    @classmethod
-    def clear_cache(cls) -> None:
-        cls._configs.clear()
-        cls._cache_hits = 0
-        cls._cache_misses = 0
-        cls._cache_reloads = 0
-        logger.info("Config cache cleared")
+    @staticmethod
+    def config_cache(name: str) -> Config:
+        return Config(name)
 
     def add_script_file(self, file_name: str):
         # 当你添加了新的脚本文件后，需要添加缓存的列表
@@ -125,18 +88,13 @@ class MainManager(ConfigManager):
                 # 如果 已经存在了 对应的协程 跳过
                 # 如果这个进程异常/运行中 那这个协程也应该存在
                 # logger.info(f'检测脚本的process: {name}')
-                coroutine_state_name = f'coroutine_state_{name}'
-                coroutine_log_name = f'coroutine_log_{name}'
                 if script_p.state == ScriptState.INACTIVE:
-                    # 进程已停止，取消对应的广播协程，避免僵尸协程空转
-                    for coroutine_name in (coroutine_state_name, coroutine_log_name):
-                        task = tasks.pop(coroutine_name, None)
-                        if task is not None and not task.done():
-                            task.cancel()
                     continue
+                coroutine_state_name = f'coroutine_state_{name}'
                 if coroutine_state_name not in tasks:
                     tasks[coroutine_state_name] = asyncio.create_task(script_p.coroutine_broadcast_state(),
                                                                       name=coroutine_state_name)
+                coroutine_log_name = f'coroutine_log_{name}'
                 if coroutine_log_name not in tasks:
                     tasks[coroutine_log_name] = asyncio.create_task(script_p.coroutine_broadcast_log(),
                                                                     name=coroutine_log_name)
@@ -151,25 +109,6 @@ class MainManager(ConfigManager):
                     logger.error(f'{instance} file not found')
                     continue
             await self.script_process[instance].start()
-
-    async def ensure_coroutines(self, script_name: str):
-        if script_name not in self.script_process:
-            return
-        script_p = self.script_process[script_name]
-        tasks = asyncio.all_tasks()
-        tasks_names = {t.get_name() for t in tasks}
-        
-        coroutine_state_name = f'coroutine_state_{script_name}'
-        if coroutine_state_name not in tasks_names:
-            asyncio.create_task(script_p.coroutine_broadcast_state(),
-                               name=coroutine_state_name)
-            logger.info(f'Started state coroutine for {script_name}')
-        
-        coroutine_log_name = f'coroutine_log_{script_name}'
-        if coroutine_log_name not in tasks_names:
-            asyncio.create_task(script_p.coroutine_broadcast_log(),
-                               name=coroutine_log_name)
-            logger.info(f'Started log coroutine for {script_name}')
 
 
 mm = MainManager()

@@ -33,7 +33,7 @@ class HeroTestAssets:
 	# 阵容锁定状态 
 	I_LOCK = RuleImage(roi_front=(822,650,23,26), roi_back=(736,638,283,71), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_lock.png")
 	# 兵藏秘境 
-	I_BCMJ = RuleImage(roi_front=(1088,355,34,115), roi_back=(1050,300,120,240), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj.png")
+	I_BCMJ = RuleImage(roi_front=(1086,350,45,131), roi_back=(1086,350,45,131), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj.png")
 	# 兵藏秘境阵容锁 
 	I_BCMJ_LOCK = RuleImage(roi_front=(908,655,20,26), roi_back=(825,645,199,52), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_lock.png")
 	# 兵藏秘境挑战 
@@ -42,10 +42,10 @@ class HeroTestAssets:
 	I_BCMJ_WIN = RuleImage(roi_front=(431,141,100,100), roi_back=(431,141,100,100), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_win.png")
 	# 兵藏秘境选择八华斩 
 	I_BCMJ_SKILL_ADD1 = RuleImage(roi_front=(109,361,90,32), roi_back=(103,359,1076,37), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_skill_add1.png")
-	# 技能选择无畏 
+	# 技能选择 无畏 
 	I_BCMJ_SKILL_ADD2 = RuleImage(roi_front=(728,359,61,32), roi_back=(106,356,1068,38), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_skill_add2.png")
-	# 技能祝福的确定按钮 
-	I_BCMJ_SKILL_ADD_CONFIRM = RuleImage(roi_front=(612,636,52,28), roi_back=(600,625,88,54), threshold=0.7, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_skill_add_confirm.png")
+	# 技能祝福确定 
+	I_BCMJ_SKILL_ADD_CONFIRM = RuleImage(roi_front=(608,633,64,36), roi_back=(608,633,64,36), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_skill_add_confirm.png")
 	# 兵藏秘境的暴击伤害属性奖励 
 	I_BCMJ_PROPERTY_ADD_CRITICAL = RuleImage(roi_front=(704,359,115,34), roi_back=(120,356,1038,39), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_bcmj_property_add_critical.png")
 	# 兵藏秘境默认祝福 
@@ -99,16 +99,28 @@ class HeroTestAssets:
 	I_HERO2_SKILL3 = RuleImage(roi_front=(520,358,62,38), roi_back=(41,346,1172,63), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill3.png")
 	# 速度祝福 
 	I_HERO2_SKILL6 = RuleImage(roi_front=(427,356,62,38), roi_back=(48,342,1175,67), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill6.png")
+	# 遏云 
+	I_HERO2_SKILL7 = RuleImage(roi_front=(823,355,64,41), roi_back=(54,344,1170,74), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill7.png")
+	# 音迹 
+	I_HERO2_SKILL8 = RuleImage(roi_front=(221,353,60,40), roi_back=(54,343,1167,73), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill8.png")
+	# 泛音 
+	I_HERO2_SKILL9 = RuleImage(roi_front=(219,356,60,38), roi_back=(50,342,1169,73), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill9.png")
+	# 凝啸 
+	I_HERO2_SKILL10 = RuleImage(roi_front=(1127,356,59,40), roi_back=(53,345,1169,74), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill10.png")
+	# 逐空 
+	I_HERO2_SKILL11 = RuleImage(roi_front=(521,357,60,39), roi_back=(48,342,1172,74), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill11.png")
+	# 伤害加成 
+	I_HERO2_SKILL12 = RuleImage(roi_front=(1034,354,122,41), roi_back=(53,341,1172,74), threshold=0.8, method="Template matching", file="./tasks/HeroTest/as/as_hero2_skill12.png")
 
 
 	# Ocr Rule Assets
 	# 投喂的体力 
 	O_REMAIN_AP = RuleOcr(roi=(1095,24,123,33), area=(1095,24,123,33), mode="DigitCounter", method="Default", keyword="", name="remain_ap")
-	# 兵道帖 
-	O_ART_WAR_CARD = RuleOcr(roi=(742,32,63,17), area=(742,32,63,17), mode="DigitCounter", method="Default", keyword="", name="art_war_card")
+	# 兵藏秘境兵道帖 
+	O_ART_WAR_CARD = RuleOcr(roi=(712,21,98,36), area=(712,21,98,36), mode="DigitCounter", method="Default", keyword="", name="art_war_card")
 	# 兵道帖机密 
-	O_ART_WAR_CARD_PLUS = RuleOcr(roi=(916,25,90,29), area=(916,25,90,29), mode="Digit", method="Default", keyword="", name="art_war_card_plus")
+	O_ART_WAR_CARD_PLUS = RuleOcr(roi=(916,25,90,29), area=(916,25,90,29), mode="SINGLE", method="Default", keyword="", name="art_war_card_plus")
 	# 挑战按钮 
-	O_FIRE = RuleOcr(roi=(1129,594,94,53), area=(1129,594,94,53), mode="Single", method="Default", keyword="挑战", name="fire")
+	O_FIRE = RuleOcr(roi=(1130,585,92,55), area=(1126,576,100,99), mode="Single", method="Default", keyword="挑战", name="fire")
 
 

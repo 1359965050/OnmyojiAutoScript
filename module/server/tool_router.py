@@ -7,15 +7,16 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from starlette.websockets import WebSocketState
 
 from module.logger import logger
+from module.server.api_logger import ApiLoggingRoute, log_ws_event
 from module.server.tool import AnnotatorError, annotator_manager
-from module.server.constants import TOOL_ROUTER_PREFIX, TOOL_ROUTER_TAGS
-from module.server.endpoints import ToolEndpoints, ToolErrorCodes, ToolCloseReasons
 
 tool_app = APIRouter(
-    prefix=TOOL_ROUTER_PREFIX,
-    tags=TOOL_ROUTER_TAGS,
+    prefix="/tool",
+    tags=["tool"],
+    route_class=ApiLoggingRoute,
 )
 
 
@@ -98,21 +99,21 @@ def _close_session_safely(session_id: str, reason: str) -> dict[str, Any]:
     return annotator_manager.close_session(session_id, reason=reason, raise_if_missing=False)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR)
+@tool_app.get('/annotator')
 async def tool_annotator_page():
     page = annotator_manager.index_file()
     if not page.exists():
-        raise HTTPException(status_code=404, detail={"code": ToolErrorCodes.PAGE_NOT_FOUND, "message": "标注页面不存在"})
+        raise HTTPException(status_code=404, detail={"code": "page_not_found", "message": "标注页面不存在"})
     return FileResponse(page)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_SESSION)
+@tool_app.post('/annotator/api/session')
 async def annotator_create_session():
     session = annotator_manager.create_session()
     return {"code": "ok", "session": session}
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_SESSION_DETAIL)
+@tool_app.get('/annotator/api/session/{session_id}')
 async def annotator_get_session(session_id: str):
     try:
         session = annotator_manager.get_session_snapshot(session_id)
@@ -123,8 +124,8 @@ async def annotator_get_session(session_id: str):
 
 
 
-@tool_app.delete(ToolEndpoints.ANNOTATOR_SESSION_DETAIL)
-async def annotator_close_session(session_id: str, reason: str = ToolCloseReasons.CLIENT_CLOSE):
+@tool_app.delete('/annotator/api/session/{session_id}')
+async def annotator_close_session(session_id: str, reason: str = "client_close"):
     try:
         result = _close_session_safely(session_id, f"api:{reason}")
         return {"code": "ok", **result}
@@ -132,15 +133,15 @@ async def annotator_close_session(session_id: str, reason: str = ToolCloseReason
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_SESSION_CLOSE_BEACON)
-async def annotator_close_session_beacon(session_id: str, reason: str = ToolCloseReasons.PAGEHIDE):
+@tool_app.post('/annotator/api/session/{session_id}/close')
+async def annotator_close_session_beacon(session_id: str, reason: str = "pagehide"):
     try:
         result = _close_session_safely(session_id, f"beacon:{reason}")
         return {"code": "ok", **result}
     except AnnotatorError as e:
         _raise_annotator_error(e)
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_IMAGES_UPLOAD)
+@tool_app.post('/annotator/api/images/upload')
 async def annotator_upload_images(data: UploadImagesBody):
     try:
         images = annotator_manager.save_uploaded_images_base64(
@@ -152,7 +153,7 @@ async def annotator_upload_images(data: UploadImagesBody):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_IMAGES)
+@tool_app.get('/annotator/api/images')
 async def annotator_list_images(session_id: str):
     try:
         images = annotator_manager.list_images(session_id)
@@ -161,7 +162,7 @@ async def annotator_list_images(session_id: str):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_IMAGE_FILE)
+@tool_app.get('/annotator/api/images/{session_id}/{image_id}')
 async def annotator_image_file(session_id: str, image_id: str):
     try:
         image = annotator_manager.get_image_file(session_id, image_id)
@@ -170,7 +171,7 @@ async def annotator_image_file(session_id: str, image_id: str):
         _raise_annotator_error(e)
 
 
-@tool_app.delete(ToolEndpoints.ANNOTATOR_IMAGE_FILE)
+@tool_app.delete('/annotator/api/images/{session_id}/{image_id}')
 async def annotator_delete_image(session_id: str, image_id: str):
     try:
         session = annotator_manager.delete_image(session_id, image_id)
@@ -179,7 +180,7 @@ async def annotator_delete_image(session_id: str, image_id: str):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_IMAGES_DELETE_BATCH)
+@tool_app.post('/annotator/api/images/delete-batch')
 async def annotator_delete_batch_images(data: BatchDeleteImagesBody):
     try:
         result = annotator_manager.delete_images(data.session_id, data.image_ids)
@@ -188,7 +189,7 @@ async def annotator_delete_batch_images(data: BatchDeleteImagesBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_IMAGES_CLEAR)
+@tool_app.post('/annotator/api/images/clear')
 async def annotator_clear_images(data: SessionBody):
     try:
         result = annotator_manager.clear_images(data.session_id)
@@ -197,19 +198,19 @@ async def annotator_clear_images(data: SessionBody):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_CONFIGS)
+@tool_app.get('/annotator/api/configs')
 async def annotator_configs():
     configs = annotator_manager.list_configs()
     return {"code": "ok", "configs": configs}
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_TASKS)
+@tool_app.get('/annotator/api/tasks')
 async def annotator_tasks():
     tasks = annotator_manager.list_task_names()
     return {"code": "ok", "tasks": tasks}
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_TASK_JSON_FILES)
+@tool_app.get('/annotator/api/tasks/{task_name}/json')
 async def annotator_task_json_files(task_name: str):
     try:
         files = annotator_manager.list_task_json_files(task_name)
@@ -218,7 +219,7 @@ async def annotator_task_json_files(task_name: str):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_RULE_SCHEMA)
+@tool_app.get('/annotator/api/rules/schema')
 async def annotator_rule_schema():
     try:
         data = annotator_manager.rule_schema()
@@ -227,7 +228,7 @@ async def annotator_rule_schema():
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_RULE_LOAD)
+@tool_app.get('/annotator/api/rules/load')
 async def annotator_load_rules(task_name: str, json_relpath: str):
     try:
         data = annotator_manager.load_rule_file(task_name, json_relpath)
@@ -236,7 +237,7 @@ async def annotator_load_rules(task_name: str, json_relpath: str):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_RULE_SOURCE)
+@tool_app.get('/annotator/api/rules/source')
 async def annotator_rule_source(dir_path: str = ""):
     try:
         data = annotator_manager.list_rule_source(dir_path)
@@ -245,7 +246,7 @@ async def annotator_rule_source(dir_path: str = ""):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_RULE_SOURCE_CREATE)
+@tool_app.post('/annotator/api/rules/source/create')
 async def annotator_rule_source_create(data: RuleFileCreateBody):
     try:
         result = annotator_manager.create_rule_json(data.dir_path, data.file_name)
@@ -254,7 +255,7 @@ async def annotator_rule_source_create(data: RuleFileCreateBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_RULE_SOURCE_DELETE)
+@tool_app.post('/annotator/api/rules/source/delete')
 async def annotator_rule_source_delete(data: RuleFileDeleteBody):
     try:
         result = annotator_manager.delete_rule_json(data.dir_path, data.file_name)
@@ -263,7 +264,7 @@ async def annotator_rule_source_delete(data: RuleFileDeleteBody):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_RULE_IMAGE_PREVIEW)
+@tool_app.get('/annotator/api/rules/image-preview')
 async def annotator_rule_image_preview(task_name: str, json_relpath: str, image_name: str):
     try:
         image = annotator_manager.get_rule_image_file(task_name, json_relpath, image_name)
@@ -272,7 +273,7 @@ async def annotator_rule_image_preview(task_name: str, json_relpath: str, image_
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_RULE_IMAGE_DELETE)
+@tool_app.post('/annotator/api/rules/image/delete')
 async def annotator_rule_image_delete(data: RuleImageDeleteBody):
     try:
         result = annotator_manager.delete_rule_image(data.task_name, data.json_relpath, data.image_name)
@@ -281,7 +282,7 @@ async def annotator_rule_image_delete(data: RuleImageDeleteBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_EMULATOR_START)
+@tool_app.post('/annotator/api/emulator/start')
 async def annotator_start_emulator(data: EmulatorStartBody):
     try:
         status = annotator_manager.start_emulator(data.session_id, data.config_name, data.frame_rate)
@@ -290,7 +291,7 @@ async def annotator_start_emulator(data: EmulatorStartBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_EMULATOR_STOP)
+@tool_app.post('/annotator/api/emulator/stop')
 async def annotator_stop_emulator(data: SessionBody):
     try:
         status = annotator_manager.stop_emulator(data.session_id)
@@ -299,7 +300,7 @@ async def annotator_stop_emulator(data: SessionBody):
         _raise_annotator_error(e)
 
 
-@tool_app.get(ToolEndpoints.ANNOTATOR_EMULATOR_STATUS)
+@tool_app.get('/annotator/api/emulator/status')
 async def annotator_emulator_status(session_id: str):
     try:
         status = annotator_manager.emulator_status(session_id)
@@ -308,7 +309,7 @@ async def annotator_emulator_status(session_id: str):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_EMULATOR_CAPTURE)
+@tool_app.post('/annotator/api/emulator/capture')
 async def annotator_capture_frame(data: SessionBody):
     try:
         image = annotator_manager.capture_from_emulator(data.session_id)
@@ -317,7 +318,7 @@ async def annotator_capture_frame(data: SessionBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_RULE_TEST)
+@tool_app.post('/annotator/api/rules/test')
 async def annotator_test_rule(data: RuleTestBody):
     try:
         result = annotator_manager.test_rule(
@@ -334,7 +335,7 @@ async def annotator_test_rule(data: RuleTestBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_RULE_SAVE)
+@tool_app.post('/annotator/api/rules/save')
 async def annotator_save_rules(data: RuleSaveBody):
     try:
         result = annotator_manager.save_rules_and_generate(
@@ -351,7 +352,7 @@ async def annotator_save_rules(data: RuleSaveBody):
         _raise_annotator_error(e)
 
 
-@tool_app.post(ToolEndpoints.ANNOTATOR_CROP_SAVE)
+@tool_app.post('/annotator/api/images/crop-save')
 async def annotator_crop_save(data: CropSaveBody):
     try:
         result = annotator_manager.save_cropped_image(
@@ -367,9 +368,10 @@ async def annotator_crop_save(data: CropSaveBody):
         _raise_annotator_error(e)
 
 
-@tool_app.websocket(ToolEndpoints.ANNOTATOR_WS)
+@tool_app.websocket('/annotator/ws/{session_id}')
 async def annotator_frame_ws(websocket: WebSocket, session_id: str):
     await websocket.accept()
+    log_ws_event(f"annotator_ws[{session_id}] connect")
     try:
         annotator_manager.get_session_snapshot(session_id)
         while True:
@@ -380,10 +382,11 @@ async def annotator_frame_ws(websocket: WebSocket, session_id: str):
 
             status = annotator_manager.emulator_status(session_id)
             if status.get("state") == "error":
+                log_ws_event(f"annotator_ws[{session_id}] event: emulator_error")
                 await websocket.send_json(
                     {
                         "event": "error",
-                        "code": ToolErrorCodes.EMULATOR_ERROR,
+                        "code": "emulator_error",
                         "message": status.get("error", "unknown"),
                     }
                 )
@@ -392,9 +395,11 @@ async def annotator_frame_ws(websocket: WebSocket, session_id: str):
 
             await asyncio.sleep(0.1)
     except WebSocketDisconnect:
+        log_ws_event(f"annotator_ws[{session_id}] disconnect")
         logger.info(f"[annotator] ws disconnect, session={session_id}")
     except AnnotatorError as e:
-        if e.code != ToolErrorCodes.INVALID_SESSION:
+        log_ws_event(f"annotator_ws[{session_id}] annotator_error: code={e.code}, message={e.message}", level="warning")
+        if e.code != "invalid_session":
             logger.warning(f"[annotator] ws annotator error, session={session_id}, code={e.code}")
         try:
             await websocket.send_json({"event": "error", "code": e.code, "message": e.message})
@@ -407,12 +412,15 @@ async def annotator_frame_ws(websocket: WebSocket, session_id: str):
     except Exception as e:
         message = str(e).strip().lower()
         if e.__class__.__name__ == "ClientDisconnected" or "disconnected" in message:
+            log_ws_event(f"annotator_ws[{session_id}] client_disconnected_during_send")
             logger.info(f"[annotator] ws client disconnected during send, session={session_id}")
         else:
+            log_ws_event(f"annotator_ws[{session_id}] error: {type(e).__name__}: {e}", level="error")
             logger.exception(f"[annotator] ws failed, session={session_id}")
         try:
             await websocket.close(code=1011)
         except Exception:
             pass
-
-
+    finally:
+        if websocket.client_state == WebSocketState.DISCONNECTED:
+            log_ws_event(f"annotator_ws[{session_id}] disconnect")

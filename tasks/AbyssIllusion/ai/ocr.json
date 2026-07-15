@@ -1,0 +1,11 @@
+[
+  {
+    "itemName": "remain_tickets",
+    "roiFront": "1169,30,52,28",
+    "roiBack": "1159,20,72,48",
+    "mode": "DigitCounter",
+    "method": "Default",
+    "keyword": "",
+    "description": "挑战券数量"
+  }
+]

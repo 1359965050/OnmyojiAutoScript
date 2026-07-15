@@ -146,30 +146,7 @@ class GitManager(DeployConfig):
             self.execute(f'"{self.git}" remote add {source} {repo}')
 
         logger.hr('Fetch Repository Branch', 1)
-        fetch_success = self._git_fetch_with_timeout(source, branch, timeout=3)
-
-        logger.hr('Check Version', 1)
-        local_commit = self._git_revision('HEAD')
-        remote_commit = self._git_revision(f'{source}/{branch}') if fetch_success else None
-
-        if not remote_commit:
-            if local_commit:
-                logger.warning(
-                    f'Cannot reach remote repository, using local version ({local_commit[:8]}), skip update'
-                )
-                logger.hr('Show Version', 1)
-                self.execute(f'"{self.git}" --no-pager log --no-merges -1', allow_failure=True)
-                return
-            else:
-                logger.error('No local code available and cannot fetch remote repository')
-                self.show_error(f'"{self.git}" fetch {source} {branch}')
-                raise ExecutionError
-
-        if local_commit and local_commit == remote_commit:
-            logger.info(f'Local version equals remote version ({local_commit[:8]}), skip update')
-            logger.hr('Show Version', 1)
-            self.execute(f'"{self.git}" --no-pager log --no-merges -1')
-            return
+        self.execute(f'"{self.git}" fetch {source} {branch}')
 
         logger.hr('Pull Repository Branch', 1)
         # Remove git lock
@@ -201,7 +178,7 @@ class GitManager(DeployConfig):
         self.execute(f'"{self.git}" --no-pager log --no-merges -1')
 
     def git_install(self):
-        logger.hr('Update Alas', 0)
+        logger.hr('Update OAS', 0)
 
         if not self.AutoUpdate:
             logger.info('AutoUpdate is disabled, skip')
@@ -214,5 +191,4 @@ class GitManager(DeployConfig):
             proxy=self.GitProxy,
             ssl_verify=self.SSLVerify,
             keep_changes=self.KeepLocalChanges,
-            mirror=self.GitMirror,
         )

@@ -74,8 +74,8 @@
   {
     "itemName": "bcmj",
     "imageName": "as_bcmj.png",
-    "roiFront": "1088,355,34,115",
-    "roiBack": "1050,300,120,240",
+    "roiFront": "1086,350,45,131",
+    "roiBack": "1086,350,45,131",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "兵藏秘境"
@@ -123,16 +123,16 @@
     "roiBack": "106,356,1068,38",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "技能选择无畏"
+    "description": "技能选择 无畏"
   },
   {
     "itemName": "bcmj_skill_add_confirm",
     "imageName": "as_bcmj_skill_add_confirm.png",
-    "roiFront": "612,636,52,28",
-    "roiBack": "600,625,88,54",
+    "roiFront": "608,633,64,36",
+    "roiBack": "608,633,64,36",
     "method": "Template matching",
-    "threshold": 0.7,
-    "description": "技能祝福的确定按钮"
+    "threshold": 0.8,
+    "description": "技能祝福确定"
   },
   {
     "itemName": "bcmj_property_add_critical",

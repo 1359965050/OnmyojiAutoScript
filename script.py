@@ -24,7 +24,7 @@ from multiprocessing.queues import Queue
 from module.config.utils import convert_to_underscore
 from module.config.config import Config
 from module.device.env import IS_WINDOWS
-from module.base.utils import load_module, ensure_time
+from module.base.utils import load_module
 from module.base.decorator import del_cached_property
 from module.logger import logger
 from module.exception import *
@@ -32,25 +32,14 @@ from module.server.i18n import I18n
 from module.image.rpc import ensure_image_server_ready
 from module.ocr.rpc import ensure_ocr_server_ready
 from module.script import ScriptRuntimeController, ScriptRuntimeDecision
-from module.utils.power_manager import PowerManager
 from tasks.Restart.server_update import delay_pending_tasks_for_server_update, is_server_update_window
 from module.server.log_service import build_error_log_dir_name
 
-_log_switch_lock = threading.Lock()  # 线程锁
-
-# 全局 stop_event 注册表，key 为 config_name，供 BaseTask 等查询当前脚本是否被要求停止
-_script_stop_events: dict[str, Any] = {}
-
-
-def get_stop_event(config_name: str):
-    """
-    获取指定脚本当前的停止事件（若存在）
-    """
-    return _script_stop_events.get(config_name)
+_log_switch_lock = threading.Lock()#线程锁
 
 
 class Script:
-    def __init__(self, config_name: str ='oas', stop_event=None) -> None:
+    def __init__(self, config_name: str ='oas') -> None:
         logger.hr('Start', level=0)
         self.server = None
         self.state_queue: Queue = None
@@ -66,10 +55,6 @@ class Script:
         self.last_task_runtime_outcome: dict[str, Any] | None = None
         # 运行loop的线程
         self.loop_thread: Thread = None
-        # 停止事件，用于从外部通知调度器优雅退出
-        self.stop_event = stop_event
-        if stop_event is not None:
-            _script_stop_events[config_name] = stop_event
 
     @cached_property
     def config(self) -> "Config":
@@ -302,18 +287,20 @@ class Script:
             future (datetime):
 
         Returns:
-            bool: True if wait finished, False if config changed or stop requested.
+            bool: True if wait finished, False if config changed.
         """
         future = future + timedelta(seconds=1)
         self.config.start_watching()
         while 1:
             if datetime.now() > future:
                 return True
-            if self.stop_event is not None and self.stop_event.is_set():
-                logger.info(f'[{self.config_name}] stop event detected, exit wait')
-                return True
+            # if self.stop_event is not None:
+            #     if self.stop_event.is_set():
+            #         logger.info("Update event detected")
+            #         logger.info(f"[{self.config_name}] exited. Reason: Update")
+            #         exit(0)
 
-            time.sleep(1)
+            time.sleep(5)
 
             if self.config.should_reload():
                 return False
@@ -324,9 +311,6 @@ class Script:
         :return:
         """
         while True:
-            if self.stop_event is not None and self.stop_event.is_set():
-                logger.info(f'[{self.config_name}] stop event detected in get_next_task, exit')
-                return ''
             task = self.config.get_next()
             self.config.task = task
             if self.state_queue:
@@ -415,30 +399,7 @@ class Script:
             module_path = str(Path.cwd() / 'tasks' / command / (module_name + '.py'))
             logger.info(f'module_path: {module_path}, module_name: {module_name}')
             task_module = load_module(module_name, module_path)
-            task = task_module.ScriptTask(config=self.config, device=self.device)
-
-            # 任务执行期间将 device.sleep 包装为可中断版本，使停止请求能尽快响应
-            original_sleep = self.device.sleep
-
-            def _sleep_with_stop(second):
-                total = ensure_time(second)
-                elapsed = 0.0
-                interval = 0.5
-                while elapsed < total:
-                    step = min(interval, total - elapsed)
-                    original_sleep(step)
-                    elapsed += step
-                    if self.stop_event is not None and self.stop_event.is_set():
-                        raise TaskEnd('Stop requested during sleep')
-
-            self.device.sleep = _sleep_with_stop
-            try:
-                task.run()
-            finally:
-                self.device.sleep = original_sleep
-        except TaskEnd:
-            logger.info(f'Task `{command}` ended by stop request')
-            return True
+            task_module.ScriptTask(config=self.config, device=self.device).run()
         except Exception as e:
             return self._handle_task_exception(e, command)
         return False
@@ -463,99 +424,83 @@ class Script:
                 logger.info(f'重新显示: {target_window_name}')
             else:
                 show_window_by_name(target_window_name)
+                
+        while 1:
+            if date.today() > start_day:
+                with _log_switch_lock:
+                    logger.set_file_logger(self.config_name, do_cleanup=True)
+                start_day = date.today()
 
-        try:
-            while 1:
-                if self.stop_event is not None and self.stop_event.is_set():
-                    logger.info(f'[{self.config_name}] scheduler loop received stop event, exiting')
-                    break
-
-                if date.today() > start_day:
-                    with _log_switch_lock:
-                        logger.set_file_logger(self.config_name, do_cleanup=True)
-                    start_day = date.today()
-
-                task = ""
-                try:
-                    # Get task
-                    task = self.get_next_task()
-                    if task == '':
-                        logger.info(f'[{self.config_name}] no next task, scheduler loop exiting')
-                        break
-                    # Skip first restart
-                    if self.is_first_task and task == 'Restart':
-                        logger.info('Skip task `Restart` at scheduler start')
-                        self.config.task_delay(task='Restart', success=True, server=True)
-                        del_cached_property(self, 'config')
-                        continue
-                    decision = self.runtime.prepare_task_execution(task)
-                except Exception as e:
-                    self._handle_task_exception(e, task)
-                    # 本轮 prepare 失败,重新调度
+            task = ""
+            try:
+                # Get task
+                task = self.get_next_task()
+                # Skip first restart
+                if self.is_first_task and task == 'Restart':
+                    logger.info('Skip task `Restart` at scheduler start')
+                    self.config.task_delay(task='Restart', success=True, server=True)
                     del_cached_property(self, 'config')
                     continue
+                decision = self.runtime.prepare_task_execution(task)
+            except Exception as e:
+                self._handle_task_exception(e, task)
+                # 本轮 prepare 失败,重新调度
+                del_cached_property(self, 'config')
+                continue
 
-                if decision == ScriptRuntimeDecision.RESCHEDULE:
-                    logger.info(f'Runtime preparation for `{task}` requested reschedule, reload config and retry scheduling')
-                    del_cached_property(self, 'config')
-                    continue
-                if decision == ScriptRuntimeDecision.FAILED:
-                    logger.warning(f'Runtime preparation for `{task}` failed, reload config and retry scheduling')
-                    del_cached_property(self, 'config')
-                    continue
+            if decision == ScriptRuntimeDecision.RESCHEDULE:
+                logger.info(f'Runtime preparation for `{task}` requested reschedule, reload config and retry scheduling')
+                del_cached_property(self, 'config')
+                continue
+            if decision == ScriptRuntimeDecision.FAILED:
+                logger.warning(f'Runtime preparation for `{task}` failed, reload config and retry scheduling')
+                del_cached_property(self, 'config')
+                continue
 
-                # Run
-                logger.info(f'Scheduler: Start task `{task}`')
-                self.device.stuck_record_clear()
-                self.device.click_record_clear()
-                logger.hr(task, level=0)
-                self.config.model.running_task = task
-                PowerManager.acquire()
-                try:
-                    success = self.run(inflection.camelize(task))
-                finally:
-                    PowerManager.release()
-                    self.config.model.running_task = ''
-                logger.info(f'Scheduler: End task `{task}`')
-                self.is_first_task = False
+            # Run
+            logger.info(f'Scheduler: Start task `{task}`')
+            self.device.stuck_record_clear()
+            self.device.click_record_clear()
+            logger.hr(task, level=0)
+            self.config.model.running_task = task
+            success = self.run(inflection.camelize(task))
+            self.config.model.running_task = ''
+            logger.info(f'Scheduler: End task `{task}`')
+            self.is_first_task = False
 
-                # Check failures
-                # failed = deep_get(self.failure_record, keys=task, default=0)
-                failed = self.failure_record[task] if task in self.failure_record else 0
-                failed = 0 if success else failed + 1
-                # deep_set(self.failure_record, keys=task, value=failed)
-                self.failure_record[task] = failed
-                if failed >= 3:
-                    logger.critical(f"Task `{task}` failed 3 or more times.")
-                    logger.critical("Possible reason #1: You haven't used it correctly. "
-                                    "Please read the help text of the options.")
-                    logger.critical("Possible reason #2: There is a problem with this task. "
-                                    "Please contact developers or try to fix it yourself.")
-                    logger.critical('Request human takeover')
-                    # 添加失败三次的推送通知
-                    self.config.notifier.push(
-                        title=f'{I18n.trans_zh_cn(task)}{task}',
-                        content=f"<{self.config_name}> 任务连续失败三次，请上线查看"
-                    )
-                    # 关闭模拟器
-                    if self.config.script.error.error_repeated:
-                        self.device.emulator_stop()
-                    exit(1)
+            # Check failures
+            # failed = deep_get(self.failure_record, keys=task, default=0)
+            failed = self.failure_record[task] if task in self.failure_record else 0
+            failed = 0 if success else failed + 1
+            # deep_set(self.failure_record, keys=task, value=failed)
+            self.failure_record[task] = failed
+            if failed >= 3:
+                logger.critical(f"Task `{task}` failed 3 or more times.")
+                logger.critical("Possible reason #1: You haven't used it correctly. "
+                                "Please read the help text of the options.")
+                logger.critical("Possible reason #2: There is a problem with this task. "
+                                "Please contact developers or try to fix it yourself.")
+                logger.critical('Request human takeover')
+                # 添加失败三次的推送通知
+                self.config.notifier.push(
+                    title=f'{I18n.trans_zh_cn(task)}{task}',
+                    content=f"<{self.config_name}> 任务连续失败三次，请上线查看"
+                )
+                # 关闭模拟器
+                if self.config.script.error.error_repeated:
+                    self.device.emulator_stop()
+                exit(1)
 
-                if success:
-                    del_cached_property(self, 'config')
-                    continue
-                elif self.config.script.error.handle_error:
-                    # self.config.task_delay(success=False)
-                    del_cached_property(self, 'config')
-                    # self.checker.check_now()
-                    continue
-                else:
-                    break
-        finally:
-            PowerManager.release()
-            _script_stop_events.pop(self.config_name, None)
-            logger.info(f'Scheduler loop exited: {self.config_name}')
+            if success:
+                del_cached_property(self, 'config')
+                continue
+            elif self.config.script.error.handle_error:
+                # self.config.task_delay(success=False)
+                del_cached_property(self, 'config')
+                # self.checker.check_now()
+                continue
+            else:
+                break
 
     def _handle_task_exception(self, e: Exception, command: str) -> bool:
         """

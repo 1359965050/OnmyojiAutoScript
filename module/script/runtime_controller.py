@@ -174,7 +174,7 @@ class ScriptRuntimeController:
         """
         在脚本尚未初始化 `device` 时，同步一次模拟器真实状态。
 
-        仅用于关闭模拟器相关策略，避免在"模拟器本来就关闭"的情况下，
+        仅用于关闭模拟器相关策略，避免在“模拟器本来就关闭”的情况下，
         因为访问 `self.device` 而触发 `Device` 初始化，反而把模拟器先拉起来。
         """
         if self.emulator_down or 'device' in self.script.__dict__:
@@ -289,7 +289,7 @@ class ScriptRuntimeController:
 
     def _prepare_idle_goto_main(self) -> ScriptRuntimeDecision:
         """
-        将空闲状态调整为"模拟器开启、游戏运行且位于主界面"。
+        将空闲状态调整为“模拟器开启、游戏运行且位于主界面”。
         停服窗口内改为关闭游戏，避免停留在停服弹窗。
         """
         if self._is_server_update_wait_active():
@@ -299,13 +299,13 @@ class ScriptRuntimeController:
 
     def _prepare_idle_close_game(self) -> ScriptRuntimeDecision:
         """
-        将空闲状态调整为"模拟器开启、游戏关闭"。
+        将空闲状态调整为“模拟器开启、游戏关闭”。
         """
         return self._ensure_game_closed()
 
     def _prepare_idle_keep_game_running(self) -> ScriptRuntimeDecision:
         """
-        将空闲状态调整为"模拟器开启、游戏运行"。
+        将空闲状态调整为“模拟器开启、游戏运行”。
         """
         return self._ensure_game_running(require_main=False, allow_server_update_skip=True)
 
@@ -331,6 +331,9 @@ class ScriptRuntimeController:
         try:
             running = self.device.app_is_running()
         except RequestHumanTakeover as e:
+            # adb 重试 3 次都连不上 → "无法确认游戏是否在前台"。
+            # 翻译为 GameNotRunningError,沿调用栈上抛,
+            # 由 Script._handle_task_exception 统一走 Restart 恢复分支。
             raise GameNotRunningError(f'Failed to query app state before task `{task}` (likely adb disconnected): {e}') \
                 from e
 
@@ -410,7 +413,7 @@ class ScriptRuntimeController:
 
     def _wait_close_game(self, next_run: datetime) -> ScriptRuntimeDecision:
         """
-        按"关闭游戏"策略等待下个任务。
+        按“关闭游戏”策略等待下个任务。
 
         Args:
             next_run: 下一个任务的计划运行时间。
@@ -439,7 +442,7 @@ class ScriptRuntimeController:
 
     def _wait_goto_main(self, next_run: datetime) -> ScriptRuntimeDecision:
         """
-        按"前往主界面"策略等待下个任务。
+        按“前往主界面”策略等待下个任务。
 
         Args:
             next_run: 下一个任务的计划运行时间。
@@ -458,7 +461,7 @@ class ScriptRuntimeController:
 
     def _wait_close_emulator_or_goto_main(self, next_run: datetime) -> ScriptRuntimeDecision:
         """
-        按"关闭模拟器&前往主界面"策略等待下个任务。
+        按“关闭模拟器&前往主界面”策略等待下个任务。
 
         Args:
             next_run: 下一个任务的计划运行时间。
@@ -474,7 +477,7 @@ class ScriptRuntimeController:
 
     def _wait_close_emulator_or_close_game(self, next_run: datetime) -> ScriptRuntimeDecision:
         """
-        按"关闭模拟器&关闭游戏"策略等待下个任务。
+        按“关闭模拟器&关闭游戏”策略等待下个任务。
 
         Args:
             next_run: 下一个任务的计划运行时间。
@@ -495,7 +498,7 @@ class ScriptRuntimeController:
         on_wake: Callable[[], ScriptRuntimeDecision]
     ) -> ScriptRuntimeDecision:
         """
-        处理带"关闭模拟器"语义的空闲等待策略。
+        处理带“关闭模拟器”语义的空闲等待策略。
 
         Args:
             next_run: 下一个任务的计划运行时间。
@@ -524,7 +527,7 @@ class ScriptRuntimeController:
 
     def _wait_stay_there(self, next_run: datetime) -> ScriptRuntimeDecision:
         """
-        按"保持现状"策略等待下个任务。
+        按“保持现状”策略等待下个任务。
 
         Args:
             next_run: 下一个任务的计划运行时间。

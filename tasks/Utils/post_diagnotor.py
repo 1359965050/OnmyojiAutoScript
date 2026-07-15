@@ -6,6 +6,7 @@ from module.exception import *
 from module.atom.image import RuleImage
 
 from tasks.GlobalGame.assets import GlobalGameAssets
+from tasks.SoulsTidy.assets import SoulsTidyAssets
 
 
 class AnalyzeType(str, Enum):
@@ -13,7 +14,11 @@ class AnalyzeType(str, Enum):
     SoulOverflow = "soul_overflow"
 
 
-class PostDiagnotor(GlobalGameAssets):
+class PostDiagnotor(GlobalGameAssets, SoulsTidyAssets):
     def handle(self, e: Exception, command: str, image: np.ndarray) -> AnalyzeType:
-        # SoulsTidy 模块已物理移除，御魂溢出检测功能暂时禁用
+        if self.I_UI_CONFIRM_SAMLL.match(image) and \
+                self.I_ST_SOUL_OVERFLOW.match(image):
+            logger.warning(f"Detect soul overflow, command: {command}")
+            return AnalyzeType.SoulOverflow
+
         return AnalyzeType.NONE

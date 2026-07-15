@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import random
-import time
+from module.base.decorator import run_once
+from tasks.Exploration.assets import ExplorationAssets
+from tasks.GlobalGame.assets import GlobalGameAssets
+
+"""GameUi 导航运行时。"""
+
 import heapq
 import inspect
+import time
 from pathlib import Path
 from time import sleep
 
@@ -12,7 +18,6 @@ from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
 from module.atom.list import RuleList
 from module.atom.ocr import RuleOcr
-from module.base.decorator import run_once
 from module.base.timer import Timer
 from module.exception import GamePageUnknownError, GameNotRunningError
 from module.logger import logger
@@ -29,26 +34,45 @@ from tasks.base_task import BaseTask
 
 
 class GameUi(BaseTask, GameUiAssets):
+    """页面识别、导航与未知页恢复的统一入口。"""
 
     REPEATED_TRANSITION_FAILURE_THRESHOLD = 3
 
+    # 全局未知页关闭动作，所有任务共享。
     DEFAULT_UNKNOWN_CLOSERS = [
-        BaseTask.I_UI_BACK_RED,
-        GameUiAssets.I_CLOSE_CHAT_WINDOW,
+        GlobalGameAssets.I_UI_BACK_RED,
+        GlobalGameAssets.I_CHAT_CLOSE_BUTTON,
         ActivityShikigamiAssets.I_SKIP_BUTTON,
-        BaseTask.I_UI_CONFIRM,
+        GlobalGameAssets.I_UI_CONFIRM_SAMLL,
+        GlobalGameAssets.I_UI_CONFIRM,
+        ExplorationAssets.I_E_EXIT_CONFIRM,
+        GameUiAssets.I_BACK_DAILY,
+        GlobalGameAssets.I_UI_BACK_YELLOW,
         SixRealmsAssets.I_EXIT_SIXREALMS,
-        BaseTask.I_UI_BACK_BLUE,
-        BaseTask.I_UI_BACK_YELLOW,
+        GlobalGameAssets.I_UI_BACK_BLUE,
     ]
 
     def __init__(self, config, device):
+        """初始化 GameUi 运行时。
+
+        Args:
+            config: 当前任务配置对象。
+            device: 当前设备对象。
+        """
+
         super().__init__(config, device)
         PageRegistry.load_all_pages()
+        # 当前任务的导航 session，持有页面快照和运行期状态。
         self.navigator = NavigatorSession(task_category=self._infer_task_category())
         self.navigator.bootstrap(PageRegistry.all())
 
     def _infer_task_category(self) -> str:
+        """根据当前任务模块路径推断任务分类。
+
+        Returns:
+            当前任务所属分类名。
+        """
+
         module_parts = self.__class__.__module__.split(".")
         if "tasks" in module_parts:
             return infer_tasks_category_from_parts(
@@ -56,25 +80,59 @@ class GameUi(BaseTask, GameUiAssets):
                 module_parts.index("tasks"),
                 component_use_child=True,
             )
+
+        # 调度器通过固定模块名 `script_task` 动态加载任务时，__module__ 无法反映真实路径，
+        # 因此这里回退到类定义文件路径推断任务分类。
         try:
             class_file = Path(inspect.getfile(self.__class__)).resolve()
         except (TypeError, OSError):
             return "global"
+
         return infer_tasks_category_from_path(class_file, component_use_child=True)
 
     def _default_detect_categories(self) -> set[str]:
+        """获取普通当前页识别时允许扫描的分类集合。"""
+
         return {"global", self.navigator.task_category}
 
     def _navigation_detect_categories(self, destination: Page) -> set[str]:
+        """获取导航时用于识别当前页的分类集合。
+
+        Args:
+            destination: 目标页面。
+
+        Returns:
+            当前导航允许识别的页面分类集合。
+        """
+
         return {"global", self.navigator.task_category, destination.category}
 
     def _navigation_graph_categories(self, destination: Page, current: Page | None) -> set[str]:
+        """获取导航时允许参与建图的分类集合。
+
+        Args:
+            destination: 目标页面。
+            current: 当前页面。
+
+        Returns:
+            当前导航允许参与路径规划的页面分类集合。
+        """
+
         categories = {"global", destination.category}
         if current is not None:
             categories.add(current.category)
         return categories
 
     def _invoke_callable(self, target):
+        """调用用户自定义动作函数。
+
+        Args:
+            target: 自定义可调用对象。
+
+        Returns:
+            调用结果。
+        """
+
         try:
             signature = inspect.signature(target)
         except (TypeError, ValueError):
@@ -84,11 +142,30 @@ class GameUi(BaseTask, GameUiAssets):
         return target(self)
 
     def match_page_once(self, page: Page) -> bool:
+        """执行一次页面识别。
+
+        Args:
+            page: 待识别页面。
+
+        Returns:
+            单次识别是否成功。
+        """
+
         if page.recognizer is None:
             return False
         return bool(page.recognizer.evaluate(self))
 
     def confirm_page(self, page: Page, skip_first_screenshot: bool = True) -> bool:
+        """使用两帧稳定判定确认页面。
+
+        Args:
+            page: 待确认页面。
+            skip_first_screenshot: 是否复用当前截图。
+
+        Returns:
+            两帧连续识别是否成功。
+        """
+
         self.maybe_screenshot(skip_first_screenshot)
         if not self.match_page_once(page):
             return False
@@ -101,6 +178,16 @@ class GameUi(BaseTask, GameUiAssets):
         skip_first_screenshot: bool = True,
         categories: set[str] = None,
     ) -> Page | None:
+        """在给定分类集合内识别当前页面。
+
+        Args:
+            skip_first_screenshot: 是否复用当前截图。
+            categories: 允许参与识别的页面分类集合。
+
+        Returns:
+            稳定识别到的当前页面；识别失败时返回 `None`。
+        """
+
         pages = self.navigator.all_pages(categories)
         return GameUi._detect_pages(self, pages, skip_first_screenshot=skip_first_screenshot)
 
@@ -111,6 +198,17 @@ class GameUi(BaseTask, GameUiAssets):
         categories: set[str] = None,
         context: str = "current_page",
     ) -> Page | None:
+        """先按作用域识别当前页面，失败后再回退到 session 全量页面。
+
+        Args:
+            skip_first_screenshot: 是否复用当前截图。
+            categories: 第一轮识别允许参与的页面分类集合。
+            context: 当前识别调用场景，用于日志输出。
+
+        Returns:
+            稳定识别到的当前页面；两轮识别都失败时返回 `None`。
+        """
+
         page = self._detect_current_page(
             skip_first_screenshot=skip_first_screenshot,
             categories=categories,
@@ -137,6 +235,8 @@ class GameUi(BaseTask, GameUiAssets):
         *,
         skip_first_screenshot: bool = True,
     ) -> Page | None:
+        """在给定页面集合内识别当前页面。"""
+
         if not pages:
             return None
 
@@ -168,23 +268,19 @@ class GameUi(BaseTask, GameUiAssets):
                 seen.add(cache_key)
                 targets.append(target)
         if targets:
-            self._prepare_appear_cache(targets)
-
-    @staticmethod
-    def _prepare_appear_cache(targets: list) -> None:
-        """
-        Pre-load image resources for the given targets to warm up the cache.
-        This avoids loading latency on the first match call.
-        """
-        for target in targets:
-            if hasattr(target, 'load_image'):
-                try:
-                    target.load_image()
-                except Exception:
-                    pass
+            self.prepare_appear_cache(targets)
 
     @staticmethod
     def _action_name(action) -> str:
+        """将动作对象转换为便于日志输出的名称。
+
+        Args:
+            action: 目标动作对象。
+
+        Returns:
+            动作名称字符串。
+        """
+
         if isinstance(action, (RuleImage, RuleGif, RuleOcr, RuleList, RuleClick)):
             return action.name
         if isinstance(action, ConditionalAction):
@@ -196,6 +292,17 @@ class GameUi(BaseTask, GameUiAssets):
         return repr(action)
 
     def _execute_action(self, action, *, interval: float | None = None, skip_first_screenshot: bool = True) -> bool:
+        """统一执行动作对象。
+
+        Args:
+            action: 待执行动作。
+            interval: 点击间隔。
+            skip_first_screenshot: 是否复用当前截图。
+
+        Returns:
+            动作是否成功执行。
+        """
+
         self.maybe_screenshot(skip_first_screenshot)
 
         if isinstance(action, ConditionalAction):
@@ -244,19 +351,47 @@ class GameUi(BaseTask, GameUiAssets):
         return False
 
     def _run_hooks(self, hooks: list, *, interval: float = 0.6) -> None:
+        """按顺序执行 hook 列表。
+
+        Args:
+            hooks: 待执行的 hook 列表。
+            interval: hook 点击间隔。
+        """
+
         for index, hook in enumerate(hooks):
             self._execute_action(hook, interval=interval, skip_first_screenshot=(index == 0))
 
     def _mark_page_entered(self, page: Page) -> None:
+        """记录最近一次已触发进入成功 hook 的页面。
+
+        Args:
+            page: 当前已进入的页面。
+        """
+
         self.navigator.last_enter_success_page_key = page.key
 
     def _run_enter_success_hooks_if_needed(self, page: Page) -> None:
+        """仅在页面变化时触发进入成功 hook。
+
+        Args:
+            page: 当前页面。
+        """
+
         if self.navigator.last_enter_success_page_key == page.key:
             return
         self._run_hooks(page.on_enter_success)
         self._mark_page_entered(page)
 
     def _allowed_pages_for_navigation(self, destination: Page, current: Page | None) -> dict[str, Page]:
+        """构建本轮导航允许访问的页面集合。
+
+        Args:
+            destination: 目标页面。
+            current: 当前页面。
+
+        Returns:
+            以页面 key 为索引的允许页面字典。
+        """
         categories = self._navigation_graph_categories(destination, current)
         categories.add(self.navigator.task_category)
         pages = {page.key: page for page in self.navigator.all_pages(categories)}
@@ -266,6 +401,16 @@ class GameUi(BaseTask, GameUiAssets):
         return pages
 
     def _build_path(self, current: Page, destination: Page) -> list[Transition]:
+        """在允许页面集合内构建最小代价路径。
+
+        Args:
+            current: 当前页面。
+            destination: 目标页面。
+
+        Returns:
+            最优路径的边列表；无法构建路径时返回 `None`。
+        """
+
         if current == destination:
             return []
 
@@ -311,6 +456,16 @@ class GameUi(BaseTask, GameUiAssets):
         return path
 
     def _refresh_current_page(self, destination: Page, skip_first_screenshot: bool) -> Page | None:
+        """优先确认缓存当前页，失败后再执行作用域识别与全量兜底。
+
+        Args:
+            destination: 当前导航目标页面。
+            skip_first_screenshot: 是否复用当前截图。
+
+        Returns:
+            当前稳定页面；无法识别时返回 `None`。
+        """
+
         current = self.navigator.current_page
         if current is not None and self.confirm_page(current, skip_first_screenshot=skip_first_screenshot):
             return current
@@ -321,6 +476,16 @@ class GameUi(BaseTask, GameUiAssets):
         )
 
     def _wait_for_destination(self, destination: Page, timeout: float = 4.0) -> bool:
+        """等待下一页面稳定出现。
+
+        Args:
+            destination: 目标页面。
+            timeout: 等待超时时间。
+
+        Returns:
+            是否在超时前稳定识别到目标页面。
+        """
+
         timer = Timer(timeout).start()
         while not timer.reached():
             if self.confirm_page(destination, skip_first_screenshot=False):
@@ -329,6 +494,15 @@ class GameUi(BaseTask, GameUiAssets):
         return False
 
     def _execute_transition(self, transition: Transition) -> bool:
+        """执行一条导航边。
+
+        Args:
+            transition: 待执行的页面边。
+
+        Returns:
+            是否成功到达边的终点页面。
+        """
+
         source = transition.source
         destination = transition.destination
 
@@ -376,11 +550,26 @@ class GameUi(BaseTask, GameUiAssets):
         return False
 
     def _collect_page_check_results(self, destination: Page) -> list[str]:
+        """收集当前截图下所有命中的页面名称。
+
+        Args:
+            destination: 当前导航目标页面。
+
+        Returns:
+            当前截图命中的页面名称列表。
+        """
+
         pages = self.navigator.all_pages(self._navigation_detect_categories(destination))
         self.screenshot()
         return [page.name for page in pages if self.match_page_once(page)]
 
     def _record_unknown_close_event(self, message: str) -> None:
+        """记录未知页关闭历史。
+
+        Args:
+            message: 本次关闭尝试的结果描述。
+        """
+
         self.navigator.unknown_close_history.append(message)
         self.navigator.unknown_close_history = self.navigator.unknown_close_history[-10:]
 
@@ -392,6 +581,16 @@ class GameUi(BaseTask, GameUiAssets):
         repeated_failure_count: int = 0,
         last_repeated_failure_close_result: str | None = None,
     ) -> None:
+        """输出导航超时诊断日志。
+
+        Args:
+            destination: 当前导航目标页面。
+            last_path_signature: 最近一次成功构建的路径签名。
+            repeated_failure_transition_key: 最近一次连续失败的边 key。
+            repeated_failure_count: 当前连续失败次数。
+            last_repeated_failure_close_result: 最近一次“三连失败后主动关闭”的结果摘要。
+        """
+
         current = self.navigator.current_page.name if self.navigator.current_page else "None"
         allowed_categories = sorted(self._navigation_graph_categories(destination, self.navigator.current_page))
         penalties = {
@@ -417,6 +616,16 @@ class GameUi(BaseTask, GameUiAssets):
         raise GamePageUnknownError(f"Cannot goto page[{destination}]")
 
     def get_current_page(self, skip_first_screenshot: bool = True, fallback: bool = False) -> Page | None:
+        """获取当前稳定页面。
+
+        Args:
+            skip_first_screenshot: 是否复用当前截图。
+            fallback: 是否回退至识别全部注册页面
+
+        Returns:
+            当前稳定识别到的页面；识别失败时返回 `None`。
+        """
+
         if not fallback:
             return self._detect_current_page(
                 skip_first_screenshot=skip_first_screenshot,
@@ -429,9 +638,13 @@ class GameUi(BaseTask, GameUiAssets):
         )
 
     def pages_in_category(self, category: str) -> list[Page]:
+        """读取当前 session 中指定分类下的所有页面副本。"""
+
         return self.navigator.all_pages({category})
 
     def detect_page_in(self, *targets: str | Page, include_global: bool = True) -> Page | None:
+        """在指定分类或显式页面集合内识别当前页面。"""
+
         category_set = {target for target in targets if isinstance(target, str)}
         explicit_pages: list[Page] = []
         for target in targets:
@@ -461,15 +674,26 @@ class GameUi(BaseTask, GameUiAssets):
         return GameUi._detect_pages(self, pages, skip_first_screenshot=True)
 
     def close_unknown_pages(self, skip_first_screenshot: bool = True) -> bool:
+        """尝试关闭未知页面。
+
+        Args:
+            skip_first_screenshot: 是否复用当前截图。
+
+        Returns:
+            是否成功触发某个关闭动作。
+        """
+
         self.maybe_screenshot(skip_first_screenshot)
         logger.warning("Try switch to a supported page")
         for action in [*self.navigator.local_unknown_closers, *self.DEFAULT_UNKNOWN_CLOSERS]:
             action_name = self._action_name(action)
+            # 若最后3次执行的都是该动作，则跳过该动作尝试其他动作
             if len(self.navigator.unknown_close_history) >= 3 and \
                     self.navigator.unknown_close_history[-3:] == [action_name] * 3:
                 continue
             if self._execute_action(action, interval=1.5, skip_first_screenshot=False):
                 self._record_unknown_close_event(f"{action_name}")
+                # 关掉未知界面后等待页面变化, 防止多次识别到未知界面
                 time.sleep(random.randrange(8, 16, 1) / 10)
                 return True
         self._record_unknown_close_event(f"None")
@@ -494,6 +718,20 @@ class GameUi(BaseTask, GameUiAssets):
         return False
 
     def _finalize_arrival(self, destination: Page, confirm_wait: float, start_time: float) -> bool:
+        """统一处理到达目标页后的收尾动作。
+
+        到达判定已由调用方完成（跳转边到达等待的两帧确认，或当前页刷新返回的两帧确认结果），
+        本方法不再重复确认，只负责收尾：刷新当前页缓存、幂等触发进入成功钩子、按需等待、输出到达日志。
+
+        Args:
+            destination: 已确认到达的目标页面。
+            confirm_wait: 到达后额外等待的确认时间。
+            start_time: 本次导航开始时间戳，用于输出耗时。
+
+        Returns:
+            固定返回 True，表示已到达目标页面。
+        """
+
         self.navigator.current_page = destination
         self._run_enter_success_hooks_if_needed(destination)
         if confirm_wait > 0:
@@ -503,6 +741,21 @@ class GameUi(BaseTask, GameUiAssets):
 
     def goto_page(self, destination: Page, confirm_wait: float = 0, skip_first_screenshot: bool = True,
                   timeout: int = 30) -> bool | None:
+        """导航到目标页面。
+
+        Args:
+            destination: 目标页面。
+            confirm_wait: 到达目标页面后额外等待的确认时间。
+            skip_first_screenshot: 是否复用当前截图。
+            timeout: 无有效进展超时时间，单位秒。
+
+        Returns:
+            是否成功到达目标页面。
+
+        Raises:
+            GamePageUnknownError: 无法恢复到可导航状态或无法推进到目标页面时抛出。
+        """
+
         destination = self.navigator.resolve_page(destination) or self.navigator.add_page(destination)
         logger.hr(f"UI goto {destination}")
         start_time = time.time()
@@ -546,6 +799,7 @@ class GameUi(BaseTask, GameUiAssets):
                 reset_repeated_transition_failures()
 
             if current == destination:
+                # current 来自 _refresh_current_page，其返回已是两帧稳定确认的结果，无需再次 confirm。
                 return self._finalize_arrival(destination, confirm_wait, start_time)
 
             path = self._build_path(current, destination)
@@ -595,6 +849,7 @@ class GameUi(BaseTask, GameUiAssets):
                 reset_repeated_transition_failures()
 
             if advanced and self.navigator.current_page == destination:
+                # _execute_transition 的到达等待已对目标页完成两帧确认，直接收尾返回，避免回环重复确认。
                 return self._finalize_arrival(destination, confirm_wait, start_time)
             if progress_timer.reached():
                 self._log_navigation_timeout(

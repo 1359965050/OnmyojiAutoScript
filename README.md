@@ -33,9 +33,9 @@
 
 ## 功能 Features
 
-- **日常任务**: 悬赏封印、小猫咪、小杂签到、年兽、花合战、地鬼、封魔、御魂整理
+- **日常任务**: 悬赏封印、小猫咪、小杂签到、金币妖怪、年兽、花合战、地鬼、封魔、御魂整理
 - **每周相关**: 真蛇、秘闻竞速、神秘商店、搜刮商店、斗技、每周小杂事
-- **阴阳寮**: 结界上卡、结界蹭卡、结界突破、寮突破、狩猎战、道馆
+- **阴阳寮**: 结界上卡、结界蹭卡、结界突破、寮突破、狩猎战、集体任务、道馆
 - **御魂副本**: 八岐大蛇、业原火、日轮之城、永生之海、六道之门
 - **肝帝专属**: 探索、契灵、御灵、觉醒副本、石距、百鬼夜行
 - **限时活动**: 每期爬塔、超鬼王、对弈竞猜、花车巡游、智力答题
@@ -69,7 +69,7 @@ OAS 在其基础上进行了如下优化：
 - [Alas](https://github.com/LmeSzinc/AzurLaneAutoScript): 碧蓝航线的自动化脚本
 - [SRC](https://github.com/LmeSzinc/StarRailCopilot): 星铁速溶茶，崩坏：星穹铁道脚本，基于下一代Alas框架。
 - [OASX](https://github.com/runhey/OASX): 同 OAS 对接的全平台 GUI
-- [NikkeAutoScript](https://github.com/megumiss/NIKKEAutoScript): 胜利女神：NIKKE 自动日常脚本
+- [NikkeAutoScript](https://github.com/takagisanmie/NIKKEAutoScript): 胜利女神：NIKKE 自动日常脚本
 - [AAS](https://github.com/TheFunny/ArisuAutoSweeper): 蔚蓝档案自动化脚本
 - [MAA](https://github.com/MaaAssistantArknights/MaaAssistantArknights): 明日方舟小助手，全日常一键长草
 - [FGO-py](https://github.com/hgjazhgj/FGO-py): 全自动免配置跨平台开箱即用的Fate/Grand Order助手

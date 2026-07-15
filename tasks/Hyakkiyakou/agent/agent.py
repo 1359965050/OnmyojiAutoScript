@@ -1,19 +1,14 @@
-import cv2
-import time
-import copy
 import numpy as np
 
 from datetime import datetime
-from pathlib import Path
-from numpy import uint8, fromfile
 from cached_property import cached_property
 
 from oashya.tracker import Tracker
 from oashya.labels import CLASSINDEX as CI
 from oashya.labels import id2label, id2name
 from module.logger import logger
+from module.hyakkiyakou import Debugger
 from tasks.Hyakkiyakou.agent.focus import Focus
-from tasks.Hyakkiyakou.debugger import Debugger
 
 
 def generate_gaussian_patch(size=(300, 300), mean=0, std_dev=60):
@@ -100,7 +95,9 @@ class Agent:
                 case _ if CI.MIN_SR <= _class <= CI.MAX_SR: weight = weights[2]
                 case _ if CI.MIN_SSR <= _class <= CI.MAX_SSR: weight = 1.5 * weights[1]
                 case _ if CI.MIN_SP <= _class <= CI.MAX_SP: weight = 1.5 * weights[0]
-                # case CI.BUFF_005:  # 冰冻 buff：已禁用，模型在冰冻场景误识别率过高
+                # case CI.BUFF_005:  # freeze
+                #     weight = -1.
+                #     _cy += 100
                 case _: continue
             for priority in priorities:  # 我的代码在你之上
                 if priority == _class:
@@ -124,7 +121,7 @@ class Agent:
                 max_variance = variance
         return Focus(inputs=tracks[max_index])
 
-    def decision(self, tracks: list[tuple], state: list) -> list:
+    def decision(self, tracks: list[tuple], state: list, freeze: bool = False) -> list:
         not_decision = [-1, -1, False, -1]
         if not tracks:
             return not_decision
@@ -134,7 +131,7 @@ class Agent:
         self.check_observe(tracks=tracks)
         if self.focus is None:
             return not_decision
-        result = self.focus.decision(tracks=tracks, strategy=self.strategy, state=[delta_time] + state)
+        result = self.focus.decision(tracks=tracks, strategy=self.strategy, state=[delta_time] + state, freeze=freeze)
         if result[2]:
             self.last_throw_time = new_time
             self.dbg_throw += 1
@@ -160,4 +157,3 @@ class Agent:
             self.focus.set_omega(omega)
         # if Debugger.info_enable:
         #     self.focus.show()
-

@@ -20,6 +20,8 @@ config/reloadflag
 config/reloadalas
 test.py
 test/
+docs/
+OASX-master/
 
 # OnmyojiAutoScript
 *.user
@@ -48,12 +50,10 @@ CLAUDE.md
 .codex/
 .claude/
 openspec/
-
-# Trae
+.agents/
+skills-lock.json
+.codegraph/
 .trae/
-
-# Docs
-/docs/
 
 
 # Created by .ignore support plugin (hsz.mobi)
@@ -278,6 +278,3 @@ console.bat
 .vscode/*
 tasks/AutoCheckinBigGod/frida-server-17.6.2-android-x86_64
 oas.bat
-
-# OASX frontend source copy (not part of backend repo)
-OASX-master/

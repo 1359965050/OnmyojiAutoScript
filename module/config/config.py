@@ -22,7 +22,7 @@ from module.config.scheduler import TaskScheduler
 from module.config.utils import *
 from module.notify.notify import Notifier
 
-from module.exception import ScriptError
+from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 
@@ -125,9 +125,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
 
     @cached_property
     def notifier(self):
-        config = getattr(self.model.script.error, 'notify_config', 'provider: null')
-        enable = getattr(self.model.script.error, 'notify_enable', False)
-        notifier = Notifier(config, enable=enable)
+        notifier = Notifier(self.model.script.error.notify_config, enable=self.model.script.error.notify_enable)
         notifier.config_name = self.config_name.upper()
         logger.info(f'Notifier: {notifier.config_name}')
         return notifier
@@ -239,21 +237,9 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.attr("Task", task)
             return task
         else:
-            logger.debug("No task waiting or pending, please enable at least one task if needed")
-            # 返回一个默认的空任务，避免抛出异常导致连接断开
-            # 创建一个模拟 Function 对象的对象
-            class IdleFunction:
-                def __init__(self):
-                    self.enable = False
-                    self.command = "Idle"
-                    self.next_run = datetime.now() + timedelta(hours=1)
-                    self.priority = 0
-                def __str__(self):
-                    return "Idle (no enabled tasks)"
-                __repr__ = __str__
-            idle_function = IdleFunction()
-            logger.attr("Task", idle_function)
-            return idle_function
+            logger.critical("No task waiting or pending")
+            logger.critical("Please enable at least one task")
+            raise RequestHumanTakeover
 
     def get_schedule_data(self) -> dict[str, dict]:
         """
@@ -384,7 +370,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             },
             allow_none=False,
         )
-        logger.info(f"Delay task `{task}` to {next_run} ({kv})")
+        # logger.info(f"Delay task `{task}` to {next_run} ({kv})")
 
         # 保证线程安全的
         self.lock_config.acquire()

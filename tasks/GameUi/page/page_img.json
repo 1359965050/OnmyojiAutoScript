@@ -110,10 +110,10 @@
   {
     "itemName": "exploration_goto_six_gates",
     "imageName": "page_exploration_goto_six_gates.png",
-    "roiFront": "928,638,54,46",
-    "roiBack": "46,618,1090,100",
+    "roiFront": "900,620,100,95",
+    "roiBack": "860,590,180,140",
     "method": "Template matching",
-    "threshold": 0.65,
+    "threshold": 0.5,
     "description": "探索前往六道之门"
   },
   {
@@ -211,6 +211,15 @@
     "imageName": "page_check_six_gates.png",
     "roiFront": "1174,621,55,44",
     "roiBack": "1174,621,55,44",
+    "method": "Template matching",
+    "threshold": 0.5,
+    "description": "description"
+  },
+  {
+    "itemName": "check_peacock_kingdom",
+    "imageName": "page_check_peacock_kingdom.png",
+    "roiFront": "348,158,30,106",
+    "roiBack": "296,117,165,256",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "description"

@@ -9,9 +9,11 @@ from datetime import timedelta, datetime
 from module.base.timer import Timer
 from module.atom.image_grid import ImageGrid
 from module.logger import logger
-from module.exception import TaskEnd
+from module.exception import TaskEnd, GamePageUnknownError
 
 from tasks.GameUi.game_ui import GameUi
+from tasks.KekkaiUtilize.page import page_guild_realm, page_guild_realm_utilize, page_guild_realm_growth, \
+    page_friend_utilize, page_gr_ap_box, page_gr_exp_jug
 from tasks.Utils.config_enum import ShikigamiClass
 from tasks.KekkaiUtilize.assets import KekkaiUtilizeAssets
 from tasks.KekkaiUtilize.config import UtilizeRule, SelectFriendList
@@ -29,44 +31,41 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
     utilize_add_count = 0
     ap_max_num = 0
     jade_max_num = 0
-    first_utilize = True
 
     def run(self):
         con = self.config.kekkai_utilize.utilize_config
-        self.ui_get_current_page()
-        self.ui_goto(page_guild)
-
         # 进入寮结界
-        self.goto_realm()
+        self.goto_page(page_guild_realm)
         # 育成界面去蹭卡
         if con.utilize_enable:
             self.check_utilize_add()
 
         # 查看育成满级
-        self.check_max_lv(con.shikigami_class)
-        # 检查蹭卡收获
-        self.check_utilize_harvest()
+        self.check_max_lv(con.shikigami_class, con.auto_fill)
+        # 检查是否有蹭卡收获 是否收取
+        if con.utilize_harvest:
+            self.check_utilize_harvest()
         # 收体力盒子或者是经验盒子
-        self.check_box_ap_or_exp()
+        self.check_box_ap_or_exp(con.box_ap_enable, con.box_exp_enable, con.box_exp_waste)
 
         # 收取寮资金和体力
         self.recive_guild_ap_or_assets(con.harvest_guild_max_times)
         if not con.utilize_enable:
             self.set_next_run(task='KekkaiUtilize', finish=True, success=True)
+        self.goto_page(page_main)
         raise TaskEnd
 
     def recive_guild_ap_or_assets(self, max_tries: int = 3):
         for i in range(1, max_tries+1):
-            self.ui_get_current_page()
-            self.ui_goto(page_guild)
+            self.goto_page(page_guild)
             # 在寮的主界面 检查是否有收取体力或者是收取寮资金
             if self.check_guild_ap_or_assets():
                 logger.warning(f'第[{i}]次检查寮收获,成功')
-                self.ui_goto(page_main)
+                self.goto_page(page_main)
                 break
             else:
                 logger.warning(f'第[{i}]次检查寮收获寮收获,失败')
-            self.ui_goto(page_main)
+            self.goto_page(page_main)
 
     def check_utilize_add(self):
         con = self.config.kekkai_utilize.utilize_config
@@ -81,9 +80,8 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
             # 无论收不收到菜，都会进入看看至少看一眼时间还剩多少
             time.sleep(0.5)
             # 进入育成界面
-            self.realm_goto_grown()
+            self.goto_page(page_guild_realm_growth)
             self.screenshot()
-
             if not self.appear(self.I_UTILIZE_ADD):
                 remaining_time = self.O_UTILIZE_RES_TIME.ocr(self.device.image)
                 if not isinstance(remaining_time, timedelta):
@@ -94,24 +92,23 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
                 next_time = datetime.now() + remaining_time
                 self.set_next_run(task='KekkaiUtilize', target=next_time)
                 return
-            if not self.grown_goto_utilize():
+            if not self.goto_page(page_guild_realm_utilize):
                 logger.info('Utilize failed, exit')
             # 开始执行寄养
-            if self.run_utilize(con.select_friend_list, con.shikigami_class, con.shikigami_order):
-                # 退出寮结界
-                self.back_guild()
-                # 进入寮结界
-                self.goto_realm()
-            else:
-                self.back_realm()
+            self.run_utilize(con.select_friend_list, con.shikigami_class, con.shikigami_order)
+            self.goto_page(page_guild_realm_growth)
 
-    def check_max_lv(self, shikigami_class: ShikigamiClass = ShikigamiClass.N):
+    def check_max_lv(self, shikigami_class: ShikigamiClass = ShikigamiClass.N, auto_fill: bool = False):
         """
         在结界界面，进入式神育成，检查是否有满级的，如果有就换下一个
         退出的时候还是结界界面
         :return:
         """
-        self.realm_goto_grown()
+        self.goto_page(page_guild_realm_growth)
+        if auto_fill:
+            self.ui_click(self.I_AUTO_FILL, self.I_REMOVE_ALL, interval=1.5)
+            self.goto_page(page_guild_realm)
+            return
         if self.appear(self.I_RS_LEVEL_MAX):
             # 存在满级的式神
             logger.info('Exist max level shikigami and replace it')
@@ -126,16 +123,7 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
             self.set_shikigami(shikigami_order=7, stop_image=self.I_RS_NO_ADD)
 
         # 回到结界界面
-        while 1:
-            self.screenshot()
-
-            if self.appear(self.I_REALM_SHIN) and self.appear_multi_scale(self.I_SHI_GROWN):
-                self.screenshot()
-                if not self.appear(self.I_REALM_SHIN):
-                    continue
-                break
-            if self.appear_then_click(self.I_UI_BACK_BLUE, interval=2.5):
-                continue
+        self.goto_page(page_guild_realm)
 
     def check_guild_ap_or_assets(self, ap_enable: bool = True, assets_enable: bool = True) -> bool:
         """
@@ -146,164 +134,111 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
         timer_check = Timer(2)
         timer_check.start()
         click_ap = False
-        while 1:
+        while True:
             self.screenshot()
-
-            # 获得奖励
             if self.ui_reward_appear_click():
                 timer_check.reset()
                 continue
-
             if timer_check.reached():
                 return False
-
             if click_ap and not self.appear(self.I_GUILD_AP) and not self.appear(self.I_UI_REWARD):
                 return True
-
             # 关闭展开的寮活动横幅
             if self.appear_then_click(self.I_GUILD_EXPAND):
                 timer_check.reset()
                 continue
-
             # 资金收取确认
             if self.appear_then_click(self.I_GUILD_ASSETS_RECEIVE, interval=1):
                 time.sleep(1)
                 timer_check.reset()
                 continue
-
             # 收资金
             if self.appear_then_click(self.I_GUILD_ASSETS, interval=1.5, threshold=0.6):
                 timer_check.reset()
                 continue
-
             # 收体力
             if self.appear_then_click(self.I_GUILD_AP, interval=1):
                 # 等待1秒，看到获得奖励
                 time.sleep(1)
-                logger.info('appear_click guild_ap success')
-                if self.ui_reward_appear_click(True):
-                    logger.info('appear_click reward success')
-                    click_ap = True
-                    timer_check.reset()
+                click_ap = True
+                timer_check.reset()
+                self.device.click_record_clear()
                 continue
+        return False
 
-    def goto_realm(self):
-        """
-        从寮的主界面进入寮结界
-        :return:
-        """
-        while 1:
-            self.screenshot()
-            if self.appear(self.I_REALM_SHIN):
-                break
-            if self.appear_multi_scale(self.I_SHI_DEFENSE):
-                break
-            if self.appear_then_click(self.I_PLANT_TREE_CLOSE):
-                continue
-            if self.appear_then_click(self.I_GUILD_REALM, interval=1):
-                continue
-
-    def check_box_ap_or_exp(self) -> bool:
+    def check_box_ap_or_exp(self, ap_enable: bool = True, exp_enable: bool = True, exp_waste: bool = True) -> bool:
         """
         顺路检查盒子
+        :param exp_waste:
+        :param ap_enable:
+        :param exp_enable:
         :return:
         """
 
-        # 退出到寮结界
-        def _exit_to_realm():
-            # 右上方关闭红色
-            while 1:
-                self.screenshot()
-                if self.appear(self.I_REALM_SHIN):
-                    break
-                if self.appear_then_click(self.I_UI_BACK_RED, interval=1):
-                    continue
-
-        # 先是体力盒子
-        def _check_ap_box(appear: bool = False):
-            if not appear:
-                return False
-            # 点击盒子
+        def _harvest_ap_box():
+            """收取体力"""
             timer_ap = Timer(6)
             timer_ap.start()
-            while 1:
+            while True:
+                if timer_ap.reached():
+                    logger.warning('Extract ap box done')
+                    break
                 self.screenshot()
-
                 if self.appear(self.I_UI_REWARD):
-                    while 1:
-                        self.screenshot()
-                        if not self.appear(self.I_UI_REWARD):
-                            break
-                        if self.appear_then_click(self.I_UI_REWARD, self.C_UI_REWARD, interval=1, threshold=0.6):
-                            continue
+                    self.ui_click_until_smt_disappear(self.C_UI_REWARD, self.I_UI_REWARD, interval=1)
                     logger.info('Reward box')
                     break
-
-                if self.appear_then_click(self.I_BOX_AP, interval=1):
-                    continue
                 if self.appear_then_click(self.I_AP_EXTRACT, interval=2):
                     continue
-                if timer_ap.reached():
-                    logger.warning('Extract ap box timeout')
-                    break
-            logger.info('Extract AP box finished')
-            _exit_to_realm()
+            return True
 
-        # 经验盒子
-        def _check_exp_box(appear: bool = False):
-            if not appear:
-                logger.info('No exp box')
-                return False
-
+        def _harvest_exp_jug():
             time_exp = Timer(12)
             time_exp.start()
-            while 1:
+            max_tries = random.randint(2, 3)
+            while True:
+                if time_exp.reached():
+                    logger.warning('Extract exp jug done')
+                    break
+                if max_tries <= 0:
+                    logger.info('Exp maybe already full, ocr failed, exit')
+                    break
                 self.screenshot()
                 # 如果出现结界皮肤， 表示收取好了
-                if self.appear(self.I_REALM_SHIN) and not self.appear(self.I_BOX_EXP, threshold=0.6):
+                if self.get_current_page() == page_guild_realm:
                     break
                 # 如果出现收取确认，表明进入到了有满级的
-                if self.appear(self.I_UI_CONFIRM):
-                    self.screenshot()
-                    if not self.appear(self.I_UI_CANCEL):
-                        logger.info('No cancel button')
-                        continue
-                    check_button = self.I_UI_CONFIRM
-                    while 1:
-                        self.screenshot()
-                        if not self.appear(check_button):
-                            break
-                        if self.appear_then_click(check_button, interval=1):
-                            continue
+                if self.appear(self.I_UI_CONFIRM) and self.appear(self.I_UI_CANCEL):
+                    target_button = self.I_UI_CONFIRM if exp_waste else self.I_UI_CANCEL
+                    self.ui_click_until_disappear(target_button)
                     break
-
-                if self.appear(self.I_EXP_EXTRACT):
+                if self.appear(self.I_EXP_EXTRACT, interval=1):
                     # 如果达到今日领取的最大，就不领取了
-                    cur, res, totol = self.O_BOX_EXP.ocr(self.device.image)
-                    if cur == res == totol == 0:
+                    cur, res, total = self.O_BOX_EXP.ocr(self.device.image)
+                    if total <= 0:
+                        logger.warning('Exp box OCR no data, retry')
                         continue
-                    if cur == totol and cur + res == totol:
+                    if cur == total:
                         logger.info('Exp box reach max do not collect')
                         break
-                if self.appear_then_click(self.I_BOX_EXP, threshold=0.6, interval=1):
-                    continue
-                if self.appear_then_click(self.I_EXP_EXTRACT, interval=1):
-                    continue
-
-                if time_exp.reached():
-                    logger.warning('Extract exp box timeout')
-                    break
-            _exit_to_realm()
+                    self.click(self.I_EXP_EXTRACT)
+                    max_tries -= 1
+            return True
 
         self.screenshot()
-        box_ap = self.appear(self.I_BOX_AP)
-        box_exp = self.appear(self.I_BOX_EXP, threshold=0.6) or self.appear(self.I_BOX_EXP_MAX, threshold=0.6)
-        _check_ap_box(box_ap)
-        _check_exp_box(box_exp)
+        if ap_enable and self.appear(self.I_BOX_AP):
+            self.goto_page(page_gr_ap_box)
+            _harvest_ap_box()
+            self.goto_page(page_guild_realm)
+        if exp_enable and (self.appear(self.I_BOX_EXP) or self.appear(self.I_BOX_EXP_MAX)):
+            self.goto_page(page_gr_exp_jug)
+            _harvest_exp_jug()
+            self.goto_page(page_guild_realm)
+        return True
 
     def check_utilize_harvest(self) -> bool:
         """
-        在寮结界界面检查是否有收获
+        在寮结界界面检查是否有寄养收获
         :return: 如果没有返回False, 如果有就收菜返回True
         """
         self.screenshot()
@@ -314,41 +249,6 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
 
         # 收获
         self.ui_get_reward(self.I_UTILIZE_EXP)
-        return True
-
-    def realm_goto_grown(self):
-        """
-        进入式神育成界面
-        :return:
-        """
-        while 1:
-            self.screenshot()
-
-            if self.in_shikigami_growth():
-                break
-
-            if self.appear_then_click_multi_scale(self.I_SHI_GROWN, interval=1):
-                continue
-        logger.info('Enter shikigami grown')
-
-    def grown_goto_utilize(self):
-        """
-        从式神育成界面到 蹭卡界面
-        :return:
-        """
-        self.screenshot()
-        if not self.appear(self.I_UTILIZE_ADD):
-            logger.warning('No utilize add')
-            return False
-
-        while 1:
-            self.screenshot()
-
-            if self.appear(self.I_U_ENTER_REALM):
-                break
-            if self.appear_then_click(self.I_UTILIZE_ADD, interval=2):
-                continue
-        logger.info('Enter utilize')
         return True
 
     def switch_friend_list(self, friend: SelectFriendList = SelectFriendList.SAME_SERVER) -> bool:
@@ -415,23 +315,24 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
                     shikigami_order: int = 7):
         """
         执行寄养
+        :param shikigami_order:
         :param shikigami_class:
         :param friend:
         :param rule:
         :return:
         """
         logger.hr('Start utilize')
-        if self.first_utilize:
+        # 不管什么时候进来都要切换刷新列表(同区与跨区保持一致先切换滑动再切换)
+        if friend == SelectFriendList.SAME_SERVER:
+            self.switch_friend_list(SelectFriendList.SAME_SERVER)
             self.swipe(self.S_U_END, interval=3)
-            self.first_utilize = False
-            if friend == SelectFriendList.SAME_SERVER:
-                self.switch_friend_list(SelectFriendList.DIFFERENT_SERVER)
-                self.switch_friend_list(SelectFriendList.SAME_SERVER)
-            else:
-                self.switch_friend_list(SelectFriendList.SAME_SERVER)
-                self.switch_friend_list(SelectFriendList.DIFFERENT_SERVER)
-        else:
-            self.switch_friend_list(friend)
+            self.switch_friend_list(SelectFriendList.DIFFERENT_SERVER)
+            self.switch_friend_list(SelectFriendList.SAME_SERVER)
+        else:  # 跨区必须切换两次, 否则结界卡不刷新到头部
+            self.switch_friend_list(SelectFriendList.DIFFERENT_SERVER)
+            self.swipe(self.S_U_END, interval=3)
+            self.switch_friend_list(SelectFriendList.SAME_SERVER)
+            self.switch_friend_list(SelectFriendList.DIFFERENT_SERVER)
 
         # --------------- 结界卡选择 ---------------
         if not self._select_optimal_resource_card():
@@ -446,34 +347,12 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
             logger.warning('Cannot find enter realm button')
             # 可能是滑动的时候出错
             logger.warning('The best reason is that the swipe is wrong')
-            return
-        wait_timer = Timer(20)
-        wait_timer.start()
-        while 1:
-            self.screenshot()
-            if self.appear(self.I_U_ADD_1) or self.appear(self.I_U_ADD_2):
-                logger.info('Appear enter friend realm button')
-                break
-            if self.appear(self.I_CHECK_FRIEND_REALM_1):
-                self.wait_until_stable(self.I_CHECK_FRIEND_REALM_1)
-                logger.info('Appear enter friend realm button')
-                break
-            if self.appear(self.I_CHECK_FRIEND_REALM_3):
-                self.wait_until_stable(self.I_CHECK_FRIEND_REALM_3)
-                logger.info('Appear enter friend realm button')
-                break
-            if wait_timer.reached():
-                self.save_image(wait_time=0, push_flag=False, content='进入好友结界超时', image_type='png')
-                logger.warning('Appear friend realm timeout')
-                return
-            if self.appear_then_click(self.I_CHECK_FRIEND_REALM_2, interval=1.5):
-                logger.info('Click too fast to enter the friend\'s realm pool')
-                continue
-            if self.appear_then_click(self.I_U_ENTER_REALM, interval=2.5):
-                time.sleep(0.5)
-                continue
-        logger.info('Enter friend realm')
-
+            return None
+        try:
+            self.goto_page(page_friend_utilize)
+        except GamePageUnknownError:
+            logger.warning('Appear friend realm failed')
+            return None
         # 判断好友的有两个位置还是一个坑位
         stop_image = None
         self.screenshot()
@@ -585,14 +464,14 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
 
             # ------ 步骤1: 截图识别结界卡 ------#
             self.screenshot()
-            cards = self.order_targets.find_everyone(self.device.image)
+            cards = self.order_targets.find_everyone(self.device.image, frame_id=self.device.image_frame_id)
 
             # 处理无卡情况
             if not cards:
                 miss_count += 1
                 logger.info(f'第{swipe_count}次滑动 | 未检测到结界卡' if swipe_count > 0 else '初始界面 | 未检测到结界卡')
-                # 连续无卡超过阈值则终止
-                if miss_count > CONSEC_MISS:
+                # 连续无卡超过阈值则终止/已经出现空卡也不再滑动
+                if miss_count > CONSEC_MISS or self.appear(self.I_U_EMPTY_CARD):
                     logger.warning(f'⚠️ 连续{miss_count}次 | 未检测到结界卡, 终止流程')
                     return None
                 # 执行滑动操作
@@ -645,6 +524,9 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
                         self.save_image(push_flag=False, wait_time=0, content=message)
                         return True
 
+            if self.appear(self.I_U_EMPTY_CARD):
+                logger.info('Empty card already appeared, exit explore')
+                return None
             # ------ 步骤3: 滑动到下一屏 ------#
             self.perform_swipe_action()
 
@@ -700,54 +582,18 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
         # logger.info(f'识别成功: 卡类型: {card_type}, 数值: {value}')
         return card_type, value
 
-    def back_guild(self):
-        """
-        回到寮的界面
-        :return:
-        """
-        while 1:
-            self.screenshot()
-
-            if self.appear(self.I_GUILD_INFO):
-                break
-            if self.appear(self.I_GUILD_REALM):
-                break
-            if self.appear_then_click(self.I_PLANT_TREE_CLOSE):
-                continue
-
-            if self.appear_then_click(self.I_UI_BACK_RED, interval=1):
-                continue
-            if self.appear_then_click(self.I_UI_BACK_BLUE, interval=1):
-                continue
-            if self.appear_then_click(self.I_UI_BACK_YELLOW, interval=1):
-                continue
-
-    def back_realm(self):
-        # 回到寮结界
-        while 1:
-            self.screenshot()
-            if self.appear(self.I_REALM_SHIN):
-                break
-            if self.appear_multi_scale(self.I_SHI_DEFENSE):
-                break
-            if self.appear_then_click(self.I_UI_BACK_RED, interval=1):
-                continue
-            if self.appear_then_click(self.I_UI_BACK_BLUE, interval=1):
-                continue
-
 
 if __name__ == "__main__":
     from module.config.config import Config
     from module.device.device import Device
 
-    c = Config('switch')
+    c = Config('日常1')
     d = Device(c)
     t = ScriptTask(c, d)
-    for i in range(10):
-        t.perform_swipe_action()
-    t.recive_guild_ap_or_assets()
+    t.run_utilize(SelectFriendList.DIFFERENT_SERVER)
     # t.check_utilize_add()
     # t.check_card_num('勾玉', 67)
     # t.screenshot()
     # print(t.appear(t.I_BOX_EXP, threshold=0.6))
     # print(t.appear(t.I_BOX_EXP_MAX, threshold=0.6))
+

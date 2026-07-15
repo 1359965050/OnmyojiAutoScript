@@ -1,5 +1,39 @@
 {
   "$defs": {
+    "AbyssIllusion": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler",
+          "title": "任务调度"
+        },
+        "abyss_illusion_config": {
+          "$ref": "#/$defs/AbyssIllusionConfig",
+          "title": "狭间幻境设置"
+        },
+        "switch_soul_config": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig",
+          "title": "执行任务前切换御魂"
+        },
+        "general_battle_config": {
+          "$ref": "#/$defs/GeneralBattleConfig",
+          "title": "战斗配置"
+        }
+      },
+      "title": "AbyssIllusion",
+      "type": "object"
+    },
+    "AbyssIllusionConfig": {
+      "properties": {
+        "limit_count": {
+          "default": 0,
+          "description": "0 表示不限制，按门票/挑战券数量判断；大于 0 时达到该次数也会停止",
+          "title": "挑战次数上限",
+          "type": "integer"
+        }
+      },
+      "title": "AbyssIllusionConfig",
+      "type": "object"
+    },
     "AbyssShadows": {
       "properties": {
         "scheduler": {
@@ -8,68 +42,89 @@
         "abyss_shadows_time": {
           "$ref": "#/$defs/AbyssShadowsTime"
         },
-        "abyss_shadows_combat_time": {
-          "$ref": "#/$defs/AbyssShadowsCombatTime"
+        "process_manage": {
+          "$ref": "#/$defs/ProcessManage"
         },
-        "general_battle_config": {
-          "$ref": "#/$defs/GeneralBattleConfig"
-        },
-        "switch_soul_config": {
-          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        "saved_params": {
+          "$ref": "#/$defs/SavedParams"
         }
       },
       "title": "AbyssShadows",
       "type": "object"
     },
-    "AbyssShadowsCombatTime": {
-      "properties": {
-        "CombatTime_enable": {
-          "default": false,
-          "description": "开启智能伤害",
-          "title": "Combattime Enable",
-          "type": "boolean"
-        },
-        "boss_combat_time": {
-          "default": 60,
-          "description": "以秒为单位设置首领战斗时间，请合理设置",
-          "title": "Boss Combat Time",
-          "type": "integer"
-        },
-        "general_combat_time": {
-          "default": 60,
-          "description": "以秒为单位设置副将战斗时间，请合理设置",
-          "title": "General Combat Time",
-          "type": "integer"
-        },
-        "elite_combat_time": {
-          "default": 60,
-          "description": "以秒为单位设置精英战斗时间，请合理设置",
-          "title": "Elite Combat Time",
-          "type": "integer"
-        }
-      },
-      "title": "AbyssShadowsCombatTime",
-      "type": "object"
+    "AbyssShadowsDifficulty": {
+      "enum": [
+        "EASY",
+        "NORMAL",
+        "HARD",
+        "EXTREME"
+      ],
+      "title": "AbyssShadowsDifficulty",
+      "type": "string"
     },
     "AbyssShadowsTime": {
+      "description": "AbyssShadowsTime类用于管理AbyssShadows时间配置。",
       "properties": {
-        "custom_run_time_friday": {
-          "default": "19:00:00",
-          "title": "Custom Run Time Friday",
+        "abyss_shadows_4": {
+          "default": "20:00:00",
+          "title": "Abyss Shadows 4",
           "type": "time"
         },
-        "custom_run_time_saturday": {
-          "default": "19:00:00",
-          "title": "Custom Run Time Saturday",
+        "abyss_shadows_5": {
+          "default": "20:00:00",
+          "title": "Abyss Shadows 5",
           "type": "time"
         },
-        "custom_run_time_sunday": {
-          "default": "19:00:00",
-          "title": "Custom Run Time Sunday",
+        "abyss_shadows_6": {
+          "default": "20:00:00",
+          "title": "Abyss Shadows 6",
           "type": "time"
         }
       },
       "title": "AbyssShadowsTime",
+      "type": "object"
+    },
+    "AccountInfo": {
+      "description": "character:   角色名字\nsvr:         角色所在服务器\naccount:     账号\nappleOrAndroid:  角色所属平台 安卓/苹果(可选)\n        False           Apple\n        True            Android",
+      "properties": {
+        "character": {
+          "default": "",
+          "description": "character_help",
+          "title": "Character",
+          "type": "string"
+        },
+        "svr": {
+          "default": "",
+          "description": "svr_help",
+          "title": "Svr",
+          "type": "string"
+        },
+        "account": {
+          "default": "",
+          "description": "account_help",
+          "title": "Account",
+          "type": "string"
+        },
+        "account_alias": {
+          "default": "",
+          "description": "account_alias_help",
+          "title": "Account Alias",
+          "type": "string"
+        },
+        "apple_or_android": {
+          "default": true,
+          "description": "apple_or_android_help",
+          "title": "Apple Or Android",
+          "type": "boolean"
+        },
+        "last_complete_time": {
+          "default": "2023-01-01T00:00:00",
+          "description": "last_complete_time_help",
+          "title": "Last Complete Time",
+          "type": "date_time"
+        }
+      },
+      "title": "AccountInfo",
       "type": "object"
     },
     "ActivationConfig": {
@@ -90,6 +145,24 @@
           "description": "挂卡斗鱼每小时最少收益,低于则不挂卡",
           "title": "Min Fish Num",
           "type": "integer"
+        },
+        "exchange_before": {
+          "default": true,
+          "description": "exchange_before_help",
+          "title": "Exchange Before",
+          "type": "boolean"
+        },
+        "exchange_max": {
+          "default": true,
+          "description": "exchange_max_help",
+          "title": "Exchange Max",
+          "type": "boolean"
+        },
+        "auto_fill": {
+          "default": false,
+          "description": "auto_fill_help",
+          "title": "Auto Fill",
+          "type": "boolean"
         },
         "shikigami_class": {
           "$ref": "#/$defs/ShikigamiClass",
@@ -165,24 +238,28 @@
     "ActivityShikigami": {
       "properties": {
         "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler",
-          "title": "任务调度"
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
         "general_climb": {
-          "$ref": "#/$defs/GeneralClimb",
-          "title": "通用爬塔"
+          "$ref": "#/$defs/GeneralClimb"
+        },
+        "rich_man": {
+          "$ref": "#/$defs/RichManConfig"
         },
         "switch_soul_config": {
-          "$ref": "#/$defs/tasks__ActivityShikigami__config__SwitchSoulConfig",
-          "title": "执行任务前切换御魂"
+          "$ref": "#/$defs/tasks__ActivityShikigami__config__SwitchSoulConfig"
         },
         "pass_battle_conf": {
-          "$ref": "#/$defs/GeneralBattleConfig",
-          "title": "战斗配置"
+          "$ref": "#/$defs/GeneralBattleConfig"
+        },
+        "ap_battle_conf": {
+          "$ref": "#/$defs/GeneralBattleConfig"
         },
         "boss_battle_conf": {
-          "$ref": "#/$defs/GeneralBattleConfig",
-          "title": "Boss战战斗配置"
+          "$ref": "#/$defs/GeneralBattleConfig"
+        },
+        "ap100_battle_conf": {
+          "$ref": "#/$defs/GeneralBattleConfig"
         }
       },
       "title": "ActivityShikigami",
@@ -258,6 +335,18 @@
       "title": "AttackDokanMasterType",
       "type": "string"
     },
+    "AutoCheckinBigGod": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "checkin_config": {
+          "$ref": "#/$defs/CheckinBigGodConfig"
+        }
+      },
+      "title": "AutoCheckinBigGod",
+      "type": "object"
+    },
     "AutoRotate": {
       "enum": [
         "不",
@@ -302,16 +391,33 @@
           "title": "Green Enable",
           "type": "boolean"
         },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
         "green_mark": {
           "$ref": "#/$defs/GreenMarkType",
           "default": "green_left1",
           "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
         },
         "random_click_swipt_enable": {
           "default": false,
           "description": "random_click_swipt_enable_help",
           "title": "Random Click Swipt Enable",
           "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
         },
         "continuous_battle": {
           "default": false,
@@ -331,17 +437,36 @@
           "description": "quick_exit_help",
           "title": "Quick Exit",
           "type": "boolean"
-        },
-        "battle_timeout": {
-          "default": 120.0,
-          "description": "battle_timeout_help",
-          "minimum": 10.0,
-          "title": "Battle Timeout",
-          "type": "number"
         }
       },
       "title": "BattleConfig",
       "type": "object"
+    },
+    "BattleTakeover": {
+      "properties": {
+        "battle_timeout": {
+          "default": 420,
+          "description": "battle_timeout_global_help",
+          "minimum": 1,
+          "title": "Battle Timeout",
+          "type": "integer"
+        },
+        "on_takeover": {
+          "$ref": "#/$defs/BattleTaskOverEnum",
+          "default": "finish",
+          "description": "on_takeover_help"
+        }
+      },
+      "title": "BattleTakeover",
+      "type": "object"
+    },
+    "BattleTaskOverEnum": {
+      "enum": [
+        "finish",
+        "exit"
+      ],
+      "title": "BattleTaskOverEnum",
+      "type": "string"
     },
     "BattleType": {
       "enum": [
@@ -368,7 +493,6 @@
       "properties": {
         "best_demon_shinkirou_enable": {
           "default": false,
-          "description": "是否切换极蜃气楼预设",
           "title": "Best Demon Shinkirou Enable",
           "type": "boolean"
         },
@@ -380,7 +504,6 @@
         },
         "best_demon_tsuchigumo_enable": {
           "default": false,
-          "description": "是否切换极土蜘蛛预设",
           "title": "Best Demon Tsuchigumo Enable",
           "type": "boolean"
         },
@@ -392,7 +515,6 @@
         },
         "best_demon_gashadokuro_enable": {
           "default": false,
-          "description": "是否切换极荒骷髅预设",
           "title": "Best Demon Gashadokuro Enable",
           "type": "boolean"
         },
@@ -404,7 +526,6 @@
         },
         "best_demon_namazu_enable": {
           "default": false,
-          "description": "是否切换极地震鲶预设",
           "title": "Best Demon Namazu Enable",
           "type": "boolean"
         },
@@ -416,7 +537,6 @@
         },
         "best_demon_oboroguruma_enable": {
           "default": false,
-          "description": "是否切换极胧车预设",
           "title": "Best Demon Oboroguruma Enable",
           "type": "boolean"
         },
@@ -428,7 +548,6 @@
         },
         "best_demon_nightly_aramitama_enable": {
           "default": false,
-          "description": "是否切换极夜荒魂预设",
           "title": "Best Demon Nightly Aramitama Enable",
           "type": "boolean"
         },
@@ -624,7 +743,7 @@
           "$ref": "#/$defs/BondlingConfig"
         },
         "invite_config": {
-          "$ref": "#/$defs/tasks__Component__GeneralInvite__config_invite__InviteConfig"
+          "$ref": "#/$defs/InviteConfig"
         },
         "bondling_switch_soul": {
           "$ref": "#/$defs/BondlingSwitchSoul"
@@ -804,16 +923,6 @@
       "title": "CardType",
       "type": "string"
     },
-    "CarpBannerType": {
-      "enum": [
-        "costume_carpbanner_default",
-        "costume_carpbanner_1",
-        "costume_carpbanner_2",
-        "costume_carpbanner_3"
-      ],
-      "title": "CarpBannerType",
-      "type": "string"
-    },
     "Charisma": {
       "properties": {
         "enable": {
@@ -835,6 +944,18 @@
       "title": "Charisma",
       "type": "object"
     },
+    "CheckinBigGodConfig": {
+      "properties": {
+        "usage": {
+          "default": "",
+          "description": "checkin_big_god_usage_help",
+          "title": "Usage",
+          "type": "multi_line"
+        }
+      },
+      "title": "CheckinBigGodConfig",
+      "type": "object"
+    },
     "ChooseRarity": {
       "enum": [
         "N卡",
@@ -842,6 +963,18 @@
       ],
       "title": "ChooseRarity",
       "type": "string"
+    },
+    "CollectiveMissions": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "missions_config": {
+          "$ref": "#/$defs/MissionsConfig"
+        }
+      },
+      "title": "CollectiveMissions",
+      "type": "object"
     },
     "Consignment": {
       "properties": {
@@ -860,6 +993,28 @@
       "title": "Consignment",
       "type": "object"
     },
+    "CooperationSelectMaskDescription": {
+      "enum": [
+        "NoInvite",
+        "GoldOnly",
+        "JadeOnly",
+        "GoldAndJade",
+        "FoodOnly",
+        "GoldAndFood",
+        "JadeAndFood",
+        "GoldAndJadeAndFood",
+        "SushiOnly",
+        "GoldAndSushi",
+        "JadeAndSushi",
+        "GoldAndJadeAndSushi",
+        "FoodAndSushi",
+        "GoldAndFoodAndSushi",
+        "JadeAndFoodAndSushi",
+        "Any"
+      ],
+      "title": "CooperationSelectMaskDescription",
+      "type": "string"
+    },
     "CostumeConfig": {
       "properties": {
         "costume_main_type": {
@@ -871,11 +1026,6 @@
           "$ref": "#/$defs/RealmType",
           "default": "costume_realm_default",
           "description": "costume_realm_type_help"
-        },
-        "costume_carpbanner_type": {
-          "$ref": "#/$defs/CarpBannerType",
-          "default": "costume_carpbanner_default",
-          "description": "costume_carpbanner_type_help"
         },
         "costume_theme_type": {
           "$ref": "#/$defs/ThemeType",
@@ -896,9 +1046,89 @@
           "$ref": "#/$defs/BattleType",
           "default": "costume_battle_default",
           "description": "costume_battle_type_help"
+        },
+        "custom_courtyard_affair": {
+          "$ref": "#/$defs/CourtyardAffairType",
+          "default": "custom_courtyard_affair_default"
         }
       },
       "title": "CostumeConfig",
+      "type": "object"
+    },
+    "CourtyardAffairType": {
+      "enum": [
+        "custom_courtyard_affair_default",
+        "custom_courtyard_affair_1"
+      ],
+      "title": "CourtyardAffairType",
+      "type": "string"
+    },
+    "DailyTrifles": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "trifles_config": {
+          "$ref": "#/$defs/DailyTriflesConfig"
+        },
+        "done_record": {
+          "$ref": "#/$defs/DoneRecord"
+        }
+      },
+      "title": "DailyTrifles",
+      "type": "object"
+    },
+    "DailyTriflesConfig": {
+      "properties": {
+        "courtyard_affairs": {
+          "default": true,
+          "title": "Courtyard Affairs",
+          "type": "boolean"
+        },
+        "pickup_email": {
+          "default": true,
+          "title": "Pickup Email",
+          "type": "boolean"
+        },
+        "one_summon": {
+          "default": false,
+          "title": "One Summon",
+          "type": "boolean"
+        },
+        "summon_type": {
+          "$ref": "#/$defs/SummonType",
+          "default": "普通召唤",
+          "description": "召唤类型"
+        },
+        "draw_mystery_pattern": {
+          "default": false,
+          "description": "是否绘制神秘图案",
+          "title": "Draw Mystery Pattern",
+          "type": "boolean"
+        },
+        "guild_wish": {
+          "default": false,
+          "title": "Guild Wish",
+          "type": "boolean"
+        },
+        "luck_msg": {
+          "default": false,
+          "title": "Luck Msg",
+          "type": "boolean"
+        },
+        "store_sign": {
+          "default": false,
+          "description": "store_sign_help",
+          "title": "Store Sign",
+          "type": "boolean"
+        },
+        "buy_sushi_count": {
+          "default": -1,
+          "title": "Buy Sushi Count",
+          "type": "integer"
+        }
+      },
+      "title": "DailyTriflesConfig",
       "type": "object"
     },
     "DebugConfig": {
@@ -947,29 +1177,75 @@
       "title": "DebugConfig",
       "type": "object"
     },
-    "DefaultStrategy": {
+    "Delegation": {
       "properties": {
-        "md_preset_group_team_default_1": {
-          "default": "1,1",
-          "description": "md_preset_group_team_default_1_help",
-          "title": "Md Preset Group Team Default 1",
-          "type": "string"
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
-        "md_preset_group_team_default_2": {
-          "default": "1,1",
-          "description": "md_preset_group_team_default_2_help",
-          "title": "Md Preset Group Team Default 2",
-          "type": "string"
+        "delegation_config": {
+          "$ref": "#/$defs/DelegationConfig"
         }
       },
-      "title": "DefaultStrategy",
+      "title": "Delegation",
+      "type": "object"
+    },
+    "DelegationConfig": {
+      "properties": {
+        "miyoshino_painting": {
+          "default": false,
+          "description": "miyoshino_painting_help",
+          "title": "Miyoshino Painting",
+          "type": "boolean"
+        },
+        "bird_feather": {
+          "default": false,
+          "description": "bird_feather_help",
+          "title": "Bird Feather",
+          "type": "boolean"
+        },
+        "find_earring": {
+          "default": false,
+          "description": "find_earring_help",
+          "title": "Find Earring",
+          "type": "boolean"
+        },
+        "cat_boss": {
+          "default": false,
+          "description": "cat_boss_help",
+          "title": "Cat Boss",
+          "type": "boolean"
+        },
+        "miyoshino": {
+          "default": false,
+          "description": "miyoshino_help",
+          "title": "Miyoshino",
+          "type": "boolean"
+        },
+        "strange_trace": {
+          "default": false,
+          "description": "strange_trace_help",
+          "title": "Strange Trace",
+          "type": "boolean"
+        }
+      },
+      "title": "DelegationConfig",
       "type": "object"
     },
     "DemonBattleConfig": {
       "properties": {
+        "demon_kiryou_utahime_enable": {
+          "default": false,
+          "title": "Demon Kiryou Utahime Enable",
+          "type": "boolean"
+        },
+        "demon_kiryou_utahime": {
+          "default": "-1,-1",
+          "description": "鬼灵歌姬预设",
+          "title": "Demon Kiryou Utahime",
+          "type": "string"
+        },
         "demon_shinkirou_enable": {
           "default": false,
-          "description": "是否切换蜃气楼预设",
           "title": "Demon Shinkirou Enable",
           "type": "boolean"
         },
@@ -981,7 +1257,6 @@
         },
         "demon_tsuchigumo_enable": {
           "default": false,
-          "description": "是否切换土蜘蛛预设",
           "title": "Demon Tsuchigumo Enable",
           "type": "boolean"
         },
@@ -993,7 +1268,6 @@
         },
         "demon_gashadokuro_enable": {
           "default": false,
-          "description": "是否切换荒骷髅预设",
           "title": "Demon Gashadokuro Enable",
           "type": "boolean"
         },
@@ -1005,7 +1279,6 @@
         },
         "demon_namazu_enable": {
           "default": false,
-          "description": "是否切换地震鲶预设",
           "title": "Demon Namazu Enable",
           "type": "boolean"
         },
@@ -1017,7 +1290,6 @@
         },
         "demon_oboroguruma_enable": {
           "default": false,
-          "description": "是否切换胧车预设",
           "title": "Demon Oboroguruma Enable",
           "type": "boolean"
         },
@@ -1029,7 +1301,6 @@
         },
         "demon_nightly_aramitama_enable": {
           "default": false,
-          "description": "是否切换夜荒魂预设",
           "title": "Demon Nightly Aramitama Enable",
           "type": "boolean"
         },
@@ -1159,6 +1430,7 @@
       "properties": {
         "custom_run_time": {
           "default": "10:00:00",
+          "description": "demon_retreat_time_help",
           "title": "Custom Run Time",
           "type": "time"
         }
@@ -1203,17 +1475,9 @@
           "type": "boolean"
         },
         "emulatorinfo_type": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EmulatorInfoType"
-            },
-            {
-              "type": "string"
-            }
-          ],
+          "$ref": "#/$defs/EmulatorInfoType",
           "default": "auto",
-          "description": "emulatorinfo_type_help",
-          "title": "Emulatorinfo Type"
+          "description": "emulatorinfo_type_help"
         },
         "emulatorinfo_name": {
           "default": "",
@@ -1251,10 +1515,16 @@
         "dokan_config": {
           "$ref": "#/$defs/DokanConfig"
         },
-        "general_battle_config": {
-          "$ref": "#/$defs/GeneralBattleConfig"
+        "dokan_member_battle_conf": {
+          "$ref": "#/$defs/DokanBattleConfig"
         },
-        "switch_soul_config": {
+        "dokan_owner_battle_conf": {
+          "$ref": "#/$defs/DokanBattleConfig"
+        },
+        "dokan_member_switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        },
+        "dokan_owner_switch_soul": {
           "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         },
         "attack_count_config": {
@@ -1264,8 +1534,100 @@
       "title": "Dokan",
       "type": "object"
     },
+    "DokanBattleConfig": {
+      "properties": {
+        "lock_team_enable": {
+          "default": false,
+          "description": "lock_team_enable_help",
+          "title": "Lock Team Enable",
+          "type": "boolean"
+        },
+        "preset_enable": {
+          "default": false,
+          "description": "preset_enable_help",
+          "title": "Preset Enable",
+          "type": "boolean"
+        },
+        "preset_group": {
+          "default": 1,
+          "description": "preset_group_help",
+          "maximum": 7,
+          "minimum": 1,
+          "title": "Preset Group",
+          "type": "integer"
+        },
+        "preset_team": {
+          "default": 1,
+          "description": "preset_team_help",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Preset Team",
+          "type": "integer"
+        },
+        "green_enable": {
+          "default": false,
+          "description": "green_enable_help",
+          "title": "Green Enable",
+          "type": "boolean"
+        },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
+        "green_mark": {
+          "$ref": "#/$defs/GreenMarkType",
+          "default": "green_left1",
+          "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
+        },
+        "random_click_swipt_enable": {
+          "default": false,
+          "description": "random_click_swipt_enable_help",
+          "title": "Random Click Swipt Enable",
+          "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
+        },
+        "continuous_battle": {
+          "default": true,
+          "title": "Continuous Battle",
+          "type": "boolean"
+        },
+        "max_continuous": {
+          "default": 0,
+          "description": "max_continuous_help",
+          "minimum": 0,
+          "title": "Max Continuous",
+          "type": "integer"
+        },
+        "quick_exit": {
+          "default": false,
+          "description": "quick_exit_help",
+          "title": "Quick Exit",
+          "type": "boolean"
+        }
+      },
+      "title": "DokanBattleConfig",
+      "type": "object"
+    },
     "DokanConfig": {
       "properties": {
+        "dokan_run_time": {
+          "default": "20:00:00",
+          "description": "dokan_run_time_help",
+          "title": "Dokan Run Time",
+          "type": "time"
+        },
         "dokan_attack_priority": {
           "default": 0,
           "description": "dokan_attack_priority_help",
@@ -1282,12 +1644,6 @@
           "default": false,
           "description": "random_delay_help",
           "title": "Random Delay",
-          "type": "boolean"
-        },
-        "anti_detect_click_fixed_random_area": {
-          "default": false,
-          "description": "anti_detect_click_fixed_random_area_help",
-          "title": "Anti Detect Click Fixed Random Area",
           "type": "boolean"
         },
         "monday_to_thursday": {
@@ -1325,33 +1681,152 @@
           "description": "find_dokan_refresh_count_help",
           "title": "Find Dokan Refresh Count",
           "type": "integer"
-        },
-        "switch_preset_enable": {
-          "default": false,
-          "description": "switch_preset_enable_help",
-          "title": "Switch Preset Enable",
-          "type": "boolean"
-        },
-        "preset_group_1": {
-          "default": "",
-          "description": "preset_group_1_help",
-          "title": "Preset Group 1",
-          "type": "string"
-        },
-        "preset_group_2": {
-          "default": "",
-          "description": "preset_group_2_help",
-          "title": "Preset Group 2",
-          "type": "string"
-        },
-        "green_mark_shikigami_name": {
-          "default": "",
-          "description": "green_mark_shikigami_name_help",
-          "title": "Green Mark Shikigami Name",
-          "type": "string"
         }
       },
       "title": "DokanConfig",
+      "type": "object"
+    },
+    "DoneRecord": {
+      "properties": {
+        "courtyard_affairs_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Courtyard Affairs Dt",
+          "type": "date_time"
+        },
+        "pickup_email_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Pickup Email Dt",
+          "type": "date_time"
+        },
+        "summon_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Summon Dt",
+          "type": "date_time"
+        },
+        "guild_wish_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Guild Wish Dt",
+          "type": "date_time"
+        },
+        "luck_msg_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Luck Msg Dt",
+          "type": "date_time"
+        },
+        "store_sign_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Store Sign Dt",
+          "type": "date_time"
+        },
+        "sushi_dt": {
+          "default": "2023-01-01T00:00:00",
+          "title": "Sushi Dt",
+          "type": "date_time"
+        }
+      },
+      "title": "DoneRecord",
+      "type": "object"
+    },
+    "DoubleScrolls": {
+      "enum": [
+        "默认绘卷一",
+        "双绘卷之二"
+      ],
+      "title": "DoubleScrolls",
+      "type": "string"
+    },
+    "Duel": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "duel_config": {
+          "$ref": "#/$defs/DuelConfig"
+        },
+        "duel_celeb_config": {
+          "$ref": "#/$defs/DuelCelebConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "Duel",
+      "type": "object"
+    },
+    "DuelCelebConfig": {
+      "properties": {
+        "celeb_battle": {
+          "default": false,
+          "description": "是否开启名仕战斗",
+          "title": "Celeb Battle",
+          "type": "boolean"
+        },
+        "ban_name": {
+          "default": "",
+          "description": "填写第五手式神名称",
+          "title": "Ban Name",
+          "type": "string"
+        },
+        "initial_score": {
+          "default": 3800,
+          "description": "设置初始斗技分值默认为8颗星之后每赢一场加100输一场减100",
+          "title": "Initial Score",
+          "type": "integer"
+        }
+      },
+      "title": "DuelCelebConfig",
+      "type": "object"
+    },
+    "DuelConfig": {
+      "properties": {
+        "switch_enabled": {
+          "default": true,
+          "description": "是否切换阴阳师",
+          "title": "Switch Enabled",
+          "type": "boolean"
+        },
+        "switch_onmyoji": {
+          "$ref": "#/$defs/Onmyoji",
+          "default": "源赖光",
+          "description": "切换阴阳师"
+        },
+        "switch_all_soul": {
+          "default": false,
+          "description": "switch_all_soul_help",
+          "title": "Switch All Soul",
+          "type": "boolean"
+        },
+        "limit_time": {
+          "default": "00:30:00",
+          "description": "limit_time_help",
+          "title": "Limit Time",
+          "type": "time"
+        },
+        "target_score": {
+          "default": 2000,
+          "description": "target_score_help",
+          "title": "Target Score",
+          "type": "integer"
+        },
+        "honor_full_exit": {
+          "default": false,
+          "description": "honor_full_exit_help",
+          "title": "Honor Full Exit",
+          "type": "boolean"
+        },
+        "green_enable": {
+          "default": false,
+          "description": "green_enable_help",
+          "title": "Green Enable",
+          "type": "boolean"
+        },
+        "green_mark": {
+          "$ref": "#/$defs/GreenMarkType",
+          "default": "green_left1",
+          "description": "green_mark_help"
+        }
+      },
+      "title": "DuelConfig",
       "type": "object"
     },
     "DyeTrials": {
@@ -1372,6 +1847,16 @@
           "$ref": "#/$defs/FriendInvitation",
           "default": "accept",
           "description": "friend_invitation_help"
+        },
+        "when_network_abnormal": {
+          "$ref": "#/$defs/WhenNetworkAbnormal",
+          "default": "wait_10s",
+          "description": "when_network_abnormal_help"
+        },
+        "when_network_error": {
+          "$ref": "#/$defs/WhenNetworkError",
+          "default": "restart",
+          "description": "when_network_error_help"
         },
         "home_client_clear": {
           "default": true,
@@ -1429,6 +1914,18 @@
           "minimum": 1,
           "title": "Screenshot Length",
           "type": "integer"
+        },
+        "notify_enable": {
+          "default": false,
+          "description": "",
+          "title": "Notify Enable",
+          "type": "boolean"
+        },
+        "notify_config": {
+          "default": "provider: null",
+          "description": "notify_config_help",
+          "title": "Notify Config",
+          "type": "multi_line"
         }
       },
       "title": "Error",
@@ -1442,20 +1939,106 @@
         "eternity_sea_config": {
           "$ref": "#/$defs/EternitySeaConfig"
         },
+        "invite_config": {
+          "$ref": "#/$defs/InviteConfig"
+        },
         "general_battle_config": {
-          "$ref": "#/$defs/GeneralBattleConfig"
+          "$ref": "#/$defs/EternitySeaBattleConfig"
         },
         "switch_soul_config_1": {
           "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         },
         "switch_soul_config_2": {
           "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
-        },
-        "invite_config": {
-          "$ref": "#/$defs/tasks__Component__GeneralInvite__config_invite__InviteConfig"
         }
       },
       "title": "EternitySea",
+      "type": "object"
+    },
+    "EternitySeaBattleConfig": {
+      "properties": {
+        "lock_team_enable": {
+          "default": false,
+          "description": "lock_team_enable_help",
+          "title": "Lock Team Enable",
+          "type": "boolean"
+        },
+        "preset_enable": {
+          "default": false,
+          "description": "preset_enable_help",
+          "title": "Preset Enable",
+          "type": "boolean"
+        },
+        "preset_group": {
+          "default": 1,
+          "description": "preset_group_help",
+          "maximum": 7,
+          "minimum": 1,
+          "title": "Preset Group",
+          "type": "integer"
+        },
+        "preset_team": {
+          "default": 1,
+          "description": "preset_team_help",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Preset Team",
+          "type": "integer"
+        },
+        "green_enable": {
+          "default": false,
+          "description": "green_enable_help",
+          "title": "Green Enable",
+          "type": "boolean"
+        },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
+        "green_mark": {
+          "$ref": "#/$defs/GreenMarkType",
+          "default": "green_left1",
+          "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
+        },
+        "random_click_swipt_enable": {
+          "default": false,
+          "description": "random_click_swipt_enable_help",
+          "title": "Random Click Swipt Enable",
+          "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
+        },
+        "continuous_battle": {
+          "default": true,
+          "title": "Continuous Battle",
+          "type": "boolean"
+        },
+        "max_continuous": {
+          "default": 0,
+          "description": "max_continuous_help",
+          "minimum": 0,
+          "title": "Max Continuous",
+          "type": "integer"
+        },
+        "quick_exit": {
+          "default": false,
+          "description": "quick_exit_help",
+          "title": "Quick Exit",
+          "type": "boolean"
+        }
+      },
+      "title": "EternitySeaBattleConfig",
       "type": "object"
     },
     "EternitySeaConfig": {
@@ -1495,7 +2078,7 @@
           "$ref": "#/$defs/EvoZoneConfig"
         },
         "invite_config": {
-          "$ref": "#/$defs/tasks__Component__GeneralInvite__config_invite__InviteConfig"
+          "$ref": "#/$defs/InviteConfig"
         },
         "general_battle_config": {
           "$ref": "#/$defs/GeneralBattleConfig"
@@ -1546,6 +2129,37 @@
       "title": "EvoZoneConfig",
       "type": "object"
     },
+    "ExperienceYoukai": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "experience_youkai": {
+          "$ref": "#/$defs/ExperienceYoukaiConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "ExperienceYoukai",
+      "type": "object"
+    },
+    "ExperienceYoukaiConfig": {
+      "properties": {
+        "buff_exp_50_click": {
+          "default": false,
+          "title": "Buff Exp 50 Click",
+          "type": "boolean"
+        },
+        "buff_exp_100_click": {
+          "default": false,
+          "title": "Buff Exp 100 Click",
+          "type": "boolean"
+        }
+      },
+      "title": "ExperienceYoukaiConfig",
+      "type": "object"
+    },
     "Exploration": {
       "properties": {
         "scheduler": {
@@ -1558,7 +2172,7 @@
           "$ref": "#/$defs/Scrolls"
         },
         "invite_config": {
-          "$ref": "#/$defs/tasks__Exploration__config__InviteConfig"
+          "$ref": "#/$defs/InviteConfig"
         },
         "general_battle_config": {
           "$ref": "#/$defs/GeneralBattleConfig"
@@ -1604,7 +2218,7 @@
           "type": "time"
         },
         "minions_cnt": {
-          "default": "30",
+          "default": 30,
           "description": "minions_cnt_help",
           "minimum": 0,
           "title": "战斗次数",
@@ -1615,6 +2229,12 @@
           "default": "第二十八章",
           "description": "exploration_level_help",
           "title": "探索等级"
+        },
+        "collect_paper_reward": {
+          "default": true,
+          "description": "collect_paper_reward_help",
+          "title": "Collect Paper Reward",
+          "type": "boolean"
         },
         "auto_rotate": {
           "$ref": "#/$defs/AutoRotate",
@@ -1680,7 +2300,7 @@
           "$ref": "#/$defs/FallenSunConfig"
         },
         "invite_config": {
-          "$ref": "#/$defs/tasks__Component__GeneralInvite__config_invite__InviteConfig"
+          "$ref": "#/$defs/InviteConfig"
         },
         "general_battle_config": {
           "$ref": "#/$defs/GeneralBattleConfig"
@@ -1720,6 +2340,55 @@
       "title": "FallenSunConfig",
       "type": "object"
     },
+    "FindJade": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "find_jade_config": {
+          "$ref": "#/$defs/FindJadeConfig"
+        },
+        "invite_info_list": {
+          "default": null,
+          "items": {
+            "$ref": "#/$defs/InviteInfo"
+          },
+          "title": "Invite Info List",
+          "type": "array"
+        },
+        "sup_account_list": {
+          "default": null,
+          "items": {
+            "$ref": "#/$defs/AccountInfo"
+          },
+          "title": "Sup Account List",
+          "type": "array"
+        }
+      },
+      "title": "FindJade",
+      "type": "object"
+    },
+    "FindJadeConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "invite_info_count": {
+          "default": 1,
+          "description": "invite_info_count_help",
+          "minimum": 1,
+          "title": "Invite Info Count",
+          "type": "integer"
+        },
+        "sup_account_count": {
+          "default": 1,
+          "description": "sup_account_count_help",
+          "minimum": 1,
+          "title": "Sup Account Count",
+          "type": "integer"
+        }
+      },
+      "title": "FindJadeConfig",
+      "type": "object"
+    },
     "FindMode": {
       "enum": [
         "auto_find",
@@ -1727,6 +2396,34 @@
       ],
       "title": "FindMode",
       "type": "string"
+    },
+    "FloatParade": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "float_parade": {
+          "$ref": "#/$defs/FloatParadeConfig"
+        }
+      },
+      "title": "FloatParade",
+      "type": "object"
+    },
+    "FloatParadeConfig": {
+      "properties": {
+        "collect_placement_reward": {
+          "default": true,
+          "title": "Collect Placement Reward",
+          "type": "boolean"
+        },
+        "collect_exp": {
+          "default": true,
+          "title": "Collect Exp",
+          "type": "boolean"
+        }
+      },
+      "title": "FloatParadeConfig",
+      "type": "object"
     },
     "FriendInvitation": {
       "description": "协作",
@@ -1766,6 +2463,35 @@
       "title": "FriendshipPoints",
       "type": "object"
     },
+    "FrogBoss": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "frog_boss_config": {
+          "$ref": "#/$defs/FrogBossConfig"
+        }
+      },
+      "title": "FrogBoss",
+      "type": "object"
+    },
+    "FrogBossConfig": {
+      "properties": {
+        "before_end_frog": {
+          "default": "00:15:00",
+          "description": "before_end_frog_help",
+          "title": "Before End Frog",
+          "type": "time"
+        },
+        "strategy_frog": {
+          "$ref": "#/$defs/Strategy",
+          "default": "frog_majority",
+          "description": "strategy_frog_help"
+        }
+      },
+      "title": "FrogBossConfig",
+      "type": "object"
+    },
     "GeneralBattleConfig": {
       "properties": {
         "lock_team_enable": {
@@ -1802,16 +2528,33 @@
           "title": "Green Enable",
           "type": "boolean"
         },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
         "green_mark": {
           "$ref": "#/$defs/GreenMarkType",
           "default": "green_left1",
           "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
         },
         "random_click_swipt_enable": {
           "default": false,
           "description": "random_click_swipt_enable_help",
           "title": "Random Click Swipt Enable",
           "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
         },
         "continuous_battle": {
           "default": false,
@@ -1831,13 +2574,6 @@
           "description": "quick_exit_help",
           "title": "Quick Exit",
           "type": "boolean"
-        },
-        "battle_timeout": {
-          "default": 120.0,
-          "description": "battle_timeout_help",
-          "minimum": 10.0,
-          "title": "Battle Timeout",
-          "type": "number"
         }
       },
       "title": "GeneralBattleConfig",
@@ -1848,32 +2584,46 @@
         "limit_time": {
           "default": "01:30:00",
           "description": "总限制时间",
-          "title": "限制运行时间",
+          "title": "Limit Time",
           "type": "time"
         },
         "pass_limit": {
           "default": 50,
-          "description": "",
-          "title": "门票爬塔最大次数",
+          "title": "Pass Limit",
           "type": "integer"
         },
         "ap_limit": {
           "default": 300,
-          "description": "",
-          "title": "体力爬塔最大次数",
+          "title": "Ap Limit",
           "type": "integer"
         },
         "boss_limit": {
           "default": 20,
-          "description": "",
-          "title": "Boss战最大次数",
+          "title": "Boss Limit",
+          "type": "integer"
+        },
+        "ap100_limit": {
+          "default": 20,
+          "title": "Ap100 Limit",
           "type": "integer"
         },
         "run_sequence": {
-          "default": "pass,ap,boss",
-          "description": "可选：pass(门票), ap(体力), boss(boss战)\n英文逗号分隔，从左到右依次运行\n例：pass,ap,boss = 先门票 -> 再体力 -> 再boss战",
-          "title": "运行爬塔顺序",
+          "default": "pass,ap,ap100,boss",
+          "description": "pass:门票,ap100:100体,boss:boss战,ap:体力\n逗号分隔,从左到右依次运行\n例:pass,ap100,boss,ap=门票->100体->boss战->体力",
+          "title": "Run Sequence",
           "type": "string"
+        },
+        "active_souls_clean": {
+          "default": false,
+          "description": "是否运行结束后清理御魂",
+          "title": "Active Souls Clean",
+          "type": "boolean"
+        },
+        "random_sleep": {
+          "default": false,
+          "description": "是否启用在点击战斗前随机休息",
+          "title": "Random Sleep",
+          "type": "boolean"
         }
       },
       "title": "GeneralClimb",
@@ -1886,9 +2636,46 @@
         },
         "costume_config": {
           "$ref": "#/$defs/CostumeConfig"
+        },
+        "battle": {
+          "$ref": "#/$defs/BattleTakeover"
+        },
+        "team_flow": {
+          "$ref": "#/$defs/TeamFlow"
         }
       },
       "title": "GlobalGame",
+      "type": "object"
+    },
+    "GoldYoukai": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "gold_youkai": {
+          "$ref": "#/$defs/GoldYoukaiConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "GoldYoukai",
+      "type": "object"
+    },
+    "GoldYoukaiConfig": {
+      "properties": {
+        "buff_gold_50_click": {
+          "default": false,
+          "title": "Buff Gold 50 Click",
+          "type": "boolean"
+        },
+        "buff_gold_100_click": {
+          "default": false,
+          "title": "Buff Gold 100 Click",
+          "type": "boolean"
+        }
+      },
+      "title": "GoldYoukaiConfig",
       "type": "object"
     },
     "GoryouClass": {
@@ -1943,6 +2730,14 @@
       "title": "GoryouRealm",
       "type": "object"
     },
+    "GreenMarkEnum": {
+      "enum": [
+        "choose",
+        "name"
+      ],
+      "title": "GreenMarkEnum",
+      "type": "string"
+    },
     "GreenMarkType": {
       "enum": [
         "green_left1",
@@ -1955,38 +2750,19 @@
       "title": "GreenMarkType",
       "type": "string"
     },
-    "GuaGuaArtRoom": {
+    "GuguArtStudio": {
       "properties": {
         "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler",
-          "title": "任务调度"
-        },
-        "gua_gua_art_room_config": {
-          "$ref": "#/$defs/GuaGuaArtRoomConfig",
-          "title": "呱呱画室设置"
-        },
-        "switch_soul_config": {
-          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig",
-          "title": "执行任务前切换御魂"
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
         "general_battle_config": {
-          "$ref": "#/$defs/GeneralBattleConfig",
-          "title": "战斗配置"
+          "$ref": "#/$defs/GeneralBattleConfig"
+        },
+        "switch_soul_config": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         }
       },
-      "title": "GuaGuaArtRoom",
-      "type": "object"
-    },
-    "GuaGuaArtRoomConfig": {
-      "properties": {
-        "limit_count": {
-          "default": 0,
-          "description": "0 表示不限制，按「今日可得」判断；大于 0 时达到该次数也会停止",
-          "title": "挑战次数上限",
-          "type": "integer"
-        }
-      },
-      "title": "GuaGuaArtRoomConfig",
+      "title": "GuguArtStudio",
       "type": "object"
     },
     "GuildActivity": {
@@ -2065,38 +2841,45 @@
         "scheduler": {
           "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
-        "guild_banquet_time": {
-          "$ref": "#/$defs/GuildBanquetTime"
+        "guild_banquet_config": {
+          "$ref": "#/$defs/GuildBanquetConfig"
         }
       },
       "title": "GuildBanquet",
       "type": "object"
     },
-    "GuildBanquetTime": {
+    "GuildBanquetConfig": {
       "properties": {
+        "auto_switch_shikigami": {
+          "default": false,
+          "description": "guild_auto_switch_shikigami_help",
+          "title": "Auto Switch Shikigami",
+          "type": "boolean"
+        },
         "day_1": {
           "$ref": "#/$defs/Weekday",
           "default": "星期三",
-          "description": "每周第1次运行时间设置，注意第一次时间要比第二次时间早"
+          "description": "每周第1次运行星期设置，第一次星期要比第二次星期早"
         },
         "run_time_1": {
-          "default": "19:00:00",
+          "default": "20:00:00",
+          "description": "若当前时间没有开启宴会, 则会在1小时之内按照调度器失败间隔不断重试",
           "title": "Run Time 1",
           "type": "time"
         },
         "day_2": {
           "$ref": "#/$defs/Weekday",
           "default": "星期六",
-          "description": "每周第2次运行时间设置"
+          "description": "每周第2次星期设置"
         },
         "run_time_2": {
-          "default": "19:00:00",
-          "description": "每周第2次运行时间设置",
+          "default": "20:00:00",
+          "description": "规则同上",
           "title": "Run Time 2",
           "type": "time"
         }
       },
-      "title": "GuildBanquetTime",
+      "title": "GuildBanquetConfig",
       "type": "object"
     },
     "GuildStore": {
@@ -2104,6 +2887,11 @@
         "enable": {
           "default": false,
           "title": "Enable",
+          "type": "boolean"
+        },
+        "honor_gift": {
+          "default": false,
+          "title": "Honor Gift",
           "type": "boolean"
         },
         "mystery_amulet": {
@@ -2150,6 +2938,11 @@
           "$ref": "#/$defs/tasks__HeroTest__config__Layer",
           "default": "鬼兵演武",
           "description": "选择要打的关卡。\n兵藏秘境升级顺序八华斩->无畏 -> 暴击伤害 -> 默认祝福 -> 默认属性\n藤原道长矩阵博士攻略:https://www.bilibili.com/opus/1162129635334422531"
+        },
+        "skill_mode": {
+          "$ref": "#/$defs/SkillMode",
+          "default": "PVE",
+          "description": "技能本技能偏向\n藤原道长使用攻略高配阵容,自己配置好技能和祝福,PVP:阵容助手高配,PVE:矩阵博士高配"
         },
         "limit_time": {
           "default": "00:30:00",
@@ -2217,7 +3010,7 @@
           "$ref": "#/$defs/HuntGeneralBattleConfig"
         },
         "netherworld_battle_config": {
-          "$ref": "#/$defs/HuntGeneralBattleConfig"
+          "$ref": "#/$defs/NetherWorldBattleConfig"
         }
       },
       "title": "Hunt",
@@ -2276,16 +3069,33 @@
           "title": "Green Enable",
           "type": "boolean"
         },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
         "green_mark": {
           "$ref": "#/$defs/GreenMarkType",
           "default": "green_left1",
           "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
         },
         "random_click_swipt_enable": {
           "default": false,
           "description": "random_click_swipt_enable_help",
           "title": "Random Click Swipt Enable",
           "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
         },
         "continuous_battle": {
           "default": false,
@@ -2305,13 +3115,6 @@
           "description": "quick_exit_help",
           "title": "Quick Exit",
           "type": "boolean"
-        },
-        "battle_timeout": {
-          "default": 120.0,
-          "description": "battle_timeout_help",
-          "minimum": 10.0,
-          "title": "Battle Timeout",
-          "type": "number"
         }
       },
       "title": "HuntGeneralBattleConfig",
@@ -2464,13 +3267,75 @@
       "title": "InferenceEngine",
       "type": "string"
     },
-    "InviteNumber": {
-      "enum": [
-        "one",
-        "two"
-      ],
-      "title": "InviteNumber",
-      "type": "string"
+    "InviteConfig": {
+      "properties": {
+        "friend_list": {
+          "default": "",
+          "description": "invite_friend_list_help",
+          "title": "Friend List",
+          "type": "multi_line"
+        },
+        "find_mode": {
+          "$ref": "#/$defs/FindMode",
+          "default": "auto_find",
+          "description": "find_mode_help"
+        },
+        "wait_time": {
+          "default": "00:02:00",
+          "description": "wait_time_help",
+          "title": "Wait Time",
+          "type": "time"
+        },
+        "default_invite": {
+          "default": true,
+          "description": "default_invite_help",
+          "title": "Default Invite",
+          "type": "boolean"
+        }
+      },
+      "title": "InviteConfig",
+      "type": "object"
+    },
+    "InviteInfo": {
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "name_help",
+          "title": "Name",
+          "type": "string"
+        },
+        "default_invite_type": {
+          "$ref": "#/$defs/CooperationSelectMaskDescription",
+          "default": "JadeAndFood",
+          "description": "default_invite_type_help"
+        },
+        "invite_history_1": {
+          "default": "2023-01-01T00:00:00",
+          "description": "invite_history_1_help",
+          "title": "Invite History 1",
+          "type": "date_time"
+        },
+        "invite_history_2": {
+          "default": "2023-01-01T00:00:00",
+          "description": "invite_history_2_help",
+          "title": "Invite History 2",
+          "type": "date_time"
+        },
+        "invite_history_4": {
+          "default": "2023-01-01T00:00:00",
+          "description": "invite_history_4_help",
+          "title": "Invite History 4",
+          "type": "date_time"
+        },
+        "invite_history_8": {
+          "default": "2023-01-01T00:00:00",
+          "description": "invite_history_8_help",
+          "title": "Invite History 8",
+          "type": "date_time"
+        }
+      },
+      "title": "InviteInfo",
+      "type": "object"
     },
     "KekkaiActivation": {
       "properties": {
@@ -2506,6 +3371,45 @@
       "title": "KirinType",
       "type": "string"
     },
+    "KittyShop": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "kitty_shop_config": {
+          "$ref": "#/$defs/KittyShopConfig"
+        }
+      },
+      "title": "KittyShop",
+      "type": "object"
+    },
+    "KittyShopConfig": {
+      "properties": {
+        "kitty_attempts": {
+          "default": 1,
+          "description": "kitty_attempts_help",
+          "title": "Kitty Attempts",
+          "type": "integer"
+        },
+        "kitty_quit_when_finished": {
+          "default": false,
+          "description": "kitty_quit_when_finished_help",
+          "title": "Kitty Quit When Finished",
+          "type": "boolean"
+        }
+      },
+      "title": "KittyShopConfig",
+      "type": "object"
+    },
+    "LevelReward": {
+      "enum": [
+        "蛇皮/青吉鬼",
+        "金币/勾玉",
+        "体力/樱饼"
+      ],
+      "title": "LevelReward",
+      "type": "string"
+    },
     "LoginCharacterConfig": {
       "properties": {
         "character": {
@@ -2516,6 +3420,21 @@
       },
       "title": "LoginCharacterConfig",
       "type": "object"
+    },
+    "MC": {
+      "enum": [
+        "觉醒一",
+        "觉醒二",
+        "觉醒三",
+        "御灵一",
+        "御灵二",
+        "御灵三",
+        "御魂一",
+        "御魂二",
+        "养成"
+      ],
+      "title": "MC",
+      "type": "string"
     },
     "MainType": {
       "enum": [
@@ -2533,9 +3452,26 @@
         "costume_main_11",
         "costume_main_12",
         "costume_main_13",
-        "costume_main_14"
+        "costume_main_14",
+        "costume_main_15",
+        "costume_main_16"
       ],
       "title": "MainType",
+      "type": "string"
+    },
+    "MarkMainConfig": {
+      "description": "标记主怪策略 ",
+      "enum": [
+        "NONE",
+        "BOSS_ONLY",
+        "GENERAL_ONLY",
+        "ELITE_ONLY",
+        "BOSS_AND_GENERAL",
+        "ELITE_AND_GENERAL",
+        "ELITE_AND_BOSS",
+        "ALL"
+      ],
+      "title": "MarkMainConfig",
       "type": "string"
     },
     "MedalRoom": {
@@ -2590,27 +3526,82 @@
       "title": "MedalRoom",
       "type": "object"
     },
-    "MetaDemon": {
+    "MemoryScrolls": {
       "properties": {
         "scheduler": {
           "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
-        "switch_soul": {
-          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        "memory_scrolls_config": {
+          "$ref": "#/$defs/MemoryScrollsConfig"
+        },
+        "memory_scrolls_finish": {
+          "$ref": "#/$defs/MemoryScrollsFinish"
+        }
+      },
+      "title": "MemoryScrolls",
+      "type": "object"
+    },
+    "MemoryScrollsConfig": {
+      "properties": {
+        "auto_contribute_memoryscrolls": {
+          "default": true,
+          "description": "自动贡献绘卷碎片",
+          "title": "Auto Contribute Memoryscrolls",
+          "type": "boolean"
+        },
+        "double_scrolls": {
+          "$ref": "#/$defs/DoubleScrolls",
+          "default": "默认绘卷一",
+          "description": "double_scrolls_help"
+        },
+        "scroll_number": {
+          "$ref": "#/$defs/ScrollNumber",
+          "default": "卷一",
+          "description": "scroll_number_help"
+        },
+        "auto_close_exploration": {
+          "default": false,
+          "description": "指定绘卷结束后，自动关闭探索任务，避免长时间无意义执行",
+          "title": "Auto Close Exploration",
+          "type": "boolean"
+        },
+        "notification_95": {
+          "default": false,
+          "description": "到达95%进度时发送通知",
+          "title": "Notification 95",
+          "type": "boolean"
+        }
+      },
+      "title": "MemoryScrollsConfig",
+      "type": "object"
+    },
+    "MemoryScrollsFinish": {
+      "properties": {
+        "auto_finish_exploration": {
+          "default": false,
+          "description": "小绘卷满50后自动结束当日探索任务",
+          "title": "Auto Finish Exploration",
+          "type": "boolean"
+        },
+        "next_exploration_time": {
+          "default": "07:00:00",
+          "title": "Next Exploration Time",
+          "type": "time"
+        }
+      },
+      "title": "MemoryScrollsFinish",
+      "type": "object"
+    },
+    "MetaDemon": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/MetaDemonScheduler"
         },
         "meta_demon_config": {
           "$ref": "#/$defs/MetaDemonConfig"
         },
-        "md_default_strategy": {
-          "$ref": "#/$defs/DefaultStrategy"
-        },
-        "md_strategies": {
-          "default": null,
-          "items": {
-            "$ref": "#/$defs/Strategy"
-          },
-          "title": "Md Strategies",
-          "type": "array"
+        "switch_soul": {
+          "$ref": "#/$defs/MetaDemonSwitchSoulConfig"
         }
       },
       "title": "MetaDemon",
@@ -2618,33 +3609,207 @@
     },
     "MetaDemonConfig": {
       "properties": {
-        "meta_crafting_card": {
-          "default": true,
-          "description": "craft_essence_help",
-          "title": "Meta Crafting Card",
-          "type": "boolean"
+        "limit_time": {
+          "default": "00:45:00",
+          "description": "limit_time_help",
+          "title": "Limit Time",
+          "type": "time"
+        },
+        "limit_count": {
+          "default": 50,
+          "description": "limit_count_help",
+          "title": "Limit Count",
+          "type": "integer"
         },
         "auto_tea": {
           "default": false,
-          "description": "auto_tea_help",
+          "description": "疲劳度满时是否自动喝茶, 关闭则自动根据调度器等待间隔时间安排下一次调度",
           "title": "Auto Tea",
           "type": "boolean"
         },
-        "md_strategy_count": {
-          "default": 0,
-          "description": "md_strategy_count_help",
-          "minimum": 0,
-          "title": "Md Strategy Count",
-          "type": "integer"
+        "fire_sequence": {
+          "default": "1 2 3 4",
+          "description": "攻击顺序:从左到右,空格分隔(1:一星鬼王,2:二星鬼王...)\n例:3 2(先攻击三星鬼王然后二星鬼王)",
+          "title": "Fire Sequence",
+          "type": "string"
         },
-        "md_use_strategy": {
-          "default": false,
-          "description": "md_use_strategy_help",
-          "title": "Md Use Strategy",
-          "type": "boolean"
+        "powerful_list": {
+          "default": "",
+          "description": "开启强力鬼王列表(空格分隔),例:4 5(四星鬼王和五星鬼王开启强力追击)",
+          "title": "Powerful List",
+          "type": "string"
+        },
+        "synthesis_list": {
+          "default": "1",
+          "description": "鬼王合成列表(空格分隔),支持1-5星合成,例:1 2 3(合成一星,二星,三星鬼王)",
+          "title": "Synthesis List",
+          "type": "string"
         }
       },
       "title": "MetaDemonConfig",
+      "type": "object"
+    },
+    "MetaDemonScheduler": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "next_run": {
+          "default": "2023-01-01T00:00:00",
+          "description": "next_run_help",
+          "title": "Next Run",
+          "type": "date_time"
+        },
+        "priority": {
+          "default": 5,
+          "description": "priority_help",
+          "title": "Priority",
+          "type": "integer"
+        },
+        "success_interval": {
+          "default": "P1D",
+          "description": "success_interval_help",
+          "title": "Success Interval",
+          "type": "time_delta"
+        },
+        "failure_interval": {
+          "default": "P1D",
+          "description": "failure_interval_help",
+          "title": "Failure Interval",
+          "type": "time_delta"
+        },
+        "server_update": {
+          "default": "09:00:00",
+          "description": "server_update_help",
+          "title": "Server Update",
+          "type": "time"
+        },
+        "delay_date": {
+          "default": 1,
+          "description": "delay_date_help",
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Delay Date",
+          "type": "integer"
+        },
+        "float_time": {
+          "default": "00:00:00",
+          "description": "float_time_help",
+          "title": "Float Time",
+          "type": "time"
+        },
+        "wait_interval": {
+          "default": "PT1H40M",
+          "description": "疲劳度满时等多长时间后再次运行本任务,建议设置等待完全恢复疲劳度所需的时间\n例:100分钟恢复100点疲劳度,再次运行必定可以继续战斗",
+          "title": "Wait Interval",
+          "type": "time_delta"
+        }
+      },
+      "title": "MetaDemonScheduler",
+      "type": "object"
+    },
+    "MetaDemonSwitchSoulConfig": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "是否启用自动切换御魂,清空则不会切换对应御魂\n若是数字,则以编号方式切换御魂(组号,队伍号),组1-7,队伍1-4\n若非数字,则以ocr方式切换御魂(组名,队伍名)",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "switch_once": {
+          "default": false,
+          "description": "启用该项会一次性切换所有需要攻击的鬼王御魂(建议全部独立御魂再启用), 否则当鬼王级别变更时会自动切换对应级别御魂",
+          "title": "Switch Once",
+          "type": "boolean"
+        },
+        "one_star": {
+          "default": "",
+          "description": "一星鬼王切换御魂配置",
+          "title": "One Star",
+          "type": "string"
+        },
+        "enable_one_star_preset": {
+          "default": false,
+          "description": "是否战斗内切换一星鬼王预设,仅限数字切换御魂可用,否则无效,下面同理",
+          "title": "Enable One Star Preset",
+          "type": "boolean"
+        },
+        "two_stars": {
+          "default": "",
+          "description": "二星鬼王切换御魂配置",
+          "title": "Two Stars",
+          "type": "string"
+        },
+        "enable_two_stars_preset": {
+          "default": false,
+          "description": "是否战斗内切换二星鬼王预设",
+          "title": "Enable Two Stars Preset",
+          "type": "boolean"
+        },
+        "three_stars": {
+          "default": "",
+          "description": "三星鬼王切换御魂配置",
+          "title": "Three Stars",
+          "type": "string"
+        },
+        "enable_three_stars_preset": {
+          "default": false,
+          "description": "是否战斗内切换三星鬼王预设",
+          "title": "Enable Three Stars Preset",
+          "type": "boolean"
+        },
+        "four_stars": {
+          "default": "",
+          "description": "四星鬼王切换御魂配置",
+          "title": "Four Stars",
+          "type": "string"
+        },
+        "enable_four_stars_preset": {
+          "default": false,
+          "description": "是否战斗内切换四星鬼王预设",
+          "title": "Enable Four Stars Preset",
+          "type": "boolean"
+        },
+        "five_stars": {
+          "default": "",
+          "description": "五星鬼王切换御魂配置",
+          "title": "Five Stars",
+          "type": "string"
+        },
+        "enable_five_stars_preset": {
+          "default": false,
+          "description": "是否战斗内切换五星鬼王预设",
+          "title": "Enable Five Stars Preset",
+          "type": "boolean"
+        },
+        "six_stars": {
+          "default": "",
+          "description": "六星鬼王切换御魂配置",
+          "title": "Six Stars",
+          "type": "string"
+        },
+        "enable_six_stars_preset": {
+          "default": false,
+          "description": "是否战斗内切换六星鬼王预设",
+          "title": "Enable Six Stars Preset",
+          "type": "boolean"
+        }
+      },
+      "title": "MetaDemonSwitchSoulConfig",
+      "type": "object"
+    },
+    "MissionsConfig": {
+      "properties": {
+        "missions_select": {
+          "$ref": "#/$defs/MC",
+          "default": "觉醒一",
+          "description": "选择远远不够对应的任务"
+        }
+      },
+      "title": "MissionsConfig",
       "type": "object"
     },
     "ModelPrecision": {
@@ -2654,6 +3819,225 @@
       ],
       "title": "ModelPrecision",
       "type": "string"
+    },
+    "MysteryShop": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "shop_config": {
+          "$ref": "#/$defs/ShopConfig"
+        },
+        "invite_config": {
+          "$ref": "#/$defs/InviteConfig"
+        }
+      },
+      "title": "MysteryShop",
+      "type": "object"
+    },
+    "NetherWorldBattleConfig": {
+      "properties": {
+        "lock_team_enable": {
+          "default": false,
+          "description": "lock_team_enable_help",
+          "title": "Lock Team Enable",
+          "type": "boolean"
+        },
+        "preset_enable": {
+          "default": false,
+          "description": "preset_enable_help",
+          "title": "Preset Enable",
+          "type": "boolean"
+        },
+        "preset_group": {
+          "default": 1,
+          "description": "preset_group_help",
+          "maximum": 7,
+          "minimum": 1,
+          "title": "Preset Group",
+          "type": "integer"
+        },
+        "preset_team": {
+          "default": 1,
+          "description": "preset_team_help",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Preset Team",
+          "type": "integer"
+        },
+        "green_enable": {
+          "default": false,
+          "description": "green_enable_help",
+          "title": "Green Enable",
+          "type": "boolean"
+        },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
+        "green_mark": {
+          "$ref": "#/$defs/GreenMarkType",
+          "default": "green_left1",
+          "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
+        },
+        "random_click_swipt_enable": {
+          "default": false,
+          "description": "random_click_swipt_enable_help",
+          "title": "Random Click Swipt Enable",
+          "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
+        },
+        "continuous_battle": {
+          "default": true,
+          "title": "Continuous Battle",
+          "type": "boolean"
+        },
+        "max_continuous": {
+          "default": 0,
+          "description": "max_continuous_help",
+          "minimum": 0,
+          "title": "Max Continuous",
+          "type": "integer"
+        },
+        "quick_exit": {
+          "default": false,
+          "description": "quick_exit_help",
+          "title": "Quick Exit",
+          "type": "boolean"
+        }
+      },
+      "title": "NetherWorldBattleConfig",
+      "type": "object"
+    },
+    "Nian": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "nian_config": {
+          "$ref": "#/$defs/NianConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "Nian",
+      "type": "object"
+    },
+    "NianConfig": {
+      "properties": {
+        "buff_gold_50_click": {
+          "default": false,
+          "title": "Buff Gold 50 Click",
+          "type": "boolean"
+        },
+        "buff_gold_100_click": {
+          "default": false,
+          "title": "Buff Gold 100 Click",
+          "type": "boolean"
+        }
+      },
+      "title": "NianConfig",
+      "type": "object"
+    },
+    "OWTBattleConfig": {
+      "properties": {
+        "lock_team_enable": {
+          "default": false,
+          "description": "lock_team_enable_help",
+          "title": "Lock Team Enable",
+          "type": "boolean"
+        },
+        "preset_enable": {
+          "default": false,
+          "description": "preset_enable_help",
+          "title": "Preset Enable",
+          "type": "boolean"
+        },
+        "preset_group": {
+          "default": 1,
+          "description": "preset_group_help",
+          "maximum": 7,
+          "minimum": 1,
+          "title": "Preset Group",
+          "type": "integer"
+        },
+        "preset_team": {
+          "default": 1,
+          "description": "preset_team_help",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Preset Team",
+          "type": "integer"
+        },
+        "green_enable": {
+          "default": false,
+          "description": "green_enable_help",
+          "title": "Green Enable",
+          "type": "boolean"
+        },
+        "green_mark_type": {
+          "$ref": "#/$defs/GreenMarkEnum",
+          "default": "choose"
+        },
+        "green_mark": {
+          "$ref": "#/$defs/GreenMarkType",
+          "default": "green_left1",
+          "description": "green_mark_help"
+        },
+        "green_mark_name": {
+          "default": "",
+          "description": "green_mark_name_help",
+          "title": "Green Mark Name",
+          "type": "string"
+        },
+        "random_click_swipt_enable": {
+          "default": false,
+          "description": "random_click_swipt_enable_help",
+          "title": "Random Click Swipt Enable",
+          "type": "boolean"
+        },
+        "battle_timeout": {
+          "default": -1,
+          "description": "battle_timeout_help",
+          "minimum": -1,
+          "title": "Battle Timeout",
+          "type": "integer"
+        },
+        "continuous_battle": {
+          "default": false,
+          "description": "continuous_battle_help",
+          "title": "Continuous Battle",
+          "type": "boolean"
+        },
+        "max_continuous": {
+          "default": 0,
+          "description": "max_continuous_help",
+          "minimum": 0,
+          "title": "Max Continuous",
+          "type": "integer"
+        },
+        "quick_exit": {
+          "default": false,
+          "description": "quick_exit_help",
+          "title": "Quick Exit",
+          "type": "boolean"
+        }
+      },
+      "title": "OWTBattleConfig",
+      "type": "object"
     },
     "Onmyoji": {
       "enum": [
@@ -2728,7 +4112,7 @@
           "$ref": "#/$defs/OrochiConfig"
         },
         "invite_config": {
-          "$ref": "#/$defs/tasks__Component__GeneralInvite__config_invite__InviteConfig"
+          "$ref": "#/$defs/InviteConfig"
         },
         "general_battle_config": {
           "$ref": "#/$defs/GeneralBattleConfig"
@@ -2774,6 +4158,59 @@
       "title": "OrochiConfig",
       "type": "object"
     },
+    "OrochiMoans": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        }
+      },
+      "title": "OrochiMoans",
+      "type": "object"
+    },
+    "OtherWorldTwilight": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "other_world_twilight_config": {
+          "$ref": "#/$defs/OtherWorldTwilightConfig"
+        },
+        "invite_config": {
+          "$ref": "#/$defs/InviteConfig"
+        },
+        "general_battle_config": {
+          "$ref": "#/$defs/OWTBattleConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "OtherWorldTwilight",
+      "type": "object"
+    },
+    "OtherWorldTwilightConfig": {
+      "properties": {
+        "user_status": {
+          "$ref": "#/$defs/tasks__OtherWorldTwilight__config__UserStatus",
+          "default": "leader",
+          "description": "user_status_help"
+        },
+        "limit_time": {
+          "default": "00:30:00",
+          "description": "limit_time_help",
+          "title": "Limit Time",
+          "type": "time"
+        },
+        "limit_count": {
+          "default": 30,
+          "description": "limit_count_help",
+          "title": "Limit Count",
+          "type": "integer"
+        }
+      },
+      "title": "OtherWorldTwilightConfig",
+      "type": "object"
+    },
     "PackageName": {
       "enum": [
         "auto",
@@ -2785,6 +4222,145 @@
       ],
       "title": "PackageName",
       "type": "string"
+    },
+    "Pets": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "pets_config": {
+          "$ref": "#/$defs/PetsConfig"
+        }
+      },
+      "title": "Pets",
+      "type": "object"
+    },
+    "PetsConfig": {
+      "properties": {
+        "pets_feast": {
+          "default": true,
+          "title": "Pets Feast",
+          "type": "boolean"
+        },
+        "enable_orochi_ten_once": {
+          "default": false,
+          "title": "Enable Orochi Ten Once",
+          "type": "boolean"
+        },
+        "enable_switch_layer_soul": {
+          "default": false,
+          "description": "enable_switch_layer_soul_help",
+          "title": "Enable Switch Layer Soul",
+          "type": "boolean"
+        }
+      },
+      "title": "PetsConfig",
+      "type": "object"
+    },
+    "ProcessManage": {
+      "properties": {
+        "attack_order": {
+          "default": "A-1;B-1;B;A-2;A-3;A-4;A-5;A-6",
+          "description": "A,B,C,D分别表示四个区域。123456表示区域内6个怪物\n从上到下从左到右的顺序,用-分隔.不同怪物用;分隔",
+          "title": "Attack Order",
+          "type": "string"
+        },
+        "mark_main": {
+          "$ref": "#/$defs/MarkMainConfig",
+          "default": "BOSS_ONLY",
+          "description": "BOSS首领,GENERAL副将,ELITE精英"
+        },
+        "strategy_boss": {
+          "default": "FALSE",
+          "description": "TRUE/FALSE:秒退/时间到\n数字1-999:x秒退出\n数字1000+:伤害达到y退出",
+          "title": "Strategy Boss",
+          "type": "string"
+        },
+        "strategy_general": {
+          "default": "30",
+          "description": "副将战斗策略,同首领",
+          "title": "Strategy General",
+          "type": "string"
+        },
+        "strategy_elite": {
+          "default": "4380000",
+          "description": "精英战斗策略,同首领",
+          "title": "Strategy Elite",
+          "type": "string"
+        },
+        "enable_switch_soul_in_as": {
+          "default": false,
+          "title": "Enable Switch Soul In As",
+          "type": "boolean"
+        },
+        "enable_switch_preset_in_as": {
+          "default": false,
+          "title": "Enable Switch Preset In As",
+          "type": "boolean"
+        },
+        "preset_boss": {
+          "default": "6,1",
+          "description": "例6,1，同其他通用预设配置",
+          "title": "Preset Boss",
+          "type": "string"
+        },
+        "preset_general": {
+          "default": "6,2",
+          "title": "Preset General",
+          "type": "string"
+        },
+        "preset_elite": {
+          "default": "6,3",
+          "title": "Preset Elite",
+          "type": "string"
+        },
+        "try_complete_enemy_count": {
+          "default": false,
+          "title": "Try Complete Enemy Count",
+          "type": "boolean"
+        },
+        "try_start_abyss_shadows": {
+          "default": false,
+          "title": "Try Start Abyss Shadows",
+          "type": "boolean"
+        },
+        "difficulty": {
+          "$ref": "#/$defs/AbyssShadowsDifficulty",
+          "default": "EASY"
+        }
+      },
+      "title": "ProcessManage",
+      "type": "object"
+    },
+    "Quiz": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "quiz_config": {
+          "$ref": "#/$defs/QuizConfig"
+        }
+      },
+      "title": "Quiz",
+      "type": "object"
+    },
+    "QuizConfig": {
+      "properties": {
+        "quiz_cnt": {
+          "default": 1,
+          "description": "quiz_cnt_help",
+          "title": "Quiz Cnt",
+          "type": "integer"
+        },
+        "quiz_per_round": {
+          "default": 150,
+          "description": "quiz_per_round_help",
+          "title": "Quiz Per Round",
+          "type": "integer"
+        }
+      },
+      "title": "QuizConfig",
+      "type": "object"
     },
     "RealmRaid": {
       "properties": {
@@ -2816,6 +4392,9 @@
         "scheduler": {
           "$ref": "#/$defs/RestartScheduler"
         },
+        "restart_config": {
+          "$ref": "#/$defs/RestartConfig"
+        },
         "tasks_config_reset": {
           "$ref": "#/$defs/TasksReset"
         },
@@ -2824,6 +4403,18 @@
         }
       },
       "title": "Restart",
+      "type": "object"
+    },
+    "RestartConfig": {
+      "properties": {
+        "enable_daily": {
+          "default": true,
+          "description": "是否重启之后启动每日琐事任务",
+          "title": "Enable Daily",
+          "type": "boolean"
+        }
+      },
+      "title": "RestartConfig",
       "type": "object"
     },
     "RestartScheduler": {
@@ -2924,6 +4515,30 @@
       "title": "RichMan",
       "type": "object"
     },
+    "RichManConfig": {
+      "properties": {
+        "buy_ap": {
+          "default": false,
+          "description": "是否购买体力",
+          "title": "Buy Ap",
+          "type": "boolean"
+        },
+        "buy_reward": {
+          "default": false,
+          "description": "是否购买奖励积分",
+          "title": "Buy Reward",
+          "type": "boolean"
+        },
+        "buy_ticket": {
+          "default": false,
+          "description": "是否购买定向骰子",
+          "title": "Buy Ticket",
+          "type": "boolean"
+        }
+      },
+      "title": "RichManConfig",
+      "type": "object"
+    },
     "RyouToppa": {
       "properties": {
         "scheduler": {
@@ -2940,6 +4555,30 @@
         }
       },
       "title": "RyouToppa",
+      "type": "object"
+    },
+    "SavedParams": {
+      "properties": {
+        "save_date": {
+          "default": "",
+          "description": "save_date_help",
+          "title": "Save Date",
+          "type": "string"
+        },
+        "done": {
+          "default": "",
+          "description": "已完成(仅供显示禁止操作)",
+          "title": "Done",
+          "type": "string"
+        },
+        "unavailable": {
+          "default": "",
+          "description": "未完成(仅供显示禁止操作)",
+          "title": "Unavailable",
+          "type": "string"
+        }
+      },
+      "title": "SavedParams",
       "type": "object"
     },
     "Scales": {
@@ -3012,6 +4651,18 @@
       "title": "Script",
       "type": "object"
     },
+    "ScrollNumber": {
+      "enum": [
+        "卷一",
+        "卷二",
+        "卷三",
+        "卷四",
+        "卷五",
+        "卷六"
+      ],
+      "title": "ScrollNumber",
+      "type": "string"
+    },
     "Scrolls": {
       "properties": {
         "scrolls_enable": {
@@ -3027,7 +4678,7 @@
           "type": "time_delta"
         },
         "scrolls_threshold": {
-          "default": "25",
+          "default": 25,
           "description": "scrolls_threshold_help",
           "title": "突破票数量",
           "type": "integer"
@@ -3066,6 +4717,17 @@
           "default": false,
           "description": "secret_gold_100_help",
           "title": "Secret Gold 100",
+          "type": "boolean"
+        },
+        "layer_10": {
+          "default": false,
+          "description": "layer_10_help",
+          "title": "Layer 10",
+          "type": "boolean"
+        },
+        "layer_9": {
+          "default": false,
+          "title": "Layer 9",
           "type": "boolean"
         }
       },
@@ -3110,6 +4772,38 @@
       "title": "ShikigamiType",
       "type": "string"
     },
+    "ShopConfig": {
+      "properties": {
+        "time_of_mystery": {
+          "default": "00:00:00",
+          "description": "time_of_mystery_help",
+          "title": "Time Of Mystery",
+          "type": "time"
+        },
+        "mystery_amulet": {
+          "default": false,
+          "title": "Mystery Amulet",
+          "type": "boolean"
+        },
+        "black_daruma_scrap": {
+          "default": false,
+          "title": "Black Daruma Scrap",
+          "type": "boolean"
+        },
+        "shop_kaiko_3": {
+          "default": false,
+          "title": "Shop Kaiko 3",
+          "type": "boolean"
+        },
+        "shop_kaiko_4": {
+          "default": false,
+          "title": "Shop Kaiko 4",
+          "type": "boolean"
+        }
+      },
+      "title": "ShopConfig",
+      "type": "object"
+    },
     "Shrine": {
       "properties": {
         "enable": {
@@ -3143,19 +4837,37 @@
       "title": "SignType",
       "type": "string"
     },
+    "SimpleTidy": {
+      "properties": {
+        "enable_greed": {
+          "default": true,
+          "description": "是否启用贪吃鬼",
+          "title": "Enable Greed",
+          "type": "boolean"
+        },
+        "enable_maneki": {
+          "default": true,
+          "description": "是否启用奉纳",
+          "title": "Enable Maneki",
+          "type": "boolean"
+        }
+      },
+      "title": "SimpleTidy",
+      "type": "object"
+    },
     "SixRealms": {
       "properties": {
         "scheduler": {
           "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
-        "switch_soul_config": {
-          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
-        },
         "six_realms_gate": {
           "$ref": "#/$defs/SixRealmsGate"
         },
-        "general_battle_config": {
-          "$ref": "#/$defs/GeneralBattleConfig"
+        "switch_soul_config": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        },
+        "pk_switch_soul_conf": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         }
       },
       "title": "SixRealms",
@@ -3174,10 +4886,31 @@
           "description": "limit_count_help",
           "title": "Limit Count",
           "type": "integer"
+        },
+        "six_realms_type": {
+          "$ref": "#/$defs/SixRealmsType",
+          "default": "MoonSea",
+          "description": "six_realms_type_help"
         }
       },
       "title": "SixRealmsGate",
       "type": "object"
+    },
+    "SixRealmsType": {
+      "enum": [
+        "MoonSea",
+        "PeacockKingdom"
+      ],
+      "title": "SixRealmsType",
+      "type": "string"
+    },
+    "SkillMode": {
+      "enum": [
+        "PVE",
+        "PVP"
+      ],
+      "title": "SkillMode",
+      "type": "string"
     },
     "Sougenbi": {
       "properties": {
@@ -3257,6 +4990,18 @@
       "title": "SougenbiConfig",
       "type": "object"
     },
+    "SoulsTidy": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "simple_tidy": {
+          "$ref": "#/$defs/SimpleTidy"
+        }
+      },
+      "title": "SoulsTidy",
+      "type": "object"
+    },
     "SpecialRoom": {
       "properties": {
         "enable": {
@@ -3286,24 +5031,103 @@
       "type": "object"
     },
     "Strategy": {
+      "enum": [
+        "frog_majority",
+        "frog_minority",
+        "frog_bilibili",
+        "frog_dashen",
+        "frog_always_red",
+        "frog_always_blue"
+      ],
+      "title": "Strategy",
+      "type": "string"
+    },
+    "SummonType": {
+      "enum": [
+        "普通召唤",
+        "今忆召唤"
+      ],
+      "title": "SummonType",
+      "type": "string"
+    },
+    "Tako": {
       "properties": {
-        "md_match_names": {
-          "default": "御撰津",
-          "title": "Md Match Names",
-          "type": "string"
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
         },
-        "md_preset_group_team_1": {
-          "default": "1,1",
-          "title": "Md Preset Group Team 1",
-          "type": "string"
+        "tako_config": {
+          "$ref": "#/$defs/TakoConfig"
         },
-        "md_preset_group_team_2": {
-          "default": "1,1",
-          "title": "Md Preset Group Team 2",
-          "type": "string"
+        "switch_soul": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         }
       },
-      "title": "Strategy",
+      "title": "Tako",
+      "type": "object"
+    },
+    "TakoConfig": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "buff_gold_50_click": {
+          "default": false,
+          "title": "Buff Gold 50 Click",
+          "type": "boolean"
+        },
+        "buff_gold_100_click": {
+          "default": false,
+          "title": "Buff Gold 100 Click",
+          "type": "boolean"
+        },
+        "buff_exp_50_click": {
+          "default": false,
+          "title": "Buff Exp 50 Click",
+          "type": "boolean"
+        },
+        "buff_exp_100_click": {
+          "default": false,
+          "title": "Buff Exp 100 Click",
+          "type": "boolean"
+        }
+      },
+      "title": "TakoConfig",
+      "type": "object"
+    },
+    "TalismanConfig": {
+      "properties": {
+        "get_flower": {
+          "default": false,
+          "description": "收取花合战等级奖励",
+          "title": "Get Flower",
+          "type": "boolean"
+        },
+        "level_reward": {
+          "$ref": "#/$defs/LevelReward",
+          "default": "金币/勾玉"
+        },
+        "harvest_soul": {
+          "default": false,
+          "description": "收获1500签御魂",
+          "title": "Harvest Soul",
+          "type": "boolean"
+        }
+      },
+      "title": "TalismanConfig",
+      "type": "object"
+    },
+    "TalismanPass": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__TalismanPass__config__Scheduler"
+        },
+        "talisman": {
+          "$ref": "#/$defs/TalismanConfig"
+        }
+      },
+      "title": "TalismanPass",
       "type": "object"
     },
     "TasksReset": {
@@ -3322,6 +5146,53 @@
         }
       },
       "title": "TasksReset",
+      "type": "object"
+    },
+    "TeamFlow": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "broker": {
+          "default": "",
+          "description": "broker_help",
+          "title": "Broker",
+          "type": "string"
+        },
+        "port": {
+          "default": 8883,
+          "description": "port_help",
+          "title": "Port",
+          "type": "integer"
+        },
+        "transport": {
+          "$ref": "#/$defs/Transport",
+          "default": "TCP",
+          "description": "transport_help"
+        },
+        "ca": {
+          "default": "",
+          "description": "ca_help",
+          "title": "Ca",
+          "type": "string"
+        },
+        "username": {
+          "default": "",
+          "description": "username_help",
+          "title": "Username",
+          "type": "string"
+        },
+        "password": {
+          "default": "",
+          "description": "password_help",
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "title": "TeamFlow",
       "type": "object"
     },
     "ThemeType": {
@@ -3358,6 +5229,14 @@
       "title": "ThousandThings",
       "type": "object"
     },
+    "Transport": {
+      "enum": [
+        "TCP",
+        "SSL/TLS"
+      ],
+      "title": "Transport",
+      "type": "string"
+    },
     "Trifles": {
       "properties": {
         "share_collect": {
@@ -3377,9 +5256,143 @@
           "description": "share_secret_help",
           "title": "Share Secret",
           "type": "boolean"
+        },
+        "broken_amulet": {
+          "default": 100,
+          "description": "trifles_broken_amulet_help",
+          "title": "Broken Amulet",
+          "type": "integer"
         }
       },
       "title": "Trifles",
+      "type": "object"
+    },
+    "TrueOrochi": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/TrueOrochiScheduler"
+        },
+        "true_orochi_config": {
+          "$ref": "#/$defs/TrueOrochiConfig"
+        },
+        "switch_soul": {
+          "$ref": "#/$defs/TrueOrochiSwitchSoulConf"
+        }
+      },
+      "title": "TrueOrochi",
+      "type": "object"
+    },
+    "TrueOrochiConfig": {
+      "properties": {
+        "find_true_orochi": {
+          "default": true,
+          "description": "find_true_orochi_help",
+          "title": "Find True Orochi",
+          "type": "boolean"
+        },
+        "current_success": {
+          "default": 0,
+          "description": "current_success_help",
+          "title": "Current Success",
+          "type": "integer"
+        }
+      },
+      "title": "TrueOrochiConfig",
+      "type": "object"
+    },
+    "TrueOrochiScheduler": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "next_run": {
+          "default": "2023-01-01T00:00:00",
+          "description": "next_run_help",
+          "title": "Next Run",
+          "type": "date_time"
+        },
+        "priority": {
+          "default": 10,
+          "description": "priority_help",
+          "title": "Priority",
+          "type": "integer"
+        },
+        "success_interval": {
+          "default": "P3D",
+          "description": "success_interval_help",
+          "title": "Success Interval",
+          "type": "time_delta"
+        },
+        "failure_interval": {
+          "default": "P1D",
+          "description": "failure_interval_help",
+          "title": "Failure Interval",
+          "type": "time_delta"
+        },
+        "server_update": {
+          "default": "09:00:00",
+          "description": "server_update_help",
+          "title": "Server Update",
+          "type": "time"
+        },
+        "delay_date": {
+          "default": 1,
+          "description": "delay_date_help",
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Delay Date",
+          "type": "integer"
+        },
+        "float_time": {
+          "default": "00:00:00",
+          "description": "float_time_help",
+          "title": "Float Time",
+          "type": "time"
+        }
+      },
+      "title": "TrueOrochiScheduler",
+      "type": "object"
+    },
+    "TrueOrochiSwitchSoulConf": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "switch_group_team": {
+          "default": "-1,-1",
+          "description": "switch_group_team_help",
+          "title": "Switch Group Team",
+          "type": "string"
+        },
+        "enable_switch_by_name": {
+          "default": false,
+          "description": "enable_switch_by_name_help",
+          "title": "Enable Switch By Name",
+          "type": "boolean"
+        },
+        "group_name": {
+          "default": "",
+          "title": "Group Name",
+          "type": "string"
+        },
+        "team_name": {
+          "default": "",
+          "title": "Team Name",
+          "type": "string"
+        },
+        "enable_switch_layer_soul": {
+          "default": false,
+          "description": "enable_switch_layer_soul_help",
+          "title": "Enable Switch Layer Soul",
+          "type": "boolean"
+        }
+      },
+      "title": "TrueOrochiSwitchSoulConf",
       "type": "object"
     },
     "UpType": {
@@ -3404,6 +5417,12 @@
           "default": "same_server",
           "description": "select_friend_list_help"
         },
+        "auto_fill": {
+          "default": false,
+          "description": "auto_fill_help",
+          "title": "Auto Fill",
+          "type": "boolean"
+        },
         "shikigami_class": {
           "$ref": "#/$defs/ShikigamiClass",
           "default": "N",
@@ -3421,10 +5440,46 @@
           "title": "Harvest Guild Max Times",
           "type": "integer"
         },
+        "utilize_harvest": {
+          "default": true,
+          "description": "是否领取寄养的收获",
+          "title": "Utilize Harvest",
+          "type": "boolean"
+        },
         "utilize_enable": {
           "default": true,
           "description": "是否蹭卡，小号可以选择不蹭卡",
           "title": "Utilize Enable",
+          "type": "boolean"
+        },
+        "guild_ap_enable": {
+          "default": true,
+          "description": "guild_ap_enable_help",
+          "title": "Guild Ap Enable",
+          "type": "boolean"
+        },
+        "guild_assets_enable": {
+          "default": true,
+          "description": "guild_assets_enable_help",
+          "title": "Guild Assets Enable",
+          "type": "boolean"
+        },
+        "box_ap_enable": {
+          "default": true,
+          "description": "box_ap_enable_help",
+          "title": "Box Ap Enable",
+          "type": "boolean"
+        },
+        "box_exp_enable": {
+          "default": true,
+          "description": "box_exp_enable_help",
+          "title": "Box Exp Enable",
+          "type": "boolean"
+        },
+        "box_exp_waste": {
+          "default": true,
+          "description": "box_exp_waste_help",
+          "title": "Box Exp Waste",
           "type": "boolean"
         }
       },
@@ -3439,6 +5494,62 @@
       ],
       "title": "UtilizeRule",
       "type": "string"
+    },
+    "WantedQuests": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "wanted_quests_config": {
+          "$ref": "#/$defs/WantedQuestsConfig"
+        },
+        "switch_soul_config": {
+          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
+        }
+      },
+      "title": "WantedQuests",
+      "type": "object"
+    },
+    "WantedQuestsConfig": {
+      "properties": {
+        "before_end": {
+          "default": "00:00:00",
+          "description": "before_end_help",
+          "title": "Before End",
+          "type": "time"
+        },
+        "invite_friend_name": {
+          "default": "",
+          "description": "invite_friend_name_help",
+          "title": "Invite Friend Name",
+          "type": "string"
+        },
+        "cooperation_type": {
+          "$ref": "#/$defs/CooperationSelectMaskDescription",
+          "default": "Any",
+          "description": "cooperation_type_help"
+        },
+        "battle_priority": {
+          "default": "挑战 > 秘闻 > 探索",
+          "description": "battle_priority_help",
+          "title": "Battle Priority",
+          "type": "string"
+        },
+        "cooperation_only": {
+          "default": false,
+          "description": "cooperation_only_help",
+          "title": "Cooperation Only",
+          "type": "boolean"
+        },
+        "unwanted_boss_names": {
+          "default": "酒吞童子,阎魔",
+          "description": "unwanted_boss_name_help",
+          "title": "Unwanted Boss Names",
+          "type": "string"
+        }
+      },
+      "title": "WantedQuestsConfig",
+      "type": "object"
     },
     "Weekday": {
       "enum": [
@@ -3474,6 +5585,21 @@
       "title": "WhenAttackFail",
       "type": "string"
     },
+    "WhenNetworkAbnormal": {
+      "enum": [
+        "restart",
+        "wait_10s"
+      ],
+      "title": "WhenNetworkAbnormal",
+      "type": "string"
+    },
+    "WhenNetworkError": {
+      "enum": [
+        "restart"
+      ],
+      "title": "WhenNetworkError",
+      "type": "string"
+    },
     "WhenTaskQueueEmpty": {
       "enum": [
         "goto_main",
@@ -3488,50 +5614,83 @@
       "properties": {
         "enable_switch_pass": {
           "default": false,
-          "description": "爬塔战斗前是否切换到下方指定御魂分组",
-          "title": "切换御魂",
+          "title": "Enable Switch Pass",
           "type": "boolean"
         },
         "pass_group_team": {
           "default": "-1,-1",
-          "description": "格式：预设组,队伍。例如\"1,2\"表示第一预设组第二个队伍，使用英文逗号",
-          "title": "御魂分组",
+          "description": "pass_group_team_help",
+          "title": "Pass Group Team",
           "type": "string"
         },
         "enable_switch_pass_by_name": {
           "default": false,
-          "description": "是否通过OCR识别御魂分组名称来切换",
-          "title": "按名称切换",
+          "title": "Enable Switch Pass By Name",
           "type": "boolean"
         },
         "pass_group_team_name": {
           "default": "",
-          "description": "OCR方式使用的目标分组名称，留空则不切换",
-          "title": "分组名称",
+          "title": "Pass Group Team Name",
+          "type": "string"
+        },
+        "enable_switch_ap": {
+          "default": false,
+          "title": "Enable Switch Ap",
+          "type": "boolean"
+        },
+        "ap_group_team": {
+          "default": "-1,-1",
+          "title": "Ap Group Team",
+          "type": "string"
+        },
+        "enable_switch_ap_by_name": {
+          "default": false,
+          "title": "Enable Switch Ap By Name",
+          "type": "boolean"
+        },
+        "ap_group_team_name": {
+          "default": "",
+          "title": "Ap Group Team Name",
           "type": "string"
         },
         "enable_switch_boss": {
           "default": false,
-          "description": "Boss战战斗前是否切换到下方指定御魂分组",
-          "title": "Boss战切换御魂",
+          "title": "Enable Switch Boss",
           "type": "boolean"
         },
         "boss_group_team": {
           "default": "-1,-1",
-          "description": "格式：预设组,队伍。例如\"1,2\"表示第一预设组第二个队伍，使用英文逗号",
-          "title": "Boss战御魂分组",
+          "title": "Boss Group Team",
           "type": "string"
         },
         "enable_switch_boss_by_name": {
           "default": false,
-          "description": "是否通过OCR识别御魂分组名称来切换",
-          "title": "Boss战按名称切换",
+          "title": "Enable Switch Boss By Name",
           "type": "boolean"
         },
         "boss_group_team_name": {
           "default": "",
-          "description": "OCR方式使用的目标分组名称，留空则不切换",
-          "title": "Boss战分组名称",
+          "title": "Boss Group Team Name",
+          "type": "string"
+        },
+        "enable_switch_ap100": {
+          "default": false,
+          "title": "Enable Switch Ap100",
+          "type": "boolean"
+        },
+        "ap100_group_team": {
+          "default": "-1,-1",
+          "title": "Ap100 Group Team",
+          "type": "string"
+        },
+        "enable_switch_ap100_by_name": {
+          "default": false,
+          "title": "Enable Switch Ap100 By Name",
+          "type": "boolean"
+        },
+        "ap100_group_team_name": {
+          "default": "",
+          "title": "Ap100 Group Team Name",
           "type": "string"
         }
       },
@@ -3548,46 +5707,6 @@
       ],
       "title": "UserStatus",
       "type": "string"
-    },
-    "tasks__Component__GeneralInvite__config_invite__InviteConfig": {
-      "properties": {
-        "invite_number": {
-          "$ref": "#/$defs/InviteNumber",
-          "default": "one",
-          "description": "invite_number_help"
-        },
-        "friend_1": {
-          "default": "",
-          "description": "friend_name_help",
-          "title": "Friend 1",
-          "type": "string"
-        },
-        "friend_2": {
-          "default": "",
-          "description": "friend_2_name_help",
-          "title": "Friend 2",
-          "type": "string"
-        },
-        "find_mode": {
-          "$ref": "#/$defs/FindMode",
-          "default": "auto_find",
-          "description": "find_mode_help"
-        },
-        "wait_time": {
-          "default": "00:02:00",
-          "description": "wait_time_help",
-          "title": "Wait Time",
-          "type": "time"
-        },
-        "default_invite": {
-          "default": true,
-          "description": "default_invite_help",
-          "title": "Default Invite",
-          "type": "boolean"
-        }
-      },
-      "title": "InviteConfig",
-      "type": "object"
     },
     "tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig": {
       "properties": {
@@ -3764,33 +5883,11 @@
       "enum": [
         "leader",
         "member",
-        "alone"
+        "alone",
+        "wild"
       ],
       "title": "UserStatus",
       "type": "string"
-    },
-    "tasks__Exploration__config__InviteConfig": {
-      "properties": {
-        "friend_1": {
-          "default": "",
-          "description": "friend_name_help",
-          "title": "Friend 1",
-          "type": "string"
-        },
-        "find_mode": {
-          "$ref": "#/$defs/FindMode",
-          "default": "auto_find",
-          "description": "find_mode_help"
-        },
-        "wait_time": {
-          "default": "00:02:00",
-          "description": "wait_time_help",
-          "title": "Wait Time",
-          "type": "time"
-        }
-      },
-      "title": "InviteConfig",
-      "type": "object"
     },
     "tasks__Exploration__config__UserStatus": {
       "enum": [
@@ -3815,7 +5912,8 @@
       "enum": [
         "leader",
         "member",
-        "alone"
+        "alone",
+        "wild"
       ],
       "title": "UserStatus",
       "type": "string"
@@ -3841,8 +5939,7 @@
     "tasks__Hyakkiyakou__config__ScreenshotMethod": {
       "enum": [
         "window_background",
-        "nemu_ipc",
-        "uiautomator2"
+        "nemu_ipc"
       ],
       "title": "ScreenshotMethod",
       "type": "string"
@@ -3986,6 +6083,16 @@
       "type": "object"
     },
     "tasks__Orochi__config__UserStatus": {
+      "enum": [
+        "leader",
+        "member",
+        "alone",
+        "wild"
+      ],
+      "title": "UserStatus",
+      "type": "string"
+    },
+    "tasks__OtherWorldTwilight__config__UserStatus": {
       "enum": [
         "leader",
         "member",
@@ -4161,6 +6268,62 @@
       "title": "Scheduler",
       "type": "object"
     },
+    "tasks__TalismanPass__config__Scheduler": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "next_run": {
+          "default": "2023-01-01T00:00:00",
+          "description": "next_run_help",
+          "title": "Next Run",
+          "type": "date_time"
+        },
+        "priority": {
+          "default": 5,
+          "description": "priority_help",
+          "title": "Priority",
+          "type": "integer"
+        },
+        "success_interval": {
+          "default": "PT6H",
+          "description": "success_interval_help",
+          "title": "Success Interval",
+          "type": "time_delta"
+        },
+        "failure_interval": {
+          "default": "PT6H",
+          "description": "failure_interval_help",
+          "title": "Failure Interval",
+          "type": "time_delta"
+        },
+        "server_update": {
+          "default": "09:00:00",
+          "description": "server_update_help",
+          "title": "Server Update",
+          "type": "time"
+        },
+        "delay_date": {
+          "default": 1,
+          "description": "delay_date_help",
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Delay Date",
+          "type": "integer"
+        },
+        "float_time": {
+          "default": "00:00:00",
+          "description": "float_time_help",
+          "title": "Float Time",
+          "type": "time"
+        }
+      },
+      "title": "Scheduler",
+      "type": "object"
+    },
     "tasks__WeeklyTrifles__config__Scheduler": {
       "properties": {
         "enable": {
@@ -4241,6 +6404,15 @@
     "area_boss": {
       "$ref": "#/$defs/AreaBoss"
     },
+    "experience_youkai": {
+      "$ref": "#/$defs/ExperienceYoukai"
+    },
+    "gold_youkai": {
+      "$ref": "#/$defs/GoldYoukai"
+    },
+    "nian": {
+      "$ref": "#/$defs/Nian"
+    },
     "realm_raid": {
       "$ref": "#/$defs/RealmRaid"
     },
@@ -4256,11 +6428,38 @@
     "demon_encounter": {
       "$ref": "#/$defs/DemonEncounter"
     },
+    "daily_trifles": {
+      "$ref": "#/$defs/DailyTrifles"
+    },
+    "talisman_pass": {
+      "$ref": "#/$defs/TalismanPass"
+    },
+    "pets": {
+      "$ref": "#/$defs/Pets"
+    },
+    "souls_tidy": {
+      "$ref": "#/$defs/SoulsTidy"
+    },
+    "delegation": {
+      "$ref": "#/$defs/Delegation"
+    },
     "exploration": {
       "$ref": "#/$defs/Exploration"
     },
+    "wanted_quests": {
+      "$ref": "#/$defs/WantedQuests"
+    },
+    "tako": {
+      "$ref": "#/$defs/Tako"
+    },
+    "auto_checkin_big_god": {
+      "$ref": "#/$defs/AutoCheckinBigGod"
+    },
     "orochi": {
       "$ref": "#/$defs/Orochi"
+    },
+    "orochi_moans": {
+      "$ref": "#/$defs/OrochiMoans"
     },
     "sougenbi": {
       "$ref": "#/$defs/Sougenbi"
@@ -4274,17 +6473,35 @@
     "six_realms": {
       "$ref": "#/$defs/SixRealms"
     },
+    "other_world_twilight": {
+      "$ref": "#/$defs/OtherWorldTwilight"
+    },
     "activity_shikigami": {
       "$ref": "#/$defs/ActivityShikigami"
     },
     "meta_demon": {
       "$ref": "#/$defs/MetaDemon"
     },
+    "frog_boss": {
+      "$ref": "#/$defs/FrogBoss"
+    },
+    "float_parade": {
+      "$ref": "#/$defs/FloatParade"
+    },
+    "quiz": {
+      "$ref": "#/$defs/Quiz"
+    },
+    "kitty_shop": {
+      "$ref": "#/$defs/KittyShop"
+    },
     "dye_trials": {
       "$ref": "#/$defs/DyeTrials"
     },
-    "gua_gua_art_room": {
-      "$ref": "#/$defs/GuaGuaArtRoom"
+    "gugu_art_studio": {
+      "$ref": "#/$defs/GuguArtStudio"
+    },
+    "abyss_illusion": {
+      "$ref": "#/$defs/AbyssIllusion"
     },
     "bondling_fairyland": {
       "$ref": "#/$defs/BondlingFairyland"
@@ -4301,6 +6518,15 @@
     "hero_test": {
       "$ref": "#/$defs/HeroTest"
     },
+    "find_jade": {
+      "$ref": "#/$defs/FindJade"
+    },
+    "memory_scrolls": {
+      "$ref": "#/$defs/MemoryScrolls"
+    },
+    "true_orochi": {
+      "$ref": "#/$defs/TrueOrochi"
+    },
     "rich_man": {
       "$ref": "#/$defs/RichMan"
     },
@@ -4309,6 +6535,15 @@
     },
     "weekly_trifles": {
       "$ref": "#/$defs/WeeklyTrifles"
+    },
+    "mystery_shop": {
+      "$ref": "#/$defs/MysteryShop"
+    },
+    "duel": {
+      "$ref": "#/$defs/Duel"
+    },
+    "collective_missions": {
+      "$ref": "#/$defs/CollectiveMissions"
     },
     "hunt": {
       "$ref": "#/$defs/Hunt"

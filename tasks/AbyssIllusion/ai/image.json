@@ -1,0 +1,47 @@
+[
+  {
+    "itemName": "main_goto_act",
+    "imageName": "ai_main_goto_act.png",
+    "roiFront": "1180,300,60,64",
+    "roiBack": "1160,134,100,393",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "庭院右侧进入狭间幻境活动入口"
+  },
+  {
+    "itemName": "check_act_main",
+    "imageName": "ai_check_act_main.png",
+    "roiFront": "60,15,170,50",
+    "roiBack": "50,10,190,60",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "活动主界面检测"
+  },
+  {
+    "itemName": "to_abyss_illusion",
+    "imageName": "ai_to_abyss_illusion.png",
+    "roiFront": "37,572,106,119",
+    "roiBack": "20,550,140,150",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "活动主界面狭间幻境入口按钮"
+  },
+  {
+    "itemName": "check_abyss_illusion_main",
+    "imageName": "ai_check_abyss_illusion_main.png",
+    "roiFront": "70,15,220,50",
+    "roiBack": "60,10,240,60",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "狭间幻境挑战界面检测"
+  },
+  {
+    "itemName": "challenge",
+    "imageName": "ai_challenge.png",
+    "roiFront": "1130,569,73,64",
+    "roiBack": "1120,559,93,84",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "狭间幻境挑战按钮"
+  }
+]

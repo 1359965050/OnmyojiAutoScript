@@ -7,7 +7,7 @@ import random
 import re
 from datetime import datetime, time
 from module.atom.click import RuleClick
-from tasks.Component.GeneralBattle.general_battle import GeneralBattle
+from tasks.Component.GeneralBattle.general_battle import ExitMatcher, GeneralBattle
 from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_area_boss, page_shikigami_records, page_main
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
@@ -20,6 +20,9 @@ from module.atom.image import RuleImage
 
 class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
 
+    def _exit_matcher(self) -> ExitMatcher:
+        return self.I_AB_CLOSE_RED
+
     def run(self) -> bool:
         """
         运行脚本
@@ -31,18 +34,15 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         con = self.config.area_boss.boss
 
         if self.config.area_boss.switch_soul.enable:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul(self.config.area_boss.switch_soul.switch_group_team)
 
         if self.config.area_boss.switch_soul.enable_switch_by_name:
-            self.ui_get_current_page()
-            self.ui_goto(page_shikigami_records)
+            self.goto_page(page_shikigami_records)
             self.run_switch_soul_by_name(self.config.area_boss.switch_soul.group_name,
                                          self.config.area_boss.switch_soul.team_name)
 
-        self.ui_get_current_page()
-        self.ui_goto(page_area_boss)
+        self.goto_page(page_area_boss)
 
         # 已挑战鬼王数量
         boss_fought = 0
@@ -58,14 +58,14 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             self.switch_to_famous()
 
         if con.boss_number - boss_fought == 3:
-            self.boss_fight(self.I_BATTLE_1, ultra=True)
-            self.boss_fight(self.I_BATTLE_2, ultra=True)
-            self.boss_fight(self.I_BATTLE_3, ultra=True)
+            self.boss_fight(self.I_BATTLE_1)
+            self.boss_fight(self.I_BATTLE_2)
+            self.boss_fight(self.I_BATTLE_3)
         elif con.boss_number - boss_fought == 2:
-            self.boss_fight(self.I_BATTLE_1, ultra=True)
-            self.boss_fight(self.I_BATTLE_2, ultra=True)
+            self.boss_fight(self.I_BATTLE_1)
+            self.boss_fight(self.I_BATTLE_2)
         elif con.boss_number - boss_fought == 1:
-            self.boss_fight(self.I_BATTLE_1, ultra=True)
+            self.boss_fight(self.I_BATTLE_1)
         # 退出
         self.goto_page(page_main)
         self.set_next_run(task='AreaBoss', success=True, finish=False)
@@ -145,22 +145,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             return True
 
         if ultra:
-            # 判断是否能切换到极地鬼
-            if not self.get_difficulty():
-                # 如何可以切换，直接切换
+            if not self.get_difficulty():  # 在普界面
+                # 出现了极, 则直接切换到极地鬼
                 if self.appear(self.I_AB_DIFFICULTY_NORMAL):
                     self.switch_difficulty(True)
-                elif self.config.area_boss.boss.Attack_60:
+                elif self.config.area_boss.boss.Attack_60:  # 没有出现极则一次没打过, 拉到60级再打
                     self.switch_to_level_60()
-                    if not self.start_fight():
+                    if not self.start_fight():  # 60级没打过退出吧
                         logger.warning("you are so weakness!")
                         self.wait_until_appear(self.I_AB_CLOSE_RED)
                         self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                         return False
-                else:
+                    self.switch_difficulty(True)  # 打过了切换到极
+                else:  # 普通地鬼且没有开启打60级
                     self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                     return False
-                # 切换到 极地鬼
 
             # 调整悬赏层数
             match reward_floor:
@@ -275,10 +274,9 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
                 return self.boss_fight(PHOTO, True, fileter_open=False)
             self.ui_click_until_disappear(self.I_AB_CLOSE_RED)
         # 倒数一和二
-        for i in range(random.randint(1, 3)):
-            self.swipe(self.S_AB_FILTER_UP)
         for PHOTO in BOSS_REWARD_PHOTO2:
             self.open_filter()
+            self.swipe(self.S_AB_FILTER_UP)
             name = self.get_bossName(PHOTO)
             if self.check_common_chars(str(name), boss_name):
                 return self.boss_fight(PHOTO, True, fileter_open=False)
