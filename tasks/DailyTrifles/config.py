@@ -26,6 +26,12 @@ class PetsConfig(ConfigBase):
     team_name: str = Field(default='')
 
 
+class SimpleTidy(BaseModel):
+    # 简易整理：贪吃鬼和奉纳
+    enable_greed: bool = Field(default=True, description="是否启用贪吃鬼")
+    enable_maneki: bool = Field(default=True, description="是否启用奉纳")
+
+
 class DoneRecord(ConfigBase):
     courtyard_affairs_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
     pickup_email_dt: DateTime = Field(default=DateTime.fromisoformat("2023-01-01 00:00:00"))
@@ -54,6 +60,7 @@ class DailyTrifles(ConfigBase):
     scheduler: Scheduler = Field(default_factory=Scheduler)
     trifles_config: DailyTriflesConfig = Field(default_factory=DailyTriflesConfig)
     pets_config: PetsConfig = Field(default_factory=PetsConfig)
+    simple_tidy: SimpleTidy = Field(default_factory=SimpleTidy)
     done_record: DoneRecord = Field(default_factory=DoneRecord)
 
     hide_fields = dynamic_hide('done_record')

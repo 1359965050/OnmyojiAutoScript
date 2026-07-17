@@ -100,8 +100,13 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         ryou_toppa_success_penetration = False
         ryou_toppa_admin_flag = False
         # 点击突破
+        confirm_timer = Timer(15)
+        confirm_timer.start()
         while 1:
             self.screenshot()
+            if confirm_timer.reached():
+                logger.warning("Confirm RyouToppa state timeout, exit loop")
+                break
             if self.appear_then_click(RealmRaidAssets.I_REALM_RAID, interval=1):
                 continue
             if self.appear(self.I_REAL_RAID_REFRESH, threshold=0.8):
@@ -120,6 +125,10 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
             # 出现晴明说明寮突未开
             elif self.appear(self.I_NO_SELECT_RYOU, threshold=0.8):
                 ryou_toppa_start_flag = False
+                break
+            # 出现突破记录图标，说明寮突已开
+            elif self.appear(self.I_TOPPA_RECORD, threshold=0.8):
+                ryou_toppa_start_flag = True
                 break
             # 出现寮奖励， 说明寮突已开
             elif self.appear(self.I_RYOU_REWARD, threshold=0.8) or self.appear(self.I_RYOU_REWARD_90, threshold=0.8):

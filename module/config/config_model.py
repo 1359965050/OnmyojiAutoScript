@@ -33,7 +33,6 @@ from tasks.KekkaiActivation.config import KekkaiActivation
 from tasks.DemonEncounter.config import DemonEncounter
 from tasks.DailyTrifles.config import DailyTrifles
 from tasks.TalismanPass.config import TalismanPass
-from tasks.Pets.config import Pets
 from tasks.SoulsTidy.config import SoulsTidy
 from tasks.Delegation.config import Delegation
 from tasks.WantedQuests.config import WantedQuests
@@ -103,7 +102,6 @@ class ConfigModel(ConfigBase):
     demon_encounter: DemonEncounter = Field(default_factory=DemonEncounter)
     daily_trifles: DailyTrifles = Field(default_factory=DailyTrifles)
     talisman_pass: TalismanPass = Field(default_factory=TalismanPass)
-    pets: Pets = Field(default_factory=Pets)
     souls_tidy: SoulsTidy = Field(default_factory=SoulsTidy)
     delegation: Delegation = Field(default_factory=Delegation)
     exploration: Exploration = Field(default_factory=Exploration)
@@ -172,22 +170,7 @@ class ConfigModel(ConfigBase):
             return
         data = self.read_json(config_name)
         data["config_name"] = config_name
-        # 兼容迁移：将旧 pets.pets_config 迁移到 daily_trifles.pets_config
-        self._migrate_pets_config(data)
         super().__init__(**data)
-
-    @staticmethod
-    def _migrate_pets_config(data: dict) -> None:
-        """将旧 pets.pets_config 迁移到 daily_trifles.pets_config"""
-        old_pets_config = data.get('pets', {}).get('pets_config')
-        if old_pets_config is None:
-            return
-        daily_trifles = data.setdefault('daily_trifles', {})
-        if daily_trifles.get('pets_config') is not None:
-            return
-        daily_trifles['pets_config'] = old_pets_config.copy()
-        # 可选：删除旧配置，避免重复
-        data['pets'].pop('pets_config', None)
 
     def __setattr__(self, key, value):
         """

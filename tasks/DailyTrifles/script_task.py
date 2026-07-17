@@ -32,6 +32,7 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets, PetsAssets):
     def run(self):
         con = self.config.daily_trifles.trifles_config
         pets_con = self.config.daily_trifles.pets_config
+        simple_tidy_con = self.config.daily_trifles.simple_tidy
         # 每日召唤
         if con.one_summon:
             self.run_one_summon()
@@ -43,6 +44,9 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets, PetsAssets):
         # 御魂十层（与宠物喂养解耦，不再经过宠物屋）
         if pets_con.enable_orochi_ten_once:
             self.run_orochi_ten_once()
+        # 简易整理
+        if simple_tidy_con.enable_greed or simple_tidy_con.enable_maneki:
+            self.run_simple_tidy()
         if con.pickup_email:
             self.run_pickup_email()
         # 吉闻
@@ -54,6 +58,153 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets, PetsAssets):
         self.config.save()
         self.plan_next_dt()
         raise TaskEnd('DailyTrifles')
+
+    def run_simple_tidy(self):
+        """简易整理：贪吃鬼 + 奉纳"""
+        logger.hr('Simple tidy', 2)
+        self.goto_page(page_shikigami_records)
+        self.goto_souls()
+        self.greed_maneki()
+        self.back_records()
+        self.goto_page(page_main)
+
+    def goto_souls(self):
+        """进入到御魂的主界面"""
+        while 1:
+            self.screenshot()
+            if self.appear(self.I_ST_GREED) and self.appear(self.I_ST_TIDY):
+                break
+            if self.appear_then_click(self.I_ST_REPLACE, interval=1):
+                continue
+            if self.appear_then_click(self.I_ST_SOULS, interval=1):
+                continue
+            if self.appear_then_click(self.I_ST_SOULS_CLOSE, interval=1):
+                continue
+            if self.click(self.C_ST_DETAIL, interval=2):
+                continue
+        self.ocr_appear_click(self.O_ST_OVERFLOW)
+        logger.info('Enter souls page')
+
+    def back_records(self):
+        """退回到式神录"""
+        self.ui_click(self.I_UI_BACK_YELLOW, self.I_CHECK_RECORDS)
+
+    def greed_maneki(self):
+        """贪吃鬼和招财猫"""
+        simple_tidy_con = self.config.daily_trifles.simple_tidy
+        # 先是贪吃鬼
+        if simple_tidy_con.enable_greed:
+            logger.hr('Greed Ghost')
+            self.ui_click(self.I_ST_GREED, self.I_ST_GREED_HABIT)
+            self.ui_click(self.I_ST_GREED_HABIT, self.I_ST_FEED_NOW)
+            logger.info('Feed greed ghost')
+            feed_count = 0
+            while 1:
+                self.screenshot()
+                if self.appear(self.I_ST_UNSELECTED):
+                    self.ui_click_until_disappear(self.I_ST_UNSELECTED)
+                    continue
+                if self.appear_then_click(self.I_UI_CONFIRM, interval=0.5):
+                    continue
+                if feed_count >= 3:
+                    break
+                if self.appear_then_click(self.I_ST_FEED_NOW, interval=3.5):
+                    feed_count += 1
+                    continue
+            logger.info('Feed greed ghost done')
+        # 关闭贪吃鬼, 进入奉纳
+        while 1:
+            self.screenshot()
+            if self.appear(self.I_ST_CAT):
+                break
+            if self.appear(self.I_ST_UNSELECTED):
+                self.ui_click_until_disappear(self.I_ST_UNSELECTED)
+                continue
+            if self.appear_then_click(self.I_UI_CONFIRM, interval=0.5):
+                continue
+            if self.appear_then_click(self.I_ST_GREED_CLOSE, interval=0.7):
+                continue
+            if self.appear_then_click(self.I_ST_BONGNA, interval=1, threshold=0.6):
+                continue
+        if simple_tidy_con.enable_maneki:
+            logger.hr('Enter bongna')
+            # 确保已弃置界面
+            while 1:
+                self.screenshot()
+                if self.appear(self.I_ST_ABANDONED_SELECTED):
+                    break
+                if self.appear(self.I_UI_BACK_RED):
+                    self.click(self.I_UI_BACK_RED, interval=0.8)
+                    continue
+                self.click(self.I_ST_ABANDONED_SELECTED, interval=1.5)
+            # 确保是按照等级来排序的
+            while 1:
+                self.screenshot()
+                if self.appear(self.I_UI_BACK_RED):
+                    self.click(self.I_UI_BACK_RED, interval=0.8)
+                    continue
+                if self.ocr_appear(self.O_ST_SORT_LEVEL_1):
+                    break
+                if self.ocr_appear_click(self.O_ST_SORT_LEVEL_2, interval=0.6):
+                    continue
+                if self.ocr_appear_click(self.O_ST_SORT_TIME, interval=2):
+                    continue
+                if self.ocr_appear_click(self.O_ST_SORT_TYPE, interval=2):
+                    continue
+                if self.ocr_appear_click(self.O_ST_SORT_LOCATION, interval=2):
+                    continue
+            logger.info('Sort by level')
+            # 开始奉纳
+            while 1:
+                if self.wait_until_appear(self.I_ST_SOUL_STACK, wait_time=2):
+                    logger.info('Soul stack')
+                else:
+                    self.wait_until_appear(self.I_ST_LEVEL_0, wait_time=2)
+                    self.screenshot()
+                    if not self.appear(self.I_ST_LEVEL_0):
+                        logger.info("First Orichi isn't Level 0, quit")
+                        break
+                    firvel = self.O_ST_FIRSET_LEVEL.ocr(self.device.image)
+                    if firvel is None or firvel == '':
+                        logger.info('ocr result is Null')
+                        continue
+                    if firvel != '古':
+                        logger.info('No zero level, bongna done')
+                        break
+
+                # 长按
+                self.click(self.L_ONE, interval=2.5)
+                self.screenshot()
+                gold_amount = self.O_ST_GOLD.ocr(self.device.image)
+                if not isinstance(gold_amount, int):
+                    logger.warning('Gold amount not int, skip')
+                    continue
+                if gold_amount == 0:
+                    continue
+
+                # 点击奉纳收取奖励
+                if not self.appear(self.I_ST_DONATE):
+                    logger.warning('Donate button not appear, skip')
+                    continue
+                # 点击奉纳 及收取奖励
+                while 1:
+                    self.screenshot()
+                    if self.appear_then_click(self.I_UI_CONFIRM, interval=0.5):
+                        continue
+                    if self.ui_reward_appear_click():
+                        continue
+                    if self.appear(self.I_ST_GOD_PRESENT):
+                        logger.info('God present appear')
+                        self.click(self.C_ST_GOD_PRSENT, interval=2)
+                        continue
+                    if self.appear_then_click(self.I_ST_DONATE, interval=5.5):
+                        self.wait_until_appear(self.I_ST_GOLD, True, wait_time=5)
+                        continue
+                    if not self.appear(self.I_ST_GOLD):
+                        break
+                logger.info('Donate one')
+
+        logger.info('Bongna done')
 
     def run_pets_feed(self):
         """宠物喂养"""

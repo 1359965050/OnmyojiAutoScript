@@ -1015,10 +1015,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>御魂整理</translation>
         </message>
         <message>
-            <source>Pets</source>
-            <translation>小猫咪</translation>
-        </message>
-        <message>
             <source>Delegation</source>
             <translation>式神委派</translation>
         </message>
@@ -1797,15 +1793,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>PetsConfig</source>
-            <translation>宠物</translation>
-        </message>
-        <message>
-            <source>Pets Happy</source>
-            <translation>其乐融融</translation>
-        </message>
-        <message>
-            <source>Pets Feast</source>
-            <translation>饕餮大餐</translation>
+            <translation>宠物喂养配置</translation>
         </message>
         <message>
             <source>GoldYoukaiConfig</source>
@@ -1889,7 +1877,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>SimpleTidy</source>
-            <translation>简易御魂清理</translation>
+            <translation>简易整理</translation>
         </message>
         <message>
             <source>Greed Maneki</source>

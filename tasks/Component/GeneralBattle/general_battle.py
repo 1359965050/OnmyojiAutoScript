@@ -529,7 +529,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             return
 
         logger.info("Timed inspection hit: recover battle auto mode")
-        self.ui_click(hand_marker, auto_marker, interval=0.8)
+        self.ui_click(hand_marker, auto_marker, interval=2.0)
 
     def _tick_long_battle(self, context: BattleContext) -> None:
         """按固定周期刷新长战斗卡死保护标记。
