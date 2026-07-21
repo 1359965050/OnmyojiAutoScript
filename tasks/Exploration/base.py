@@ -90,6 +90,8 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
 
     # 打开指定的章节：
     def open_expect_level(self):
+        # 新版大世界界面需要先切换到右侧面板的“主线”标签
+        self.appear_then_click(self.I_E_MAIN_LINE, interval=1)
         swipeCount = 0
         config_exploration_level = self.config.exploration.exploration_config.exploration_level
         while True:
