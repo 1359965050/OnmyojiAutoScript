@@ -1,0 +1,11 @@
+[
+  {
+    "itemName": "fp_claim",
+    "roiFront": "850,340,150,310",
+    "roiBack": "850,340,150,310",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "领取",
+    "description": "任务列表中的领取按钮"
+  }
+]
