@@ -25,6 +25,8 @@ OASX-master/
 
 # OnmyojiAutoScript
 *.user
+schema_debug.json
+git_commit.diff
 !module/gui/FluentUI/fluentuiplugin.dll
 build-fluentui-Desktop_*/
 module/config/argument/setting.json

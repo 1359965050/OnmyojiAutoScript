@@ -1,25 +1,15 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-import re
-from copy import deepcopy
-
-from cached_property import cached_property
-
-from deploy.utils import DEPLOY_TEMPLATE, poor_yaml_read, poor_yaml_write
 from module.base.timer import timer
-from module.config.utils import *
+from module.config.utils import read_file, write_file, filepath_config
 
 class ConfigUpdater:
-
-    @cached_property
-    def args(self):
-        return read_file(filepath_args(filename='args'))
 
     @timer
     def update_template(self, template_name: str = "template") -> None:
         """
-        更新模板 。从args.json更新
+        更新模板
         :param template_name:
         :return:
         """

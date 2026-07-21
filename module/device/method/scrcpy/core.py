@@ -154,20 +154,20 @@ class ScrcpyCore(Connection):
         if self._scrcpy_server_stream is not None:
             try:
                 self._scrcpy_server_stream.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Error closing scrcpy server stream: {e}')
 
         if self._scrcpy_control_socket is not None:
             try:
                 self._scrcpy_control_socket.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Error closing scrcpy control socket: {e}')
 
         if self._scrcpy_video_socket is not None:
             try:
                 self._scrcpy_video_socket.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Error closing scrcpy video socket: {e}')
 
         logger.info('Scrcpy server stopped')
 
@@ -175,8 +175,8 @@ class ScrcpyCore(Connection):
         if self._scrcpy_server_stream is not None:
             try:
                 return self._scrcpy_server_stream.conn.recv(4096)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Error receiving from scrcpy server stream: {e}')
 
     def _scrcpy_stream_loop(self) -> None:
         """

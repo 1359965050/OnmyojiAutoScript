@@ -28,6 +28,11 @@ except ImportError:
         "Run: ./toolkit/python.exe -m pip install oas-checkin-biggod"
     )
 
+try:
+    import frida
+except ImportError:
+    frida = None
+
 urllib3.disable_warnings()
 os.environ['MSYS_NO_PATHCONV'] = '1'
 
@@ -630,6 +635,56 @@ class ScriptTask(BaseTask):
             except:
                 pass
 
+    def _get_frida_device(self, timeout=5):
+        """获取 frida 设备对象，优先匹配已配置的 adb serial。"""
+        if frida is None:
+            raise RuntimeError('frida Python module is not installed')
+        manager = frida.get_device_manager()
+        serial = getattr(self, '_adb_serial', None)
+        if serial:
+            for device in manager.enumerate_devices():
+                if device.id == serial:
+                    return device
+            logger.warning(f'Frida 设备列表中未找到 {serial}，尝试使用默认 USB 设备')
+        return frida.get_usb_device(timeout=timeout)
+
+    def _run_frida_secure(self, pid, script_content, timeout=15):
+        """使用 frida Python API 执行脚本，通过 send() 接收结果。
+
+        与 REPL/console.log 方式不同，数据不经过 stdout 或临时脚本文件，
+        可避免完整 Token 在不可控通道中回显或残留。
+        """
+        if frida is None:
+            raise RuntimeError('frida Python module is not installed')
+        device = self._get_frida_device()
+        session = device.attach(pid)
+        try:
+            result = {}
+            finished = threading.Event()
+
+            def on_message(message, data):
+                if message.get('type') == 'send':
+                    payload = message.get('payload')
+                    if isinstance(payload, dict):
+                        result.update(payload)
+                    finished.set()
+                elif message.get('type') == 'error':
+                    logger.warning(f'Frida 脚本错误: {message.get("description")}')
+                    finished.set()
+
+            script = session.create_script(script_content)
+            script.on('message', on_message)
+            script.load()
+            if not finished.wait(timeout=timeout):
+                logger.warning(f'Frida 安全脚本执行超时 ({timeout}s)')
+            script.unload()
+            return result
+        finally:
+            try:
+                session.detach()
+            except Exception:
+                pass
+
     def _try_extract_token(self, pid):
         """尝试多次从内存提取 Token（GL_UID/GL_TOKEN/GL_DEVICEID），返回 dict 或 None。"""
         for attempt in range(1, 4):
@@ -646,46 +701,48 @@ class ScriptTask(BaseTask):
         return None
 
     def _extract_token(self, pid):
-        """通过 Frida 从内存中提取 GL 认证信息（UID/Token/DeviceId/Source）"""
-        script = """
+        """通过 Frida 从内存中提取 GL 认证信息（UID/Token/DeviceId/Source）。
+
+        使用 frida Python API 的 send() 通道回传数据，避免完整 Token 经过
+        stdout 或临时脚本文件，提取完成后立即清理脚本中间变量。
+        """
+        script = r"""
 Java.perform(function() {
+    var result = {};
     try {
         var YXFDeviceInfo = Java.use('com.netease.gl.glbase.build.YXFDeviceInfo');
-        console.log('GL_DEVICEID:' + YXFDeviceInfo.getDeviceId());
+        result.GL_DEVICEID = YXFDeviceInfo.getDeviceId();
     } catch(e) {}
 
+    var found = false;
     Java.choose('com.netease.gl.serviceaccount.proto.auth.GLAuth$Authed', {
         onMatch: function(instance) {
+            if (found) return 'stop';
             var uid = instance.getUid();
             var token = instance.getToken();
             var source = instance.getSource();
             if (uid && token) {
-                console.log('GL_UID:' + uid);
-                console.log('GL_TOKEN:' + token);
-                console.log('GL_SOURCE:' + source);
+                result.GL_UID = uid;
+                result.GL_TOKEN = token;
+                result.GL_SOURCE = source;
+                found = true;
+                return 'stop';
             }
         },
         onComplete: function() {
-            console.log('__DONE__');
+            send(result);
         }
     });
 });
 """
-        output = self._run_frida_script(pid, script, timeout=15)
-        if not output:
-            logger.warning('Frida脚本无输出')
+        try:
+            data = self._run_frida_secure(pid, script, timeout=15)
+        except Exception as e:
+            logger.warning(f'安全提取 Token 失败: {e}')
             return None
 
-        data = {}
-        for line in output.split('\n'):
-            if 'GL_UID:' in line:
-                data['GL_UID'] = line.split('GL_UID:')[1].strip()
-            elif 'GL_TOKEN:' in line and 'GL_TOKEN' not in data:
-                data['GL_TOKEN'] = line.split('GL_TOKEN:')[1].strip()
-            elif 'GL_DEVICEID:' in line:
-                data['GL_DEVICEID'] = line.split('GL_DEVICEID:')[1].strip()
-            elif 'GL_SOURCE:' in line:
-                data['GL_SOURCE'] = line.split('GL_SOURCE:')[1].strip()
+        # 立即清理脚本中间变量，避免完整 Token 在内存中不必要地残留
+        script = ''
 
         if data.get('GL_UID') and data.get('GL_TOKEN'):
             # 版本号通过 ADB 获取

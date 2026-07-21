@@ -179,14 +179,14 @@ def get_serial_pair(serial):
             if 5555 <= port <= 5555 + 32:
                 return f'127.0.0.1:{port}', f'emulator-{port - 1}'
         except (ValueError, IndexError):
-            pass
+            logger.debug(f'Invalid serial format: {serial}')
     if serial.startswith('emulator-'):
         try:
             port = int(serial[9:])
             if 5554 <= port <= 5554 + 32:
                 return f'127.0.0.1:{port + 1}', f'emulator-{port}'
         except (ValueError, IndexError):
-            pass
+            logger.debug(f'Invalid serial format: {serial}')
 
     return None, None
 
@@ -221,7 +221,7 @@ def remove_shell_warning(s):
             try:
                 s = s.split(b'\n', maxsplit=1)[1]
             except IndexError:
-                pass
+                logger.debug('Failed to strip WARNING line from bytes output')
         return s
         # return re.sub(b'^WARNING.+\n', b'', s)
     elif isinstance(s, str):
@@ -229,7 +229,7 @@ def remove_shell_warning(s):
             try:
                 s = s.split('\n', maxsplit=1)[1]
             except IndexError:
-                pass
+                logger.debug('Failed to strip WARNING line from string output')
     return s
 
 

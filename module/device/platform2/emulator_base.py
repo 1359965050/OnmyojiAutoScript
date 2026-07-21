@@ -3,6 +3,7 @@ import typing as t
 from dataclasses import dataclass
 
 from module.device.platform2.utils import cached_property, iter_folder
+from module.logger import logger
 
 
 def abspath(path):
@@ -23,14 +24,14 @@ def get_serial_pair(serial):
             if 5555 <= port <= 5555 + 32:
                 return f'127.0.0.1:{port}', f'emulator-{port - 1}'
         except (ValueError, IndexError):
-            pass
+            logger.debug(f'Invalid serial format: {serial}')
     if serial.startswith('emulator-'):
         try:
             port = int(serial[9:])
             if 5554 <= port <= 5554 + 32:
                 return f'127.0.0.1:{port + 1}', f'emulator-{port}'
         except (ValueError, IndexError):
-            pass
+            logger.debug(f'Invalid serial format: {serial}')
 
     return None, None
 

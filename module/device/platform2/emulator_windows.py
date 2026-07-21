@@ -14,6 +14,7 @@ from module.device.platform2.emulator_base import (
     EmulatorManagerBase,
     remove_duplicated_path)
 from module.device.platform2.utils import cached_property, iter_folder
+from module.logger import logger
 
 
 @dataclass
@@ -35,7 +36,7 @@ def list_reg(reg) -> t.List[RegValue]:
             index += 1
             rows.append(value)
     except OSError:
-        pass
+        logger.debug('Failed to enumerate registry values, end of enumeration')
     return rows
 
 
@@ -51,7 +52,7 @@ def list_key(reg) -> t.List[RegValue]:
             index += 1
             rows.append(value)
     except OSError:
-        pass
+        logger.debug('Failed to enumerate registry keys, end of enumeration')
     return rows
 
 
@@ -251,13 +252,13 @@ class EmulatorManager(EmulatorManagerBase):
                 root = winreg.QueryValueEx(reg, key)[0]
                 return root
         except FileNotFoundError:
-            pass
+            logger.debug(f'Registry not found in HKCU: {path}\\{key}')
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path) as reg:
                 root = winreg.QueryValueEx(reg, key)[0]
                 return root
         except FileNotFoundError:
-            pass
+            logger.debug(f'Registry not found in HKLM: {path}\\{key}')
 
         return None
 

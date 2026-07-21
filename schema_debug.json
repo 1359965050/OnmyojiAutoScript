@@ -2386,7 +2386,7 @@
     "FloatParade": {
       "properties": {
         "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+          "$ref": "#/$defs/tasks__FloatParade__config__Scheduler"
         },
         "float_parade": {
           "$ref": "#/$defs/FloatParadeConfig"
@@ -2397,15 +2397,13 @@
     },
     "FloatParadeConfig": {
       "properties": {
-        "collect_placement_reward": {
-          "default": true,
-          "title": "Collect Placement Reward",
-          "type": "boolean"
+        "level_reward1": {
+          "$ref": "#/$defs/LevelReward",
+          "default": "体力/樱饼"
         },
-        "collect_exp": {
-          "default": true,
-          "title": "Collect Exp",
-          "type": "boolean"
+        "level_reward2": {
+          "$ref": "#/$defs/LevelReward",
+          "default": "蛇皮/青吉鬼"
         }
       },
       "title": "FloatParadeConfig",
@@ -5842,6 +5840,62 @@
       ],
       "title": "UserStatus",
       "type": "string"
+    },
+    "tasks__FloatParade__config__Scheduler": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "next_run": {
+          "default": "2023-01-01T00:00:00",
+          "description": "next_run_help",
+          "title": "Next Run",
+          "type": "date_time"
+        },
+        "priority": {
+          "default": 5,
+          "description": "priority_help",
+          "title": "Priority",
+          "type": "integer"
+        },
+        "success_interval": {
+          "default": "P3D",
+          "description": "success_interval_help",
+          "title": "Success Interval",
+          "type": "time_delta"
+        },
+        "failure_interval": {
+          "default": "P3D",
+          "description": "failure_interval_help",
+          "title": "Failure Interval",
+          "type": "time_delta"
+        },
+        "server_update": {
+          "default": "09:00:00",
+          "description": "server_update_help",
+          "title": "Server Update",
+          "type": "time"
+        },
+        "delay_date": {
+          "default": 1,
+          "description": "delay_date_help",
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Delay Date",
+          "type": "integer"
+        },
+        "float_time": {
+          "default": "00:00:00",
+          "description": "float_time_help",
+          "title": "Float Time",
+          "type": "time"
+        }
+      },
+      "title": "Scheduler",
+      "type": "object"
     },
     "tasks__HeroTest__config__Layer": {
       "enum": [

@@ -3,6 +3,7 @@ import re
 import typing as t
 
 from module.device.platform2.handlers.base import EmulatorHandler
+from module.logger import logger
 
 
 class BlueStacksHandler(EmulatorHandler):
@@ -66,12 +67,12 @@ class BlueStacksHandler(EmulatorHandler):
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt") as reg:
                 folder = winreg.QueryValueEx(reg, 'UserDefinedDir')[0]
         except FileNotFoundError:
-            pass
+            logger.debug(r'Registry not found: HKLM\SOFTWARE\BlueStacks_nxt')
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt_cn") as reg:
                 folder = winreg.QueryValueEx(reg, 'UserDefinedDir')[0]
         except FileNotFoundError:
-            pass
+            logger.debug(r'Registry not found: HKLM\SOFTWARE\BlueStacks_nxt_cn')
         if not folder:
             return
 

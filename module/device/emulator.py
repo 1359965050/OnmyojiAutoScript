@@ -136,7 +136,7 @@ class EmulatorManager(Connection):
                         if cur_serial[1] == serial:
                             emulators.append([emulator, cur_serial[0]])
                 except FileNotFoundError:
-                    pass
+                    logger.debug(f'Emulator file not found: {emulator.name}')
 
             logger.info('Detected emulators:')
             for emulator in emulators:
@@ -163,7 +163,7 @@ class EmulatorManager(Connection):
                         logger.info('Find the only emulator, using it')
                         return emulator, cur_serial[0]
             except FileNotFoundError:
-                pass
+                logger.debug(f'Emulator file not found: {emulator.name}')
             logger.warning('The emulator corresponding to serial is not found, '
                            'please check the setting or use custom command')
             raise RequestHumanTakeover
@@ -253,7 +253,7 @@ class EmulatorManager(Connection):
                     self.sleep(10)
                     return True
             except EmulatorNotRunningError:
-                pass
+                logger.debug(f'Emulator not running yet, retrying adb connect: {serial}')
             self.sleep(5)
         return False
 

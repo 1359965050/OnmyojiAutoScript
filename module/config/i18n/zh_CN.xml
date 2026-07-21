@@ -660,12 +660,12 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>庭院事务</translation>
         </message>
         <message>
-            <source>collect_placement_reward</source>
-            <translation>收取放置奖励</translation>
+            <source>level_reward1</source>
+            <translation>等级奖励类型一</translation>
         </message>
         <message>
-            <source>collect_exp</source>
-            <translation>收取经验</translation>
+            <source>level_reward2</source>
+            <translation>等级奖励类型二</translation>
         </message>
     </context>
     <context>
