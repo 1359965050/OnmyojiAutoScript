@@ -18,6 +18,7 @@ class PackageName(str, Enum):
     NETEASE_QQ = 'com.tencent.tmgp.yys.zqb'
 
 
+
 class ScreenshotMethod(str, Enum):
     AUTO = 'auto'
     ADB = 'ADB'

@@ -161,7 +161,7 @@ class HyakkiyakouAssets:
 	# 回归活动使用 
 	I_FRIEND_REMOTE_1_RECALL = RuleImage(roi_front=(218,123,106,56), roi_back=(199,106,159,91), threshold=0.8, method="Template matching", file="./tasks/Hyakkiyakou/hya/hya_friend_remote_1.png")
 	# 回归活动使用 
-	I_FRIEND_SAME_2_RECALL = RuleImage(roi_front=(138,126,100,60), roi_back=(122,112,133,80), threshold=0.8, method="Template matching", file="./tasks/Hyakkiyakou/hya/hya_friend_same_2.png")
+	I_FRIEND_SAME_2_RECALL = RuleImage(roi_front=(168,126,100,60), roi_back=(107,114,133,80), threshold=0.8, method="Template matching", file="./tasks/Hyakkiyakou/hya/hya_friend_same_2.png")
 	# 回归活动使用 
 	I_FRIEND_REMOTE_2_RECALL = RuleImage(roi_front=(226,122,100,56), roi_back=(208,115,131,81), threshold=0.8, method="Template matching", file="./tasks/Hyakkiyakou/hya/hya_friend_remote_2.png")
 	# 寮 

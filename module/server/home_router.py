@@ -32,7 +32,7 @@ async def home_test():
 #  gcc -Wall -pedantic -shared -fPIC -o group_work.so group_work.c -lwiringPi
 @home_app.get('/home_menu')
 async def home_menu():
-    return {'Home': [], 'Updater': []}
+    return {'Home': [], 'Updater': [], 'Tool': []}
 
 
 @home_app.get('/image_server_info')
@@ -95,15 +95,6 @@ async def execute_update():
     except Exception as e:
         logger.error(e)
     return '手动更新将会立即结束运行中的脚本服务, 最后你还需重启oasx'
-
-
-@home_app.get('/chinese_translate')
-async def get_chinese_translate() -> dict:
-    try:
-        return I18n.load_zh_cn()
-    except Exception as e:
-        logger.error(e)
-    return {}
 
 
 @home_app.put('/chinese_translate')

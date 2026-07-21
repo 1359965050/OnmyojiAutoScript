@@ -1,7 +1,5 @@
 # This Python file uses the following encoding: utf-8
 # copy from alas https://github.com/LmeSzinc/AzurLaneAutoScript
-import subprocess
-
 from deploy.config import DeployConfig
 from deploy.logger import logger
 from deploy.utils import *
@@ -114,13 +112,48 @@ class GitManager(DeployConfig):
             logger.info(f'[ allowed failure ], error: {e}')
             return False
 
+    @staticmethod
+    def _has_conflict_markers(text: str) -> bool:
+        """检查文本中是否包含 Git 冲突标记。"""
+        return any(marker in text for marker in ('<<<<<<<', '=======', '>>>>>>>'))
+
+    def _check_working_tree_conflicts(self) -> list[str]:
+        """
+        扫描工作区中是否存在未解决的 Git 冲突标记。
+
+        Returns:
+            包含冲突标记的文件路径列表。
+        """
+        conflict_files = []
+        for root, _, files in os.walk('.'):
+            # 跳过依赖目录和虚拟环境，避免误报
+            if any(skip in root for skip in ['.git', 'toolkit', 'node_modules', '.venv', '__pycache__']):
+                continue
+            for file in files:
+                if not file.endswith(('.py', '.json', '.xml', '.yaml', '.yml', '.md', '.dart', '.txt')):
+                    continue
+                path = os.path.join(root, file)
+                try:
+                    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+                        if self._has_conflict_markers(f.read()):
+                            conflict_files.append(path)
+                except Exception:
+                    continue
+        return conflict_files
+
     def git_repository_init(
             self, repo, source='origin', branch='master',
-            proxy='', ssl_verify=True, keep_changes=False, mirror=None
+            proxy='', ssl_verify=True, keep_changes=False
     ):
-        if mirror:
-            repo = f"{mirror.rstrip('/')}/{repo}"
-            logger.info(f'Using GitHub mirror: {mirror}')
+        logger.hr('Pre-update Check', 1)
+        conflict_files = self._check_working_tree_conflicts()
+        if conflict_files:
+            logger.error('Unresolved Git conflict markers detected, abort update to prevent syntax errors:')
+            for path in conflict_files:
+                logger.error(f'  {path}')
+            logger.error('Please resolve conflicts manually before updating.')
+            return
+
         logger.hr('Git Init', 1)
         if not self.execute(f'"{self.git}" init', allow_failure=True):
             self.remove('./.git/config')
@@ -164,13 +197,24 @@ class GitManager(DeployConfig):
                 if self.execute(f'"{self.git}" stash pop', allow_failure=True):
                     pass
                 else:
+                    conflict_files = self._check_working_tree_conflicts()
+                    if conflict_files:
+                        logger.error('Stash pop produced conflicts, abort merge and restore stash to protect local changes:')
+                        for path in conflict_files:
+                            logger.error(f'  {path}')
+                        # Abort the in-progress merge to restore a clean working tree
+                        self.execute(f'"{self.git}" merge --abort', allow_failure=True)
+                        self.execute(f'"{self.git}" reset --merge', allow_failure=True)
+                        logger.warning('Please resolve conflicts manually. The local changes are still in the stash.')
+                        return
                     # No local changes to existing files, untracked files not included
                     logger.info('Stash pop failed, there seems to be no local changes, skip instead')
             else:
                 logger.warning('Stash failed due to unresolved merges or conflicts, abort update to preserve local changes')
                 return
         else:
-            logger.info('KeepLocalChanges is disabled, skip reset --hard to protect local modifications')
+            logger.info('KeepLocalChanges is disabled, skip pull to protect local modifications')
+            logger.info('If you want to force update, please resolve local changes manually first')
             return
 
         logger.hr('Show Version', 1)

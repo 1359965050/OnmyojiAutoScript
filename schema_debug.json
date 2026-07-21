@@ -4199,7 +4199,8 @@
         "com.netease.onmyoji.mi",
         "com.netease.onmyoji",
         "com.netease.onmyoji.huawei",
-        "com.netease.onmyoji.bili"
+        "com.netease.onmyoji.bili",
+        "com.tencent.tmgp.yys.zqb"
       ],
       "title": "PackageName",
       "type": "string"
