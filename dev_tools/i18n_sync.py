@@ -3,13 +3,16 @@
 
 Source of truth:
     OASX-master/lib/config/translation/i18n_cn.dart
+    OASX-master/lib/config/translation/i18n_us.dart
 
 Generated files:
     module/config/i18n/zh-CN.json
     assets/i18n/zh-CN.json
+    module/config/i18n/en-US.json
+    assets/i18n/en-US.json
     module/config/i18n/zh_CN.xml
 
-After editing i18n_cn.dart, run:
+After editing i18n_cn.dart or i18n_us.dart, run:
 
     python dev_tools/i18n_sync.py
 """
@@ -29,17 +32,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from i18n_models import (
     parse_i18n_cn,
     parse_i18n_content_constants,
+    parse_i18n_us,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 I18N_CN_DART = PROJECT_ROOT / "OASX-master" / "lib" / "config" / "translation" / "i18n_cn.dart"
+I18N_US_DART = PROJECT_ROOT / "OASX-master" / "lib" / "config" / "translation" / "i18n_us.dart"
 I18N_CONTENT_DART = (
     PROJECT_ROOT / "OASX-master" / "lib" / "config" / "translation" / "i18n_content.dart"
 )
 
 OUTPUT_JSON_BACKEND = PROJECT_ROOT / "module" / "config" / "i18n" / "zh-CN.json"
 OUTPUT_JSON_ASSETS = PROJECT_ROOT / "assets" / "i18n" / "zh-CN.json"
+OUTPUT_US_JSON_BACKEND = PROJECT_ROOT / "module" / "config" / "i18n" / "en-US.json"
+OUTPUT_US_JSON_ASSETS = PROJECT_ROOT / "assets" / "i18n" / "en-US.json"
 OUTPUT_XML = PROJECT_ROOT / "module" / "config" / "i18n" / "zh_CN.xml"
 
 
@@ -108,11 +115,19 @@ def main() -> int:
         for warning in warnings:
             print(f"  {warning}", file=sys.stderr)
 
+    us_merged, us_entries, us_warnings = parse_i18n_us(I18N_US_DART, constants)
+    if us_warnings:
+        print("Warnings from i18n_us.dart:", file=sys.stderr)
+        for warning in us_warnings:
+            print(f"  {warning}", file=sys.stderr)
+
     if args.check:
         changed = False
         for path, content in (
             (OUTPUT_JSON_BACKEND, json.dumps(merged, ensure_ascii=False, indent=2)),
             (OUTPUT_JSON_ASSETS, json.dumps(merged, ensure_ascii=False, indent=2)),
+            (OUTPUT_US_JSON_BACKEND, json.dumps(us_merged, ensure_ascii=False, indent=2)),
+            (OUTPUT_US_JSON_ASSETS, json.dumps(us_merged, ensure_ascii=False, indent=2)),
             (OUTPUT_XML, build_xml(merged, entries)),
         ):
             if not path.exists() or path.read_text(encoding="utf-8").strip() != content.strip():
@@ -122,14 +137,19 @@ def main() -> int:
 
     write_json(OUTPUT_JSON_BACKEND, merged)
     write_json(OUTPUT_JSON_ASSETS, merged)
+    write_json(OUTPUT_US_JSON_BACKEND, us_merged)
+    write_json(OUTPUT_US_JSON_ASSETS, us_merged)
 
     OUTPUT_XML.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_XML.write_text(build_xml(merged, entries), encoding="utf-8")
 
     print(f"Generated {OUTPUT_JSON_BACKEND}")
     print(f"Generated {OUTPUT_JSON_ASSETS}")
+    print(f"Generated {OUTPUT_US_JSON_BACKEND}")
+    print(f"Generated {OUTPUT_US_JSON_ASSETS}")
     print(f"Generated {OUTPUT_XML}")
-    print(f"Total keys: {len(merged)}")
+    print(f"Total zh-CN keys: {len(merged)}")
+    print(f"Total en-US keys: {len(us_merged)}")
     return 0
 
 

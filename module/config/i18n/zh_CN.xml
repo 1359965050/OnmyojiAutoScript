@@ -1039,6 +1039,182 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>石距</translation>
         </message>
         <message>
+            <source>gold_youkai</source>
+            <translation>金币妖怪</translation>
+        </message>
+        <message>
+            <source>experience_youkai</source>
+            <translation>经验妖怪</translation>
+        </message>
+        <message>
+            <source>nian</source>
+            <translation>年兽</translation>
+        </message>
+        <message>
+            <source>true_orochi</source>
+            <translation>真·八岐大蛇</translation>
+        </message>
+        <message>
+            <source>daily_trifles</source>
+            <translation>每日琐事</translation>
+        </message>
+        <message>
+            <source>collective_missions</source>
+            <translation>集体任务</translation>
+        </message>
+        <message>
+            <source>mystery_shop</source>
+            <translation>神秘商店</translation>
+        </message>
+        <message>
+            <source>duel</source>
+            <translation>斗技</translation>
+        </message>
+        <message>
+            <source>area_boss</source>
+            <translation>地域鬼王</translation>
+        </message>
+        <message>
+            <source>realm_raid</source>
+            <translation>个人突破</translation>
+        </message>
+        <message>
+            <source>ryou_toppa</source>
+            <translation>寮突破</translation>
+        </message>
+        <message>
+            <source>kekkai_utilize</source>
+            <translation>结界蹭卡</translation>
+        </message>
+        <message>
+            <source>kekkai_activation</source>
+            <translation>结界挂卡</translation>
+        </message>
+        <message>
+            <source>orochi</source>
+            <translation>八岐大蛇</translation>
+        </message>
+        <message>
+            <source>sougenbi</source>
+            <translation>业原火</translation>
+        </message>
+        <message>
+            <source>fallen_sun</source>
+            <translation>日轮之陨</translation>
+        </message>
+        <message>
+            <source>eternity_sea</source>
+            <translation>永生之海</translation>
+        </message>
+        <message>
+            <source>six_realms</source>
+            <translation>六道之门</translation>
+        </message>
+        <message>
+            <source>other_world_twilight</source>
+            <translation>彼世逢魔</translation>
+        </message>
+        <message>
+            <source>activity_shikigami</source>
+            <translation>当期爬塔</translation>
+        </message>
+        <message>
+            <source>meta_demon</source>
+            <translation>超鬼王</translation>
+        </message>
+        <message>
+            <source>frog_boss</source>
+            <translation>呱太入侵</translation>
+        </message>
+        <message>
+            <source>float_parade</source>
+            <translation>花车巡游</translation>
+        </message>
+        <message>
+            <source>quiz</source>
+            <translation>逢魔密信</translation>
+        </message>
+        <message>
+            <source>kitty_shop</source>
+            <translation>猫咪屋</translation>
+        </message>
+        <message>
+            <source>dye_trials</source>
+            <translation>灵染试炼</translation>
+        </message>
+        <message>
+            <source>gugu_art_studio</source>
+            <translation>呱呱画室</translation>
+        </message>
+        <message>
+            <source>abyss_illusion</source>
+            <translation>狭间幻境</translation>
+        </message>
+        <message>
+            <source>bondling_fairyland</source>
+            <translation>契灵之境</translation>
+        </message>
+        <message>
+            <source>evo_zone</source>
+            <translation>觉醒副本</translation>
+        </message>
+        <message>
+            <source>hero_test</source>
+            <translation>英杰试炼</translation>
+        </message>
+        <message>
+            <source>find_jade</source>
+            <translation>寻玉</translation>
+        </message>
+        <message>
+            <source>memory_scrolls</source>
+            <translation>追忆绘卷</translation>
+        </message>
+        <message>
+            <source>rich_man</source>
+            <translation>大富翁</translation>
+        </message>
+        <message>
+            <source>secret</source>
+            <translation>秘闻副本</translation>
+        </message>
+        <message>
+            <source>weekly_trifles</source>
+            <translation>每周琐事</translation>
+        </message>
+        <message>
+            <source>dokan</source>
+            <translation>道馆</translation>
+        </message>
+        <message>
+            <source>hunt</source>
+            <translation>狩猎战</translation>
+        </message>
+        <message>
+            <source>abyss_shadows</source>
+            <translation>狭间暗域</translation>
+        </message>
+        <message>
+            <source>guild_banquet</source>
+            <translation>寮宴会</translation>
+        </message>
+        <message>
+            <source>demon_retreat</source>
+            <translation>首领退治</translation>
+        </message>
+        <message>
+            <source>guild_activity_monitor</source>
+            <translation>阴阳寮活动监察</translation>
+        </message>
+        <message>
+            <source>hyakkiyakou</source>
+            <translation>百鬼夜行</translation>
+        </message>
+        <message>
+            <source>goryou_realm</source>
+            <translation>御灵之境</translation>
+        </message>
+        <message>
             <source>Device</source>
             <translation>模拟器</translation>
         </message>
@@ -2408,7 +2584,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>delegation</source>
-            <translation>delegation</translation>
+            <translation>式神委派</translation>
         </message>
         <message>
             <source>delegation_config</source>
@@ -2680,7 +2856,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>orochi_moans</source>
-            <translation>巫女大蛇</translation>
+            <translation>御魂悲鸣</translation>
         </message>
         <message>
             <source>pets_config</source>
@@ -2832,7 +3008,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>tako</source>
-            <translation>tako</translation>
+            <translation>石距</translation>
         </message>
         <message>
             <source>tako_config</source>
@@ -2844,7 +3020,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>talisman_pass</source>
-            <translation>talisman_pass</translation>
+            <translation>花合战</translation>
         </message>
         <message>
             <source>target_score</source>
@@ -5472,10 +5648,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>UR</translation>
         </message>
         <message>
-            <source>abyss_shadows</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
             <source>adb</source>
             <translation>adb</translation>
         </message>
@@ -5708,10 +5880,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>切换胧车预设</translation>
         </message>
         <message>
-            <source>demon_retreat</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
             <source>demon_shinkirou_enable</source>
             <translation>切换蜃气楼预设</translation>
         </message>
@@ -5752,19 +5920,11 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>Error Repeated</translation>
         </message>
         <message>
-            <source>exploration</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
             <source>fish</source>
             <translation>fish</translation>
         </message>
         <message>
             <source>global_game</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
-            <source>goryou_realm</source>
             <translation>ConfigModel</translation>
         </message>
         <message>
@@ -5800,14 +5960,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>呱呱画室设置</translation>
         </message>
         <message>
-            <source>guild_activity_monitor</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
-            <source>guild_banquet</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
             <source>handoff1</source>
             <translation>托管1</translation>
         </message>
@@ -5816,16 +5968,8 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>托管2</translation>
         </message>
         <message>
-            <source>hunt</source>
-            <translation>ConfigModel</translation>
-        </message>
-        <message>
             <source>hya_onmyoji</source>
             <translation>百鬼夜行</translation>
-        </message>
-        <message>
-            <source>hyakkiyakou</source>
-            <translation>ConfigModel</translation>
         </message>
         <message>
             <source>kaiko</source>

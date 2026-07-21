@@ -158,10 +158,13 @@ def strip_dart_line_comments(text: str) -> str:
     return re.sub(r"//.*$", "", text, flags=re.MULTILINE)
 
 
-def parse_i18n_cn(
-    file_path: Path, constants: Dict[str, str]
+def parse_i18n_file(
+    file_path: Path,
+    constants: Dict[str, str],
+    map_prefix: str,
+    exclude_maps: Tuple[str, ...] = (),
 ) -> Tuple[Dict[str, str], List[I18nEntry], List[str]]:
-    """Parse all `_cn_*` maps in `i18n_cn.dart`.
+    """Parse all `<prefix>_*` maps in a Dart translation source file.
 
     Returns:
         merged: key -> value dictionary preserving first-appearance order.
@@ -175,11 +178,13 @@ def parse_i18n_cn(
     warnings: List[str] = []
 
     map_pattern = re.compile(
-        r"final Map<String, String> (_cn_\w+) = \{(.*?)\};", re.DOTALL
+        rf"final Map<String, String> ({map_prefix}\w+) = \{{(.*?)\}};", re.DOTALL
     )
 
     for match in map_pattern.finditer(text):
         map_name = match.group(1)
+        if map_name in exclude_maps:
+            continue
         body = strip_dart_line_comments(match.group(2))
 
         parser = DartStringParser(body)
@@ -203,3 +208,23 @@ def parse_i18n_cn(
             merged[key] = value
 
     return merged, entries, warnings
+
+
+def parse_i18n_cn(
+    file_path: Path, constants: Dict[str, str]
+) -> Tuple[Dict[str, str], List[I18nEntry], List[str]]:
+    """Parse all `_cn_*` maps in `i18n_cn.dart`."""
+    return parse_i18n_file(file_path, constants, map_prefix="_cn_")
+
+
+def parse_i18n_us(
+    file_path: Path, constants: Dict[str, str]
+) -> Tuple[Dict[str, str], List[I18nEntry], List[str]]:
+    """Parse all `_us_*` source maps in `i18n_us.dart`.
+
+    `_us_base_map` is excluded because it only contains spread operators that
+    compose the source maps.
+    """
+    return parse_i18n_file(
+        file_path, constants, map_prefix="_us_", exclude_maps=("_us_base_map",)
+    )
