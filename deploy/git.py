@@ -167,12 +167,11 @@ class GitManager(DeployConfig):
                     # No local changes to existing files, untracked files not included
                     logger.info('Stash pop failed, there seems to be no local changes, skip instead')
             else:
-                logger.info('Stash failed, this may be the first installation, drop changes instead')
-                self.execute(f'"{self.git}" reset --hard {source}/{branch}')
-                self._git_pull_with_timeout(source, branch, timeout=3)
+                logger.warning('Stash failed due to unresolved merges or conflicts, abort update to preserve local changes')
+                return
         else:
-            self.execute(f'"{self.git}" reset --hard {source}/{branch}')
-            self._git_pull_with_timeout(source, branch, timeout=3)
+            logger.info('KeepLocalChanges is disabled, skip reset --hard to protect local modifications')
+            return
 
         logger.hr('Show Version', 1)
         self.execute(f'"{self.git}" --no-pager log --no-merges -1')

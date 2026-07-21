@@ -238,11 +238,9 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.attr("Task", task)
             return task
         else:
-            logger.warning("No task waiting or pending, returning Idle")
-            self.task = name_to_function("Idle")
-            self.task.next_run = datetime.now() + timedelta(seconds=60)
-            logger.attr("Task", self.task)
-            return self.task
+            logger.critical("No task waiting or pending")
+            logger.critical("Please enable at least one task")
+            raise RequestHumanTakeover
 
     def get_schedule_data(self) -> dict[str, dict]:
         """

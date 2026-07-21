@@ -18,8 +18,6 @@ from tasks.Component.Summon.summon import Summon
 from tasks.Orochi.script_task import ScriptTask as OrochiScriptTask
 from tasks.Orochi.config import Layer
 from tasks.Orochi.page import page_orochi
-from tasks.Pets.assets import PetsAssets
-
 from module.logger import logger
 from module.exception import TaskEnd
 from module.base.timer import Timer
@@ -27,7 +25,7 @@ from tasks.DailyTrifles.config import SummonType
 import re
 
 
-class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets, PetsAssets):
+class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets):
 
     def run(self):
         con = self.config.daily_trifles.trifles_config

@@ -999,6 +999,10 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>列表规则</translation>
         </message>
         <message>
+            <source>Tools</source>
+            <translation>工具</translation>
+        </message>
+        <message>
             <source>TrueOrochi</source>
             <translation>真·八岐大蛇</translation>
         </message>
@@ -1009,10 +1013,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>TalismanPass</source>
             <translation>花合战</translation>
-        </message>
-        <message>
-            <source>SoulsTidy</source>
-            <translation>御魂整理</translation>
         </message>
         <message>
             <source>Delegation</source>
@@ -2683,10 +2683,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>巫女大蛇</translation>
         </message>
         <message>
-            <source>pets</source>
-            <translation>pets</translation>
-        </message>
-        <message>
             <source>pets_config</source>
             <translation>宠物喂养配置</translation>
         </message>
@@ -2765,10 +2761,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>six_stars</source>
             <translation>六星</translation>
-        </message>
-        <message>
-            <source>souls_tidy</source>
-            <translation>souls_tidy</translation>
         </message>
         <message>
             <source>store_sign</source>
@@ -3081,10 +3073,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>突发检测</translation>
         </message>
         <message>
-            <source>team_flow</source>
-            <translation>team_flow</translation>
-        </message>
-        <message>
             <source>friend_invitation</source>
             <translation>当出现协作邀请时</translation>
         </message>
@@ -3115,54 +3103,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>home_client_clear_help</source>
             <translation>有时会出现进入庭院要求清理缓存</translation>
-        </message>
-        <message>
-            <source>broker</source>
-            <translation>broker</translation>
-        </message>
-        <message>
-            <source>broker_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>port</source>
-            <translation>port</translation>
-        </message>
-        <message>
-            <source>port_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>transport</source>
-            <translation>transport</translation>
-        </message>
-        <message>
-            <source>transport_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>ca</source>
-            <translation>ca</translation>
-        </message>
-        <message>
-            <source>ca_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>username</source>
-            <translation>username</translation>
-        </message>
-        <message>
-            <source>username_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>password</source>
-            <translation>password</translation>
-        </message>
-        <message>
-            <source>password_help</source>
-            <translation/>
         </message>
         <message>
             <source>accept</source>

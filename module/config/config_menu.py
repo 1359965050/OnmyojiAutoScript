@@ -22,7 +22,7 @@ class ConfigMenu:
         self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', 'FallenSun', 'EternitySea', 'SixRealms', 'OtherWorldTwilight']
         # 日常的任务
         self.menu["Daily Task"] = ['DailyTrifles', 'AreaBoss', 'GoldYoukai', 'ExperienceYoukai', 'Nian',
-                                   'TalismanPass', 'DemonEncounter', 'SoulsTidy', 'Delegation', 'WantedQuests',
+                                   'TalismanPass', 'DemonEncounter', 'Delegation', 'WantedQuests',
                                    'Tako', 'AutoCheckinBigGod']
         # 很肝的任务
         self.menu["Liver Emperor Exclusive"] = ["BondlingFairyland", "EvoZone", "GoryouRealm", "Exploration", "Hyakkiyakou", "HeroTest", "FindJade", "MemoryScrolls"]
@@ -33,6 +33,9 @@ class ConfigMenu:
         self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'MysteryShop', 'Duel']
         # 活动的任务
         self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'FrogBoss', 'FloatParade', 'Quiz', 'KittyShop', 'DyeTrials', 'GuguArtStudio', 'AbyssIllusion']
+        # 开发工具
+        self.menu["Tools"] = ['Image Rule', 'Ocr Rule', 'Click Rule', 'Long Click Rule', 'Swipe Rule', 'List Rule']
+
     @cached_property
     def gui_menu(self) -> str:
         """
@@ -44,6 +47,7 @@ class ConfigMenu:
     @cached_property
     def gui_menu_list(self) -> dict:
         del self.menu['TaskList']
+        del self.menu['Tools']
         return self.menu
 
 

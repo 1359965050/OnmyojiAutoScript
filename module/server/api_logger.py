@@ -200,22 +200,18 @@ def _serialize_payload(payload: dict[str, Any]) -> str:
 
 
 def log_http_access(payload: dict[str, Any]) -> None:
-    status_code = int(payload.get("response", {}).get("status_code", 200))
-    # 只记录 4xx/5xx 错误请求，正常请求不写日志
-    if status_code < 400:
-        return
     logger = ensure_api_logger()
+    status_code = int(payload.get("response", {}).get("status_code", 200))
     message = f"HTTP {_serialize_payload(payload)}"
     if status_code >= 500:
         logger.error(message)
-    else:
+    elif status_code >= 400:
         logger.warning(message)
+    else:
+        logger.info(message)
 
 
 def log_ws_event(message: str, level: str = "info") -> None:
-    # WebSocket 事件只记录 warning 及以上级别
-    if level in ("info", "debug"):
-        return
     logger = ensure_api_logger()
     getattr(logger, level, logger.info)(f"{message}")
 

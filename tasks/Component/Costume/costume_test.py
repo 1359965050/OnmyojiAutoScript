@@ -8,11 +8,11 @@ from tasks.GameUi.assets import GameUiAssets
 from tasks.GameUi.game_ui import GameUi
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
-from tasks.Pets.assets import PetsAssets
+from tasks.DailyTrifles.assets import DailyTriflesAssets
 from tasks.base_task import BaseTask
 from module.logger import logger
 
-class ScriptTask(GeneralBattle, GameUi, SwitchSoul, PetsAssets, ):
+class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DailyTriflesAssets):
 
     def run(self):
         # 町中测试

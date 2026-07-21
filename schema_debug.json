@@ -1071,6 +1071,12 @@
         "trifles_config": {
           "$ref": "#/$defs/DailyTriflesConfig"
         },
+        "pets_config": {
+          "$ref": "#/$defs/PetsConfig"
+        },
+        "simple_tidy": {
+          "$ref": "#/$defs/SimpleTidy"
+        },
         "done_record": {
           "$ref": "#/$defs/DoneRecord"
         }
@@ -2619,9 +2625,6 @@
         },
         "battle": {
           "$ref": "#/$defs/BattleTakeover"
-        },
-        "team_flow": {
-          "$ref": "#/$defs/TeamFlow"
         }
       },
       "title": "GlobalGame",
@@ -4203,18 +4206,6 @@
       "title": "PackageName",
       "type": "string"
     },
-    "Pets": {
-      "properties": {
-        "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
-        },
-        "pets_config": {
-          "$ref": "#/$defs/PetsConfig"
-        }
-      },
-      "title": "Pets",
-      "type": "object"
-    },
     "PetsConfig": {
       "properties": {
         "pets_feast": {
@@ -4227,11 +4218,32 @@
           "title": "Enable Orochi Ten Once",
           "type": "boolean"
         },
-        "enable_switch_layer_soul": {
+        "switch_soul_enable": {
           "default": false,
-          "description": "enable_switch_layer_soul_help",
-          "title": "Enable Switch Layer Soul",
+          "title": "Switch Soul Enable",
           "type": "boolean"
+        },
+        "switch_group_team": {
+          "default": "-1,-1",
+          "description": "switch_group_team_help",
+          "title": "Switch Group Team",
+          "type": "string"
+        },
+        "enable_switch_by_name": {
+          "default": false,
+          "description": "enable_switch_by_name_help",
+          "title": "Enable Switch By Name",
+          "type": "boolean"
+        },
+        "group_name": {
+          "default": "",
+          "title": "Group Name",
+          "type": "string"
+        },
+        "team_name": {
+          "default": "",
+          "title": "Team Name",
+          "type": "string"
         }
       },
       "title": "PetsConfig",
@@ -4970,18 +4982,6 @@
       "title": "SougenbiConfig",
       "type": "object"
     },
-    "SoulsTidy": {
-      "properties": {
-        "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
-        },
-        "simple_tidy": {
-          "$ref": "#/$defs/SimpleTidy"
-        }
-      },
-      "title": "SoulsTidy",
-      "type": "object"
-    },
     "SpecialRoom": {
       "properties": {
         "enable": {
@@ -5128,53 +5128,6 @@
       "title": "TasksReset",
       "type": "object"
     },
-    "TeamFlow": {
-      "properties": {
-        "enable": {
-          "default": false,
-          "description": "enable_help",
-          "title": "Enable",
-          "type": "boolean"
-        },
-        "broker": {
-          "default": "",
-          "description": "broker_help",
-          "title": "Broker",
-          "type": "string"
-        },
-        "port": {
-          "default": 8883,
-          "description": "port_help",
-          "title": "Port",
-          "type": "integer"
-        },
-        "transport": {
-          "$ref": "#/$defs/Transport",
-          "default": "TCP",
-          "description": "transport_help"
-        },
-        "ca": {
-          "default": "",
-          "description": "ca_help",
-          "title": "Ca",
-          "type": "string"
-        },
-        "username": {
-          "default": "",
-          "description": "username_help",
-          "title": "Username",
-          "type": "string"
-        },
-        "password": {
-          "default": "",
-          "description": "password_help",
-          "title": "Password",
-          "type": "string"
-        }
-      },
-      "title": "TeamFlow",
-      "type": "object"
-    },
     "ThemeType": {
       "enum": [
         "costume_theme_default"
@@ -5208,14 +5161,6 @@
       },
       "title": "ThousandThings",
       "type": "object"
-    },
-    "Transport": {
-      "enum": [
-        "TCP",
-        "SSL/TLS"
-      ],
-      "title": "Transport",
-      "type": "string"
     },
     "Trifles": {
       "properties": {
@@ -6413,12 +6358,6 @@
     },
     "talisman_pass": {
       "$ref": "#/$defs/TalismanPass"
-    },
-    "pets": {
-      "$ref": "#/$defs/Pets"
-    },
-    "souls_tidy": {
-      "$ref": "#/$defs/SoulsTidy"
     },
     "delegation": {
       "$ref": "#/$defs/Delegation"

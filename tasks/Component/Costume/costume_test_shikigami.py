@@ -10,11 +10,11 @@ from tasks.GameUi.page import page_shikigami_records, page_main
 from tasks.Component.Costume.config import ShikigamiType
 from tasks.Component.SwitchSoul.assets import SwitchSoulAssets
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
-from tasks.SoulsTidy.assets import SoulsTidyAssets
-from tasks.SoulsTidy.script_task import ScriptTask as SoulsTidyTask
+from tasks.DailyTrifles.assets import DailyTriflesAssets
+from tasks.DailyTrifles.script_task import ScriptTask as DailyTriflesTask
 
 
-class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, SoulsTidyAssets):
+class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, DailyTriflesAssets):
     """
     快速回归测试：验证幕间（式神录）皮肤映射是否正确生效。
     路径：主页 -> 式神录；并在式神录中检测御魂切换与御魂整理的关键识别点。
@@ -112,8 +112,8 @@ class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, SoulsTidyAssets):
         self.goto_page(page_shikigami_records)
         
         # 进入御魂界面
-        souls_tidy_task = SoulsTidyTask(self.config, self.device)
-        souls_tidy_task.goto_souls()
+        daily_trifles_task = DailyTriflesTask(self.config, self.device)
+        daily_trifles_task.goto_souls()
         
         # 检查御魂界面关键元素
         detection_count = 0
@@ -144,7 +144,7 @@ class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, SoulsTidyAssets):
         logger.info(f'Detected {detection_count} souls tidy interface elements')
         
         # 退回到式神录
-        souls_tidy_task.back_records()
+        daily_trifles_task.back_records()
         
         # 退出式神录
         self.goto_page(page_main)

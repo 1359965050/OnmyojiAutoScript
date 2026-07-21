@@ -4,8 +4,10 @@
 from contextlib import asynccontextmanager
 
 import argparse
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from module.logger import logger
 from module.server.api_logger import ensure_api_logger
@@ -13,6 +15,7 @@ from module.server.home_router import home_app
 from module.server.log_router import log_app
 from module.server.script_router import script_app
 from module.server.stats_router import stats_app
+from module.server.tool_router import tool_app
 from starlette import status
 from starlette.responses import JSONResponse
 from module.server.setting import State
@@ -45,6 +48,11 @@ app.include_router(home_app)
 app.include_router(script_app)
 app.include_router(stats_app)
 app.include_router(log_app)
+app.include_router(tool_app)
+
+annotator_static_dir = Path(__file__).resolve().parent / "web" / "annotator" / "static"
+if annotator_static_dir.exists():
+    app.mount("/tool/annotator/static", StaticFiles(directory=str(annotator_static_dir)), name="annotator_static")
 
 
 async def on_startup():
