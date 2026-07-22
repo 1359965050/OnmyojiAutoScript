@@ -223,7 +223,10 @@ class GameUi(BaseTask, GameUiAssets):
             skip_first_screenshot=True,
         )
         if page is not None:
-            logger.attr("UI", page.name)
+            if page.name == "page_battle":
+                logger.debug(f"[UI] {page.name}")
+            else:
+                logger.attr("UI", page.name)
             return page
 
         logger.warning(f"Page detect miss[{context}]: scoped={sorted_categories}")
@@ -251,7 +254,10 @@ class GameUi(BaseTask, GameUiAssets):
         for page in sort_pages_by_priority(indexed_candidates):
             if self.match_page_once(page):
                 self.navigator.current_page = page
-                logger.attr("UI", page.name)
+                if page.name == "page_battle":
+                    logger.debug(f"[UI] {page.name}")
+                else:
+                    logger.attr("UI", page.name)
                 return page
         return None
 

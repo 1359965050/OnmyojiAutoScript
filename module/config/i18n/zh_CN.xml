@@ -692,7 +692,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>Script</source>
-            <translation>脚本</translation>
+            <translation>模拟器配置</translation>
         </message>
         <message>
             <source>Restart</source>
@@ -2543,10 +2543,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>猫咪首领</translation>
         </message>
         <message>
-            <source>celeb_battle</source>
-            <translation>名士决斗</translation>
-        </message>
-        <message>
             <source>character_help</source>
             <translation>用于绑定的式神或角色识别辅助</translation>
         </message>
@@ -2613,10 +2609,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>draw_mystery_pattern</source>
             <translation>绘制神秘图案</translation>
-        </message>
-        <message>
-            <source>duel_celeb_config</source>
-            <translation>名士斗技配置</translation>
         </message>
         <message>
             <source>duel_config</source>

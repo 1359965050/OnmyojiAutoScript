@@ -102,18 +102,33 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 raise ScriptError(f'Unknown friend invitation type: {invite_type}')
         if not click_button:
             raise ScriptError(f'Unknown click button type: {invite_type}')
-        while 1:
+        retry_count = 0
+        while retry_count < 5:
             self.device.screenshot()
             if not self.appear(target=click_button):
                 logger.info('Deal with invitation done')
                 break
             if self.appear_then_click(click_button, interval=0.8):
+                retry_count += 1
                 continue
+        if retry_count >= 5:
+            logger.warning('Invitation window could not be dismissed within retry limit')
+
         # 有的时候长战斗 点击后会取消战斗状态
         self.device.detect_record = detect_record
+        self.device.stuck_record_clear()
+
+        # 若当前任务包含 wait_start_time（如探索组队等待），刷新计时器防止误判超时离队
+        if hasattr(self, 'wait_start_time'):
+            self.wait_start_time = datetime.now()
+
         # 如果接受邀请则立即执行悬赏任务
         if click_button == self.I_G_ACCEPT:
-            self.set_next_run(task='WantedQuests', target=datetime.now().replace(microsecond=0))
+            if hasattr(self.config.model, 'wanted_quests') and not self.config.model.wanted_quests.scheduler.enable:
+                logger.info('Accepted friend invitation, but WantedQuests is disabled in config')
+            else:
+                self.set_next_run(task='WantedQuests', target=datetime.now().replace(microsecond=0))
+                logger.info('Accepted friend invitation, scheduled WantedQuests immediately')
         return True
 
     def screenshot(self):

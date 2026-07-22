@@ -7,10 +7,12 @@ import random
 
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.RyouToppa.assets import RyouToppaAssets
-from tasks.Component.GeneralBattle.general_battle import GeneralBattle
+from tasks.Component.GeneralBattle.general_battle import GeneralBattle, BattleContext, BattleAction, ExitMatcher
+from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.Component.config_base import ConfigBase, Time
 from tasks.GameUi.game_ui import GameUi
-from tasks.GameUi.page import page_realm_raid, page_main, page_kekkai_toppa, page_shikigami_records
+from tasks.GameUi.page import (page_realm_raid, page_main, page_kekkai_toppa, page_shikigami_records,
+                               page_battle_result, page_reward, random_click, any_of)
 from tasks.RealmRaid.assets import RealmRaidAssets
 
 from module.logger import logger
@@ -65,7 +67,7 @@ area_map = (
 )
 
 
-def random_delay(min_value: float = 1.0, max_value: float = 2.0, decimal: int = 1):
+def random_delay(min_value: float = 2.0, max_value: float = 5.0, decimal: int = 1):
     """
     生成一个指定范围内的随机小数
     """
@@ -75,6 +77,26 @@ def random_delay(min_value: float = 1.0, max_value: float = 2.0, decimal: int = 
 
 class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
     medal_grid: ImageGrid = None
+
+    def _exit_matcher(self) -> ExitMatcher:
+        return any_of(self.I_KEKKAI_TOPPA, self.I_TOPPA_RECORD, self.I_TOPPA_LOCK_TEAM, self.I_TOPPA_UNLOCK_TEAM)
+
+    def _handle_result(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
+        context.reward_no_battle_ts = None
+        context.is_win = not self.appear(self.I_FALSE, threshold=0.8)
+        if context.last_page != page_battle_result:
+            self.device.click_record_clear()
+        self.click(random_click(), interval=1.5)
+        return BattleAction.CONTINUE
+
+    def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
+        context.reward_no_battle_ts = None
+        context.is_win = True
+        self.appear_then_click(self.I_GB_SKIN_CONFIRM, interval=1.5)
+        if context.last_page != page_reward:
+            self.device.click_record_clear()
+        self.click(random_click(), interval=1.5)
+        return BattleAction.CONTINUE
 
     def run(self):
         """
@@ -96,6 +118,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
             self.run_switch_soul_by_name(ryou_config.switch_soul_config.group_name, ryou_config.switch_soul_config.team_name)
 
         self.goto_page(page_kekkai_toppa)
+        time.sleep(1)
         ryou_toppa_start_flag = True
         ryou_toppa_success_penetration = False
         ryou_toppa_admin_flag = False
@@ -108,9 +131,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
                 logger.warning("Confirm RyouToppa state timeout, exit loop")
                 break
             if self.appear_then_click(RealmRaidAssets.I_REALM_RAID, interval=1):
+                time.sleep(1)
                 continue
             if self.appear(self.I_REAL_RAID_REFRESH, threshold=0.8):
                 if self.appear_then_click(self.I_RYOU_TOPPA, interval=1):
+                    time.sleep(1)
                     continue
             # 攻破阴阳寮，说明寮突已开，则退出
             elif self.appear(self.I_SUCCESS_PENETRATION, threshold=0.8):
@@ -159,6 +184,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         else:
             logger.info("Unlock team.")
             self.ui_click(self.I_TOPPA_LOCK_TEAM, self.I_TOPPA_UNLOCK_TEAM)
+        time.sleep(1)
         # --------------------------------------------------------------------------------------------------------------
         # 开始突破
         # --------------------------------------------------------------------------------------------------------------
@@ -214,6 +240,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         while 1:
             self.screenshot()
             if self.appear_then_click(self.I_SELECT_RYOU_BUTTON, interval=1):
+                time.sleep(1)
                 break
         logger.info(f'Click {self.I_SELECT_RYOU_BUTTON.name}')
 
@@ -221,6 +248,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         while 1:
             self.screenshot()
             if self.appear_then_click(self.I_GUILD_ORDERS_REWARDS, action=self.C_SELECT_FIRST_RYOU, interval=1):
+                time.sleep(1)
                 break
         logger.info(f'Click {self.C_SELECT_FIRST_RYOU.name}')
 
@@ -228,6 +256,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         while 1:
             self.screenshot()
             if self.appear_then_click(self.I_START_TOPPA_BUTTON, interval=1):
+                time.sleep(1)
                 continue
             # 出现寮奖励， 说明寮突已开
             if self.appear(self.I_RYOU_REWARD, threshold=0.8):
@@ -311,9 +340,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
                 return False
             if self.appear_then_click(RealmRaidAssets.I_FIRE, interval=2, threshold=0.8):
                 click_failure_count += 1
+                time.sleep(1)
                 continue
             if self.click(rcl, interval=5):
                 click_failure_count += 1
+                time.sleep(1)
                 continue
 
 

@@ -30,7 +30,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
     current_score = 0
     pre_battle_win_cnt = battle_win_count
     pre_battle_lose_cnt = battle_lose_count
-    is_celeb: bool = False  # 是否是名仕
     conf: Duel = None
 
     def run(self):
@@ -66,7 +65,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
             self.switch_onmyoji(self.conf.duel_config.switch_onmyoji)
         self.goto_page(page_duel)
         self.switch_all_soul()
-        self.current_score = self.conf.duel_celeb_config.initial_score
 
     def can_start_duel(self) -> bool:
         """是否可以运行斗技"""
@@ -77,10 +75,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
         # 当前分数跟目标分数比较, 判断分数是否已经满足条件
         if self.get_and_update_cur_score() >= self.conf.duel_config.target_score:
             logger.info('Duel task is over score')
-            return False
-        # 若不开启名仕战斗, 则到达名士直接退出
-        if not self.conf.duel_celeb_config.celeb_battle and self.is_celeb:
-            logger.info('You are already a celeb（名仕）')
             return False
         # 练习
         if self.appear(self.I_BATTLE_WITH_TRAIN) or self.appear(self.I_BATTLE_WITH_TRAIN2):
@@ -136,22 +130,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
                 sleep(random.uniform(1.2, 2.4))
                 continue
             not_in_prepare_cnt = 0
-            # 再次检查是否是名仕(若斗技主界面识别名仕失效的话)
-            if self.appear_then_click(self.I_BAN, interval=1.2):
-                self.is_celeb = True
-                continue
-            # 名仕不开启自动上阵, 根据最后一个式神的名字是否改变来检查自己式神是否被ban
-            if not self.appear(self.I_D_CHECK_BAN, interval=0.8) and self.is_celeb:
-                ocr_name = self.O_D_BAN_NAME.ocr(self.device.image)
-                shikigami_banned = ocr_name != '' and not any(
-                    char in ocr_name for char in self.conf.duel_celeb_config.ban_name)
-                logger.info(f'Check self shikigami is banned:{shikigami_banned}')
-                if shikigami_banned:
-                    self.duel_exit_battle()
-                    continue
-                self.click(self.C_DUEL_CLICK_5, interval=random.uniform(0.7, 1.4))
-                sleep(random.uniform(1.5, 3))  # 降低点击频率和ocr识别频率
-                continue
             # 点击自动上阵或准备
             if self.appear_then_click(self.I_D_AUTO_ENTRY, interval=1.2) or \
                     self.appear_then_click(self.I_D_PREPARE, interval=1.2):
@@ -230,27 +208,16 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
 
     def get_and_update_cur_score(self, skip_screenshot: bool = True) -> int:
         """
-        获取并更新当前斗技分数, 要求处于斗技主界面, 同时更新名仕状态
+        获取并更新当前斗技分数, 要求处于斗技主界面
         :param skip_screenshot: 是否跳过截图
         :return: 当前斗技分数
         """
         self.maybe_screenshot(skip_screenshot)
-        score = self.current_score
-        self.is_celeb = False
-        if self.appear(self.I_D_CELEB_STAR) or self.appear(self.I_D_CELEB_HONOR):
-            self.is_celeb = True
-            if self.battle_win_count - self.pre_battle_win_cnt == 1:
-                self.pre_battle_win_cnt = self.battle_win_count
-                score += 100
-            elif self.battle_lose_count - self.pre_battle_lose_cnt == 1:
-                self.pre_battle_lose_cnt = self.battle_lose_count
-                score -= 100
-        else:
-            score, remain, total = self.O_D_SCORE.ocr(self.device.image)
-            if score > 10000:
-                # 识别错误分数超过一万, 去掉最高位
-                logger.warning('Recognition error, score is too high')
-                score = int(str(score)[1:])
+        score, remain, total = self.O_D_SCORE.ocr(self.device.image)
+        if score > 10000:
+            # 识别错误分数超过一万, 去掉最高位
+            logger.warning('Recognition error, score is too high')
+            score = int(str(score)[1:])
         logger.info(f'battle score: {score}')
         self.current_score = score
         return self.current_score
@@ -268,8 +235,7 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
         """判断是否在斗技主界面"""
         if screenshot:
             self.screenshot()
-        return self.appear(self.I_D_HELP) or self.appear(self.I_CHECK_DUEL) or \
-            self.appear(self.I_D_CELEB_STAR) or self.appear(self.I_D_CELEB_HONOR)
+        return self.appear(self.I_D_HELP) or self.appear(self.I_CHECK_DUEL)
 
     def switch_all_soul(self):
         """在斗技式神备选界面一键切换所有御魂"""
@@ -301,9 +267,7 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
         self.maybe_screenshot(skip_screenshot)
         return self.appear(self.I_D_PREPARE) or \
             self.appear(self.I_D_AUTO_ENTRY) or \
-            self.appear(self.I_BAN) or \
-            self.appear(self.I_D_WORD_BATTLE) or \
-            self.appear(self.I_D_CHECK_BAN)
+            self.appear(self.I_D_WORD_BATTLE)
 
     def is_battle_win(self) -> bool:
         return self.appear(self.I_WIN) or self.appear(self.I_D_VICTORY)

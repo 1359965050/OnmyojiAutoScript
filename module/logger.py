@@ -14,7 +14,7 @@ from rich.console import Console, ConsoleOptions, ConsoleRenderable, NewLine, Re
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 from rich.rule import Rule
-from typing import Callable, List
+from typing import Callable, List, Any, cast
 
 
 def cleanup_logs(log_dir: str = "./log", keep_days: int = 7):
@@ -67,31 +67,22 @@ logging.raiseExceptions = True  # Set True if wanna see encode errors on console
 # RichHandler.KEYWORDS = []
 
 
-# def show_handlers(handlers):
-#     # 获取并打印日志记录器中处理器的信息
-#     for handler in logger.handlers:
-#         # 获取处理器的类名
-#         handler_class = handler.__class__.__name__
-#         print(f"Handler class: {handler_class}")
-#
-#         # 获取处理器的级别
-#         handler_level = logging.getLevelName(handler.level)
-#         print(f"Handler level: {handler_level}")
-#
-#         # 获取处理器的格式化器
-#         formatter = handler.formatter
-#         if formatter is not None:
-#             formatter_class = formatter.__class__.__name__
-#             print(f"Formatter class: {formatter_class}")
-#
-#         # 其他处理器的属性和方法，根据需要进行获取和打印
-#         print()  # 打印空行，用于分隔处理器的信息
+class OASLogger(logging.Logger):
+    log_file: str
+    hr: Callable
+    attr: Callable
+    attr_align: Callable
+    set_file_logger: Callable
+    set_func_logger: Callable
+    rule: Callable
+    print: Callable
 
 
 # Logger init
 logger_debug = False
-logger = logging.getLogger('oas')
+logger: OASLogger = logging.getLogger('oas')  # type: ignore
 logger.setLevel(logging.DEBUG if logger_debug else logging.INFO)
+logging.getLogger('zerorpc').setLevel(logging.WARNING)
 file_formatter = logging.Formatter(
     fmt='%(asctime)s.%(msecs)03d | %(filename)20s:%(lineno)04d | %(levelname)8s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 console_formatter = logging.Formatter(
@@ -133,7 +124,7 @@ def normalize_log_name(name: str) -> str:
     Returns:
         去掉运行时后缀并移除路径危险字符后的日志名。
     """
-    name = str(name or "").strip()
+    name = (name or "").strip()
     if '_' in name:
         name = name.split('_', 1)[0]
     name = _UNSAFE_LOG_NAME_RE.sub("_", name).replace("..", "_").strip(" .")
@@ -152,7 +143,7 @@ class RichFileHandler(RichHandler):
         **kwargs: 传给 RichHandler 的关键字参数。
     """
 
-    def __init__(self, *args, script_name: str = "", log_date: date = None, log_file: str = "", file=None, **kwargs):
+    def __init__(self, *args, script_name: str = "", log_date: date | None = None, log_file: str = "", file=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.script_name = normalize_log_name(script_name)
         self.log_date = log_date or date.today()
@@ -347,21 +338,22 @@ class FlutterConsole(Console):
 
 
 class FlutterLogStream(TextIOBase):
-    def __init__(self, *args, func: Callable[[ConsoleRenderable], None] = None, **kwargs):
+    def __init__(self, *args, func: Callable[[str], None] | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self._func = func
 
     def write(self, msg: str) -> int:
         if isinstance(msg, bytes):
             msg = msg.decode("utf-8")
-        self._func(msg)
+        if self._func:
+            self._func(msg)
         return len(msg)
 
 
 def set_func_logger(func):
     stream = FlutterLogStream(func=func)
     stream_console = Console(
-        file=stream,
+        file=cast(Any, stream),
         force_terminal=False,
         force_interactive=False,
         no_color=True,
@@ -415,7 +407,7 @@ def print(*objects: ConsoleRenderable, **kwargs):
     for hdlr in logger.handlers:
         if isinstance(hdlr, FlutterHandler):
             for renderable in _get_renderables(hdlr.console, *objects, **kwargs):
-                hdlr.console.file._func(str(renderable))
+                cast(Any, hdlr.console.file)._func(str(renderable))
         elif isinstance(hdlr, RichHandler):
             if isinstance(hdlr, RichFileHandler):
                 hdlr._rotate_if_needed()
@@ -510,7 +502,7 @@ def error_convert(func):
     return error_wrapper
 
 
-logger.error = error_convert(logger.error)
+logger.error = error_convert(logger.error)  # type: ignore
 logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align
@@ -518,4 +510,4 @@ logger.set_file_logger = set_file_logger
 logger.set_func_logger = set_func_logger
 logger.rule = rule
 logger.print = print
-logger.log_file: str
+

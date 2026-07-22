@@ -90,24 +90,6 @@
     "description": "战"
   },
   {
-    "itemName": "d_celeb_star",
-    "imageName": "duel_d_celeb_star.png",
-    "roiFront": "646,450,33,37",
-    "roiBack": "551,433,185,67",
-    "method": "Template matching",
-    "threshold": 0.75,
-    "description": "名士的星星"
-  },
-  {
-    "itemName": "d_celeb_honor",
-    "imageName": "duel_d_celeb_honor.png",
-    "roiFront": "338,641,25,30",
-    "roiBack": "199,606,222,76",
-    "method": "Template matching",
-    "threshold": 0.75,
-    "description": "名士专属"
-  },
-  {
     "itemName": "battle_with_train",
     "imageName": "duel_battle_with_train.png",
     "roiFront": "1161,588,78,81",
@@ -144,15 +126,6 @@
     "description": "活动的战斗按钮"
   },
   {
-    "itemName": "ban",
-    "imageName": "duel_ban.png",
-    "roiFront": "1139,565,77,72",
-    "roiBack": "1122,545,114,116",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "禁用"
-  },
-  {
     "itemName": "duel_exit",
     "imageName": "duel_duel_exit.png",
     "roiFront": "14,12,43,41",
@@ -160,15 +133,6 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "左上角的退出"
-  },
-  {
-    "itemName": "d_check_ban",
-    "imageName": "duel_d_check_ban.png",
-    "roiFront": "611,36,56,62",
-    "roiBack": "590,14,100,100",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "ban选界面"
   },
   {
     "itemName": "duel_honor",
