@@ -22,6 +22,7 @@ from module.exception import TaskEnd
 from module.atom.image_grid import ImageGrid
 from module.atom.image import RuleImage
 from module.atom.click import RuleClick
+from module.base.timer import Timer
 
 
 class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
@@ -224,28 +225,35 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         :param lock_team_enable:
         :return:
         """
+        timer = Timer(5).start()
         if lock_team_enable:
             while 1:
                 self.screenshot()
+                if timer.reached():
+                    logger.warning('Ensure lock team timeout, skipping lock check')
+                    return
                 if self.appear_then_click(self.I_UNLOCK, interval=1):
                     continue
                 if self.appear_then_click(self.I_UNLOCK_2, interval=1):
                     continue
-                if self.appear(self.I_LOCK_2, threshold=0.9):
+                if self.appear(self.I_LOCK_2, threshold=0.8):
                     break
-                if self.appear(self.I_LOCK, threshold=0.9):
+                if self.appear(self.I_LOCK, threshold=0.8):
                     break
             logger.info(f'Click {self.I_UNLOCK.name}')
         else:
             while 1:
                 self.screenshot()
+                if timer.reached():
+                    logger.warning('Ensure unlock team timeout, skipping lock check')
+                    return
                 if self.appear_then_click(self.I_LOCK, interval=1):
                     continue
                 if self.appear_then_click(self.I_LOCK_2, interval=1):
                     continue
-                if self.appear(self.I_UNLOCK_2, threshold=0.9):
+                if self.appear(self.I_UNLOCK_2, threshold=0.8):
                     break
-                if self.appear(self.I_UNLOCK, threshold=0.9):
+                if self.appear(self.I_UNLOCK, threshold=0.8):
                     break
             logger.info(f'Click {self.I_LOCK.name}')
 

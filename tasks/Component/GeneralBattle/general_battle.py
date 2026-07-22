@@ -862,8 +862,12 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             self.screenshot()
         if not self.appear(self.I_EXIT):
             return False
+        timer = Timer(10).start()
         while True:
             self.screenshot()
+            if timer.reached():
+                logger.warning('Exit battle timeout')
+                return False
             if self.appear_then_click(self.I_EXIT_ENSURE, interval=0.8):
                 continue
             if GameUi.get_current_page(self) in (page_battle_result, page_reward):

@@ -1522,11 +1522,6 @@
       "red_daruma": 0,
       "broken_amulet": 0
     },
-    "charisma": {
-      "enable": false,
-      "black_daruma_scrap": false,
-      "mystery_amulet": false
-    },
     "thousand_things": {
       "enable": false,
       "mystery_amulet": false,
@@ -1621,33 +1616,7 @@
     "trifles": {
       "share_collect": true,
       "share_area_boss": true,
-      "share_secret": true,
-      "broken_amulet": 100
-    }
-  },
-  "mystery_shop": {
-    "scheduler": {
-      "enable": false,
-      "next_run": "2023-01-01 00:00:00",
-      "priority": 5,
-      "success_interval": "01 00:00:00",
-      "failure_interval": "01 00:00:00",
-      "server_update": "09:00:00",
-      "delay_date": 1,
-      "float_time": "00:00:00"
-    },
-    "shop_config": {
-      "time_of_mystery": "00:00:00",
-      "mystery_amulet": false,
-      "black_daruma_scrap": false,
-      "shop_kaiko_3": false,
-      "shop_kaiko_4": false
-    },
-    "invite_config": {
-      "friend_list": "",
-      "find_mode": "auto_find",
-      "wait_time": "00:02:00",
-      "default_invite": true
+      "share_secret": true
     }
   },
   "duel": {
@@ -1670,13 +1639,6 @@
       "honor_full_exit": false,
       "green_enable": false,
       "green_mark": "green_left1"
-    },
-    "switch_soul": {
-      "enable": false,
-      "switch_group_team": "-1,-1",
-      "enable_switch_by_name": false,
-      "group_name": "",
-      "team_name": ""
     }
   },
   "collective_missions": {

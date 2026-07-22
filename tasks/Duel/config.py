@@ -8,10 +8,6 @@ from tasks.Component.SwitchOnmyoji.config import Onmyoji
 from tasks.Component.config_scheduler import Scheduler
 from tasks.Component.config_base import ConfigBase, Time
 from tasks.Component.GeneralBattle.config_general_battle import GreenMarkType
-from enum import Enum
-from tasks.Component.SwitchSoul.switch_soul_config import SwitchSoulConfig
-
-
 class DuelConfig(ConfigBase):
     # 是否切换阴阳师
     switch_enabled: bool = Field(default=True, description='是否切换阴阳师')
@@ -34,4 +30,3 @@ class DuelConfig(ConfigBase):
 class Duel(ConfigBase):
     scheduler: Scheduler = Field(default_factory=Scheduler)
     duel_config: DuelConfig = Field(default_factory=DuelConfig)
-    switch_soul: SwitchSoulConfig = Field(default_factory=SwitchSoulConfig)

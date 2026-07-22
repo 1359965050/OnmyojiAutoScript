@@ -16,13 +16,12 @@ from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_duel, page_onmyodo, random_click
 from tasks.Duel.config import Duel
 from tasks.Duel.assets import DuelAssets
-from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.page import page_main, page_shikigami_records
 
 """ 斗技 """
 
 
-class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
+class ScriptTask(GameUi, GeneralBattle, DuelAssets, SwitchOnmyoji):
     # TODO: 斗技适配页面模块
 
     battle_win_count = 0
@@ -57,9 +56,8 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
         raise TaskEnd('Duel')
 
     def prepare_duel(self):
-        """斗技准备工作(切换御魂or阴阳师...), 最后回到斗技主界面"""
+        """斗技准备工作(切换阴阳师...), 最后回到斗技主界面"""
         self.goto_page(page_main)
-        self.switch_soul()
         if self.conf.duel_config.switch_enabled:
             self.goto_page(page_onmyodo)
             self.switch_onmyoji(self.conf.duel_config.switch_onmyoji)
@@ -222,14 +220,6 @@ class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DuelAssets, SwitchOnmyoji):
         self.current_score = score
         return self.current_score
 
-    def switch_soul(self):
-        """从式神录界面切换御魂"""
-        if self.conf.switch_soul.enable:
-            self.goto_page(page_shikigami_records)
-            self.run_switch_soul(self.conf.switch_soul.switch_group_team)
-        if self.conf.switch_soul.enable_switch_by_name:
-            self.goto_page(page_shikigami_records)
-            self.run_switch_soul_by_name(self.conf.switch_soul.group_name, self.conf.switch_soul.team_name)
 
     def duel_main(self, screenshot=False) -> bool:
         """判断是否在斗技主界面"""
