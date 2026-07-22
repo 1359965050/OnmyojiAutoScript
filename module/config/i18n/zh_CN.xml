@@ -1163,10 +1163,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>英杰试炼</translation>
         </message>
         <message>
-            <source>find_jade</source>
-            <translation>寻玉</translation>
-        </message>
-        <message>
             <source>memory_scrolls</source>
             <translation>追忆绘卷</translation>
         </message>

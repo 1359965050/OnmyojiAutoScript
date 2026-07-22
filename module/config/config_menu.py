@@ -25,7 +25,7 @@ class ConfigMenu:
                                    'TalismanPass', 'DemonEncounter', 'Delegation', 'WantedQuests',
                                    'Tako', 'AutoCheckinBigGod']
         # 很肝的任务
-        self.menu["Liver Emperor Exclusive"] = ["BondlingFairyland", "EvoZone", "GoryouRealm", "Exploration", "Hyakkiyakou", "HeroTest", "FindJade", "MemoryScrolls"]
+        self.menu["Liver Emperor Exclusive"] = ["BondlingFairyland", "EvoZone", "GoryouRealm", "Exploration", "Hyakkiyakou", "HeroTest", "MemoryScrolls"]
         # 阴阳寮
         self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'Dokan', 'CollectiveMissions',
                               'Hunt' , 'AbyssShadows', 'GuildBanquet', 'DemonRetreat', 'GuildActivityMonitor']

@@ -84,49 +84,6 @@
       "title": "AbyssShadowsTime",
       "type": "object"
     },
-    "AccountInfo": {
-      "description": "character:   角色名字\nsvr:         角色所在服务器\naccount:     账号\nappleOrAndroid:  角色所属平台 安卓/苹果(可选)\n        False           Apple\n        True            Android",
-      "properties": {
-        "character": {
-          "default": "",
-          "description": "character_help",
-          "title": "Character",
-          "type": "string"
-        },
-        "svr": {
-          "default": "",
-          "description": "svr_help",
-          "title": "Svr",
-          "type": "string"
-        },
-        "account": {
-          "default": "",
-          "description": "account_help",
-          "title": "Account",
-          "type": "string"
-        },
-        "account_alias": {
-          "default": "",
-          "description": "account_alias_help",
-          "title": "Account Alias",
-          "type": "string"
-        },
-        "apple_or_android": {
-          "default": true,
-          "description": "apple_or_android_help",
-          "title": "Apple Or Android",
-          "type": "boolean"
-        },
-        "last_complete_time": {
-          "default": "2023-01-01T00:00:00",
-          "description": "last_complete_time_help",
-          "title": "Last Complete Time",
-          "type": "date_time"
-        }
-      },
-      "title": "AccountInfo",
-      "type": "object"
-    },
     "ActivationConfig": {
       "properties": {
         "card_type": {
@@ -923,27 +880,6 @@
       "title": "CardType",
       "type": "string"
     },
-    "Charisma": {
-      "properties": {
-        "enable": {
-          "default": false,
-          "title": "Enable",
-          "type": "boolean"
-        },
-        "black_daruma_scrap": {
-          "default": false,
-          "title": "Black Daruma Scrap",
-          "type": "boolean"
-        },
-        "mystery_amulet": {
-          "default": false,
-          "title": "Mystery Amulet",
-          "type": "boolean"
-        }
-      },
-      "title": "Charisma",
-      "type": "object"
-    },
     "CheckinBigGodConfig": {
       "properties": {
         "usage": {
@@ -1728,9 +1664,6 @@
         },
         "duel_config": {
           "$ref": "#/$defs/DuelConfig"
-        },
-        "switch_soul": {
-          "$ref": "#/$defs/tasks__Component__SwitchSoul__switch_soul_config__SwitchSoulConfig"
         }
       },
       "title": "Duel",
@@ -2297,55 +2230,6 @@
         }
       },
       "title": "FallenSunConfig",
-      "type": "object"
-    },
-    "FindJade": {
-      "properties": {
-        "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
-        },
-        "find_jade_config": {
-          "$ref": "#/$defs/FindJadeConfig"
-        },
-        "invite_info_list": {
-          "default": null,
-          "items": {
-            "$ref": "#/$defs/InviteInfo"
-          },
-          "title": "Invite Info List",
-          "type": "array"
-        },
-        "sup_account_list": {
-          "default": null,
-          "items": {
-            "$ref": "#/$defs/AccountInfo"
-          },
-          "title": "Sup Account List",
-          "type": "array"
-        }
-      },
-      "title": "FindJade",
-      "type": "object"
-    },
-    "FindJadeConfig": {
-      "additionalProperties": true,
-      "properties": {
-        "invite_info_count": {
-          "default": 1,
-          "description": "invite_info_count_help",
-          "minimum": 1,
-          "title": "Invite Info Count",
-          "type": "integer"
-        },
-        "sup_account_count": {
-          "default": 1,
-          "description": "sup_account_count_help",
-          "minimum": 1,
-          "title": "Sup Account Count",
-          "type": "integer"
-        }
-      },
-      "title": "FindJadeConfig",
       "type": "object"
     },
     "FindMode": {
@@ -3250,47 +3134,6 @@
       "title": "InviteConfig",
       "type": "object"
     },
-    "InviteInfo": {
-      "properties": {
-        "name": {
-          "default": "",
-          "description": "name_help",
-          "title": "Name",
-          "type": "string"
-        },
-        "default_invite_type": {
-          "$ref": "#/$defs/CooperationSelectMaskDescription",
-          "default": "JadeAndFood",
-          "description": "default_invite_type_help"
-        },
-        "invite_history_1": {
-          "default": "2023-01-01T00:00:00",
-          "description": "invite_history_1_help",
-          "title": "Invite History 1",
-          "type": "date_time"
-        },
-        "invite_history_2": {
-          "default": "2023-01-01T00:00:00",
-          "description": "invite_history_2_help",
-          "title": "Invite History 2",
-          "type": "date_time"
-        },
-        "invite_history_4": {
-          "default": "2023-01-01T00:00:00",
-          "description": "invite_history_4_help",
-          "title": "Invite History 4",
-          "type": "date_time"
-        },
-        "invite_history_8": {
-          "default": "2023-01-01T00:00:00",
-          "description": "invite_history_8_help",
-          "title": "Invite History 8",
-          "type": "date_time"
-        }
-      },
-      "title": "InviteInfo",
-      "type": "object"
-    },
     "KekkaiActivation": {
       "properties": {
         "scheduler": {
@@ -3774,21 +3617,6 @@
       "title": "ModelPrecision",
       "type": "string"
     },
-    "MysteryShop": {
-      "properties": {
-        "scheduler": {
-          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
-        },
-        "shop_config": {
-          "$ref": "#/$defs/ShopConfig"
-        },
-        "invite_config": {
-          "$ref": "#/$defs/InviteConfig"
-        }
-      },
-      "title": "MysteryShop",
-      "type": "object"
-    },
     "NetherWorldBattleConfig": {
       "properties": {
         "lock_team_enable": {
@@ -4014,7 +3842,7 @@
           "type": "number"
         },
         "combat_screenshot_interval": {
-          "default": 1.0,
+          "default": 1.5,
           "description": "combat_screenshot_interval_help",
           "title": "Combat Screenshot Interval",
           "type": "number"
@@ -4457,9 +4285,6 @@
         "medal_room": {
           "$ref": "#/$defs/MedalRoom"
         },
-        "charisma": {
-          "$ref": "#/$defs/Charisma"
-        },
         "thousand_things": {
           "$ref": "#/$defs/ThousandThings"
         },
@@ -4738,38 +4563,6 @@
       ],
       "title": "ShikigamiType",
       "type": "string"
-    },
-    "ShopConfig": {
-      "properties": {
-        "time_of_mystery": {
-          "default": "00:00:00",
-          "description": "time_of_mystery_help",
-          "title": "Time Of Mystery",
-          "type": "time"
-        },
-        "mystery_amulet": {
-          "default": false,
-          "title": "Mystery Amulet",
-          "type": "boolean"
-        },
-        "black_daruma_scrap": {
-          "default": false,
-          "title": "Black Daruma Scrap",
-          "type": "boolean"
-        },
-        "shop_kaiko_3": {
-          "default": false,
-          "title": "Shop Kaiko 3",
-          "type": "boolean"
-        },
-        "shop_kaiko_4": {
-          "default": false,
-          "title": "Shop Kaiko 4",
-          "type": "boolean"
-        }
-      },
-      "title": "ShopConfig",
-      "type": "object"
     },
     "Shrine": {
       "properties": {
@@ -5156,12 +4949,6 @@
           "description": "share_secret_help",
           "title": "Share Secret",
           "type": "boolean"
-        },
-        "broken_amulet": {
-          "default": 100,
-          "description": "trifles_broken_amulet_help",
-          "title": "Broken Amulet",
-          "type": "integer"
         }
       },
       "title": "Trifles",
@@ -6468,9 +6255,6 @@
     "hero_test": {
       "$ref": "#/$defs/HeroTest"
     },
-    "find_jade": {
-      "$ref": "#/$defs/FindJade"
-    },
     "memory_scrolls": {
       "$ref": "#/$defs/MemoryScrolls"
     },
@@ -6485,9 +6269,6 @@
     },
     "weekly_trifles": {
       "$ref": "#/$defs/WeeklyTrifles"
-    },
-    "mystery_shop": {
-      "$ref": "#/$defs/MysteryShop"
     },
     "duel": {
       "$ref": "#/$defs/Duel"

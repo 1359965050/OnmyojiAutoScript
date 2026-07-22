@@ -29,8 +29,6 @@ CONFIG_REDACTION_PATHS = (
     "script.device.handle",
     "script.device.emulatorinfo_name",
     "script.device.emulatorinfo_path",
-    "find_jade.sup_account_list_*.account",
-    "find_jade.sup_account_list_*.account_alias",
 )
 CONFIG_REDACTION_KEYS = {
     "password",
