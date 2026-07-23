@@ -720,18 +720,24 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
         return True
 
-    def ui_click(self, click, stop, interval=1):
+    def ui_click(self, click, stop, interval=1, timeout: float = 10) -> bool:
         """
         循环的一个操作，直到出现stop
         :param click:
         :param stop:
-        :parm interval
-        :return:
+        :param interval:
+        :param timeout: 超时时间（秒），默认 10 秒
+        :return: 成功匹配到 stop 返回 True，超时返回 False
         """
+        timer = Timer(timeout).start() if timeout else None
         while 1:
             self.screenshot()
             if self.appear(stop):
-                break
+                return True
+            if timer and timer.reached():
+                stop_name = stop.name if hasattr(stop, 'name') else str(stop)
+                logger.warning(f"ui_click timeout ({timeout}s) waiting for {stop_name}")
+                return False
             if isinstance(click, RuleImage) and self.appear_then_click(click, interval=interval):
                 continue
             if isinstance(click, RuleClick) and self.click(click, interval=interval):

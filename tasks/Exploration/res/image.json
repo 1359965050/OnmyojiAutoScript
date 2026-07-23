@@ -119,10 +119,10 @@
   {
     "itemName": "battle_reward",
     "imageName": "res_battle_reward.png",
-    "roiFront": "647,395,31,21",
+    "roiFront": "490,373,312,80",
     "roiBack": "1,1,1278,718",
     "method": "Template matching",
-    "threshold": 0.9,
+    "threshold": 0.8,
     "description": "战后奖励"
   },
   {
@@ -259,5 +259,14 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "右侧候补标志"
+  },
+  {
+    "itemName": "e_main_line",
+    "imageName": "res_e_main_line.png",
+    "roiFront": "1080,140,85,50",
+    "roiBack": "1050,120,200,120",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "大世界界面右侧面板的主线按钮"
   }
 ]

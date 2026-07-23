@@ -24,7 +24,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵1号位"
   },
   {
     "itemName": "frog_2",
@@ -33,7 +33,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵2号位"
   },
   {
     "itemName": "frog_3",
@@ -42,7 +42,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵3号位"
   },
   {
     "itemName": "frog_4",
@@ -51,7 +51,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵4号位"
   },
   {
     "itemName": "frog_5",
@@ -60,7 +60,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵5号位"
   },
   {
     "itemName": "frog_6",
@@ -69,7 +69,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵6号位"
   },
   {
     "itemName": "frog_7",
@@ -78,7 +78,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵7号位"
   },
   {
     "itemName": "frog_8",
@@ -87,7 +87,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵8号位"
   },
   {
     "itemName": "frog_9",
@@ -96,7 +96,7 @@
     "mode": "Digit",
     "method": "Default",
     "keyword": "",
-    "description": "Ocr-description"
+    "description": "呱太入侵9号位"
   },
   {
     "itemName": "text",
@@ -105,6 +105,6 @@
     "mode": "Single",
     "method": "Default",
     "keyword": "",
-    "description": "text"
-    }
+    "description": "右上角突破券文本"
+  }
 ]

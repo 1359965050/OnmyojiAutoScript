@@ -84,7 +84,7 @@ class ExplorationAssets:
 	# boss 
 	I_BOSS_BATTLE_BUTTON = RuleImage(roi_front=(683,256,38,34), roi_back=(0,0,1276,719), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_boss_battle_button.png")
 	# 战后奖励 
-	I_BATTLE_REWARD = RuleImage(roi_front=(647,395,31,21), roi_back=(1,1,1278,718), threshold=0.9, method="Template matching", file="./tasks/Exploration/res/res_battle_reward.png")
+	I_BATTLE_REWARD = RuleImage(roi_front=(490,373,312,80), roi_back=(1,1,1278,718), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_battle_reward.png")
 	# 妖 
 	I_EXPLORATION_TITLE = RuleImage(roi_front=(1143,109,38,40), roi_back=(1126,92,74,72), threshold=0.7, method="Template matching", file="./tasks/Exploration/res/res_exploration_title.png")
 	# description 
@@ -103,10 +103,8 @@ class ExplorationAssets:
 	I_EXP_CREATE_TEAM = RuleImage(roi_front=(902,599,79,47), roi_back=(875,560,134,126), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_exp_create_team.png")
 	# 创建确认 
 	I_EXP_CREATE_ENSURE = RuleImage(roi_front=(534,486,218,59), roi_back=(516,475,244,85), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_exp_create_ensure.png")
-	# 打开探索侧边折叠
+	# 打开探索侧边折叠 
 	I_E_OPEN_FOLDER = RuleImage(roi_front=(1241,114,22,28), roi_back=(1212,88,68,123), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_open_folder.png")
-	# 大世界界面右侧面板的主线按钮
-	I_E_MAIN_LINE = RuleImage(roi_front=(1078,168,71,36), roi_back=(1078,168,71,36), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_main_line.png")
 	# 退出探索标志 
 	I_E_CHECK_EXIT = RuleImage(roi_front=(528,299,216,50), roi_back=(344,258,597,209), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_check_exit.png")
 	# 探索退出取消 
@@ -117,6 +115,8 @@ class ExplorationAssets:
 	I_E_REWARD_BOX_SMALL = RuleImage(roi_front=(234,626,43,32), roi_back=(0,597,327,100), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_reward_box_small.png")
 	# 右侧候补标志 
 	I_E_ROTATE_EXIST_RIGHT = RuleImage(roi_front=(829,580,33,35), roi_back=(700,574,450,46), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_ratate_exsit.png")
+	# 大世界界面右侧面板的主线按钮 
+	I_E_MAIN_LINE = RuleImage(roi_front=(1080,140,85,50), roi_back=(1050,120,200,120), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_main_line.png")
 
 
 	# Long Click Rule Assets

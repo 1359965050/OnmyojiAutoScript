@@ -74,15 +74,6 @@ class RichManAssets:
 
 
 	# Image Rule Assets
-	# 蓝票 
-	I_CH_BLUE = RuleImage(roi_front=(646,142,91,105), roi_back=(144,106,879,440), threshold=0.8, method="Template matching", file="./tasks/RichMan/mall/charisma/charisma_ch_blue.png")
-	# description 
-	I_CH_BLACK = RuleImage(roi_front=(869,396,94,92), roi_back=(139,123,880,428), threshold=0.8, method="Template matching", file="./tasks/RichMan/mall/charisma/charisma_ch_black.png")
-	# 蓝票购买确认 
-	I_CH_CHECK_BLUE = RuleImage(roi_front=(615,255,45,71), roi_back=(489,173,289,239), threshold=0.8, method="Template matching", file="./tasks/RichMan/mall/charisma/charisma_ch_check_blue.png")
-
-
-	# Image Rule Assets
 	# 进入寄售屋 
 	I_CON_ENTER_CHECK = RuleImage(roi_front=(255,188,114,96), roi_back=(152,119,306,263), threshold=0.8, method="Template matching", file="./tasks/RichMan/mall/consignment/consignment_con_enter_check.png")
 	# 兑换 
@@ -176,6 +167,19 @@ class RichManAssets:
 
 
 	# Image Rule Assets
+	# 体力 
+	I_MALL_RESOURCE_AP = RuleImage(roi_front=(155,7,45,43), roi_back=(155,7,1115,90), threshold=0.7, method="Default", file="./tasks/RichMan/mall/navbar/navbar_mall_resource_ap.png")
+	# 荣誉 
+	I_MALL_RESOURCE_HONOR = RuleImage(roi_front=(722,11,41,42), roi_back=(155,7,1115,90), threshold=0.7, method="Default", file="./tasks/RichMan/mall/navbar/navbar_mall_resource_honor.png")
+	# 友情点 
+	I_MALL_RESOURCE_FRIENDS = RuleImage(roi_front=(908,8,39,43), roi_back=(155,7,1115,90), threshold=0.7, method="Default", file="./tasks/RichMan/mall/navbar/navbar_mall_resource_friends.png")
+	# 勋章 
+	I_MALL_RESOURCE_MEDAL = RuleImage(roi_front=(535,9,40,44), roi_back=(155,7,1115,90), threshold=0.7, method="Default", file="./tasks/RichMan/mall/navbar/navbar_mall_resource_medal.png")
+	# 魅力值 
+	I_MALL_RESOURCE_CHARISMA = RuleImage(roi_front=(906,5,48,46), roi_back=(155,7,1115,90), threshold=0.7, method="Default", file="./tasks/RichMan/mall/navbar/navbar_mall_resource_charisma.png")
+
+
+	# Image Rule Assets
 	# 特殊 
 	I_SIDE_CHECK_SPECIAL = RuleImage(roi_front=(218,7,42,42), roi_back=(140,0,659,74), threshold=0.7, method="Template matching", file="./tasks/RichMan/mall/navbar/navbar_side_check_special.png")
 	# 荣誉 
@@ -207,6 +211,17 @@ class RichManAssets:
 	O_MALL_RESOURCE_5 = RuleOcr(roi=(951,10,83,37), area=(951,10,83,37), mode="Quantity", method="Default", keyword="", name="mall_resource_5")
 	# 左数第二个 
 	O_MALL_RESOURCE_6 = RuleOcr(roi=(1129,6,100,41), area=(1129,6,100,41), mode="Quantity", method="Default", keyword="", name="mall_resource_6")
+
+
+	# Ocr Rule Assets
+	# 左数第一个(插画屋/寄售屋) 
+	O_LEGACY_MALL_RESOURCE_1 = RuleOcr(roi=(533,9,107,38), area=(533,9,107,38), mode="Quantity", method="Default", keyword="", name="legacy_mall_resource_1")
+	# 左数第二个(插画屋/寄售屋) 
+	O_LEGACY_MALL_RESOURCE_2 = RuleOcr(roi=(739,8,100,39), area=(739,8,100,39), mode="Quantity", method="Default", keyword="", name="legacy_mall_resource_2")
+	# 左数第三个(插画屋/寄售屋) 
+	O_LEGACY_MALL_RESOURCE_3 = RuleOcr(roi=(935,11,100,37), area=(935,11,100,37), mode="Quantity", method="Default", keyword="", name="legacy_mall_resource_3")
+	# 左数第四个(插画屋/寄售屋) 
+	O_LEGACY_MALL_RESOURCE_4 = RuleOcr(roi=(1129,6,100,41), area=(1129,6,100,41), mode="Quantity", method="Default", keyword="", name="legacy_mall_resource_4")
 
 
 	# Click Rule Assets
@@ -299,6 +314,11 @@ class RichManAssets:
 	# Swipe Rule Assets
 	# 向下滑动 
 	S_SP_DOWN = RuleSwipe(roi_front=(249,419,486,22), roi_back=(339,300,301,22), mode="default", name="sp_down")
+
+
+	# Click Rule Assets
+	# 进入神龛 
+	C_C_SHRINE = RuleClick(roi_front=(1181,320,88,109), roi_back=(1181,320,88,109), name="c_shrine")
 
 
 	# Image Rule Assets

@@ -11,6 +11,21 @@ class GeneralBattleAssets:
 
 
 	# Click Rule Assets
+	# description 
+	C_WIN_1 = RuleClick(roi_front=(175,102,1054,99), roi_back=(175,102,1054,99), name="win_1")
+	# description 
+	C_WIN_2 = RuleClick(roi_front=(22,112,210,496), roi_back=(22,112,210,496), name="win_2")
+	# description 
+	C_WIN_3 = RuleClick(roi_front=(1059,114,206,468), roi_back=(1059,114,206,468), name="win_3")
+	# description 
+	C_REWARD_1 = RuleClick(roi_front=(102,568,153,75), roi_back=(102,568,153,75), name="reward_1")
+	# description 
+	C_REWARD_2 = RuleClick(roi_front=(573,564,143,75), roi_back=(573,564,143,75), name="reward_2")
+	# description 
+	C_REWARD_3 = RuleClick(roi_front=(1057,564,159,77), roi_back=(1057,564,159,77), name="reward_3")
+
+
+	# Click Rule Assets
 	# 预设队伍1 
 	C_PRESET_TEAM_1 = RuleClick(roi_front=(195,235,465,110), roi_back=(195,235,465,110), name="preset_team_1")
 	# 预设队伍2 
@@ -83,7 +98,7 @@ class GeneralBattleAssets:
 	# 左上角的退出 
 	I_EXIT = RuleImage(roi_front=(14,12,43,41), roi_back=(0,0,91,83), threshold=0.8, method="Template matching", file="./tasks/Component/GeneralBattle/gb/gb_exit.png")
 	# 退出确认 
-	I_EXIT_ENSURE = RuleImage(roi_front=(709,406,69,36), roi_back=(709,406,69,36), threshold=0.8, method="Multi-scale template matching", file="./tasks/Component/GeneralBattle/gb/gb_exit_ensure.png")
+	I_EXIT_ENSURE = RuleImage(roi_front=(674,391,135,63), roi_back=(600,350,250,150), threshold=0.8, method="Template matching", file="./tasks/Component/GeneralBattle/gb/gb_exit_ensure.png")
 	# 左上角好友图标 
 	I_FRIENDS = RuleImage(roi_front=(89,14,36,36), roi_back=(89,14,36,36), threshold=0.8, method="Template matching", file="./tasks/Component/GeneralBattle/gb/gb_friends.png")
 	# 结算时的统计图标 

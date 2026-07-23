@@ -34,7 +34,7 @@ class MemoryScrollsAssets:
 	I_MS_ENTER = RuleImage(roi_front=(1169,155,24,55), roi_back=(1169,155,24,55), threshold=0.5, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_enter.png")
 	# 判断是否处于绘卷主界面 
 	I_MS_MAIN = RuleImage(roi_front=(151,390,40,50), roi_back=(151,390,40,50), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_main.png")
-    # 贡献碎片 
+	# 贡献碎片 
 	I_MS_CONTRIBUTE = RuleImage(roi_front=(1015,537,125,35), roi_back=(1015,537,125,35), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_contribute.png")
 	# 贡献碎片完成 
 	I_MS_CONTRIBUTED = RuleImage(roi_front=(493,232,63,40), roi_back=(493,232,63,40), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_contributed.png")
@@ -49,9 +49,9 @@ class MemoryScrollsAssets:
 	# 绘卷到达95%进度 
 	I_MS_COMPLETE_95 = RuleImage(roi_front=(654,562,8,18), roi_back=(654,562,8,18), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_complete_100.png")
 	# 小碎片 
-	I_MS_FRAGMENT_S = RuleImage(roi_front=(640,0,58,63), roi_back=(640,0,58,63), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_fragment_s.png")
+	I_MS_FRAGMENT_S = RuleImage(roi_front=(651,25,26,23), roi_back=(640,0,58,63), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_fragment_s.png")
 	# 小碎片满50 
-	I_MS_FRAGMENT_S_50 = RuleImage(roi_front=(507,302,104,45), roi_back=(507,302,104,45), threshold=0.9, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_fragment_s_50.png")
+	I_MS_FRAGMENT_S_50 = RuleImage(roi_front=(540,314,60,25), roi_back=(507,302,104,45), threshold=0.9, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_fragment_s_50.png")
 	# description 
 	I_MS_FRAGMENT_S_VERIFICATION = RuleImage(roi_front=(615,137,44,39), roi_back=(598,115,100,100), threshold=0.8, method="Template matching", file="./tasks/MemoryScrolls/ms/ms_ms_fragment_s_verification.png")
 	# 双绘卷进入按钮 

@@ -15,7 +15,7 @@
     "roiBack": "216,187,919,364",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "五个勋章"
+    "description": "5个勋章"
   },
   {
     "itemName": "medal_4",
@@ -24,7 +24,7 @@
     "roiBack": "228,178,899,362",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "4个勋章"
   },
   {
     "itemName": "medal_3",
@@ -33,7 +33,7 @@
     "roiBack": "229,189,894,345",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "3个勋章"
   },
   {
     "itemName": "medal_2",
@@ -42,7 +42,7 @@
     "roiBack": "217,193,923,354",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "2个勋章"
   },
   {
     "itemName": "medal_1",
@@ -51,7 +51,7 @@
     "roiBack": "237,198,892,336",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "1个勋章"
   },
   {
     "itemName": "medal_0",
@@ -141,7 +141,7 @@
     "roiBack": "1002,643,30,41",
     "method": "Template matching",
     "threshold": 0.9,
-    "description": "没有锁图片，适配呱太入侵"
+    "description": "无锁图片，适配呱太入侵"
   },
   {
     "itemName": "lock_2",
@@ -159,7 +159,7 @@
     "roiBack": "189,182,967,376",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "5勋章呱太"
   },
   {
     "itemName": "medal_3_2",
@@ -177,7 +177,7 @@
     "roiBack": "902,479,201,50",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "description"
+    "description": "3徽章新图3号"
   },
   {
     "itemName": "fire_again",

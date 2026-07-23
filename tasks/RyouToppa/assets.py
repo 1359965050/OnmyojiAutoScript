@@ -105,9 +105,9 @@ class RyouToppaAssets:
 	# description 
 	I_TOPPA_RECORD = RuleImage(roi_front=(66,628,64,39), roi_back=(66,628,64,39), threshold=0.8, method="Template matching", file="./tasks/RyouToppa/dev/res_toppa_record.png")
 	# description 
-	I_TOPPA_LOCK_TEAM = RuleImage(roi_front=(203,602,26,32), roi_back=(203,602,26,32), threshold=0.8, method="Template matching", file="./tasks/RyouToppa/dev/dev_toppa_lock_team.png")
+	I_TOPPA_LOCK_TEAM = RuleImage(roi_front=(203,602,26,32), roi_back=(160,570,110,80), threshold=0.75, method="Template matching", file="./tasks/RyouToppa/dev/dev_toppa_lock_team.png")
 	# description 
-	I_TOPPA_UNLOCK_TEAM = RuleImage(roi_front=(202,603,25,31), roi_back=(202,603,25,31), threshold=0.8, method="Template matching", file="./tasks/RyouToppa/dev/dev_toppa_unlock_team.png")
+	I_TOPPA_UNLOCK_TEAM = RuleImage(roi_front=(202,603,25,31), roi_back=(160,570,110,80), threshold=0.75, method="Template matching", file="./tasks/RyouToppa/dev/dev_toppa_unlock_team.png")
 
 
 	# Click Rule Assets
@@ -117,7 +117,7 @@ class RyouToppaAssets:
 
 	# Image Rule Assets
 	# 寮突 
-	I_RYOU_TOPPA = RuleImage(roi_front=(1215,370,40,70), roi_back=(1161,323,118,193), threshold=0.6, method="Template matching", file="./tasks/RyouToppa/res/res_ryou_toppa.png")
+	I_RYOU_TOPPA = RuleImage(roi_front=(1191,352,78,116), roi_back=(1161,323,118,193), threshold=0.6, method="Template matching", file="./tasks/RyouToppa/res/res_ryou_toppa.png")
 	# 寮突选择阴阳寮按钮 
 	I_SELECT_RYOU_BUTTON = RuleImage(roi_front=(560,577,156,46), roi_back=(560,577,156,46), threshold=0.8, method="Template matching", file="./tasks/RyouToppa/res/res_select_ryou_button.png")
 	# 寮突未选择阴阳寮 

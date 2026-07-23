@@ -17,6 +17,25 @@ class KekkaiActivationAssets:
 	C_A_SELECT_AUTO = RuleClick(roi_front=(173,160,354,127), roi_back=(173,160,354,127), name="a_select_auto")
 
 
+	# Ocr Rule Assets
+	# 这张卡一共有多少小时 
+	O_CARD_ALL_TIME = RuleOcr(roi=(926,262,95,31), area=(926,262,95,31), mode="Duration", method="Default", keyword="", name="card_all_time")
+	# 识别结界卡每小时收益 
+	O_CHECK_CARD_NUMBER = RuleOcr(roi=(305,153,107,481), area=(305,153,107,481), mode="Single", method="Default", keyword="", name="check_card_number")
+
+
+	# Swipe Rule Assets
+	# description 
+	S_CARDS_SWIPE = RuleSwipe(roi_front=(178,401,23,23), roi_back=(176,168,29,24), mode="default", name="cards_swipe")
+
+
+	# Click Rule Assets
+	# 切换卡的种类 
+	C_A_SELECT_CARD_LIST = RuleClick(roi_front=(352,99,172,53), roi_back=(352,99,172,53), name="a_select_card_list")
+	# description 
+	C_A_SELECT_AUTO = RuleClick(roi_front=(173,160,354,127), roi_back=(173,160,354,127), name="a_select_auto")
+
+
 	# Image Rule Assets
 	# 斗鱼收获奖励4星 
 	I_A_HARVEST_FISH4 = RuleImage(roi_front=(897,159,48,40), roi_back=(872,128,140,181), threshold=0.8, method="Template matching", file="./tasks/KekkaiActivation/a/a_a_harvest_fish4.png")
