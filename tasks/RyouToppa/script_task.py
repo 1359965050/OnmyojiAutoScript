@@ -67,12 +67,6 @@ area_map = (
 )
 
 
-def random_delay(min_value: float = 2.0, max_value: float = 5.0, decimal: int = 1):
-    """
-    生成一个指定范围内的随机小数
-    """
-    random_float_in_range = random.uniform(min_value, max_value)
-    return round(random_float_in_range, decimal)
 
 
 class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
@@ -162,16 +156,15 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
 
         logger.attr('ryou_toppa_start_flag', ryou_toppa_start_flag)
         logger.attr('ryou_toppa_success_penetration', ryou_toppa_success_penetration)
-        # 寮突未开 并且有权限， 开开寮突，没有权限则标记失败
+        # 寮突未开
         if not ryou_toppa_start_flag:
-            if ryou_config.raid_config.ryou_access and ryou_toppa_admin_flag:
-                # 作为寮管理，开启今天的寮突
-                logger.info("As the manager of the ryou, try to start ryou toppa.")
-                self.start_ryou_toppa()
+            logger.info("The ryou toppa is not open.")
+            if ryou_config.raid_config.loop_raid:
+                logger.info('Loop raid is enabled, set next run after 30 minutes')
+                self.set_next_run(task='RyouToppa', target=datetime.now().replace(microsecond=0) + timedelta(minutes=30))
             else:
-                logger.info("The ryou toppa is not open and you are a ryou member.")
                 self.set_next_run(task='RyouToppa', finish=True, server=True, success=False)
-                raise TaskEnd
+            raise TaskEnd
 
         # 100% 攻破, 第二天再执行
         if ryou_toppa_success_penetration:
@@ -214,7 +207,10 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
                     self.flush_area_cache()
                 continue
 
-        if success:
+        if ryou_config.raid_config.loop_raid:
+            logger.info('Loop raid is enabled, set next run after 30 minutes')
+            self.set_next_run(task='RyouToppa', target=datetime.now().replace(microsecond=0) + timedelta(minutes=30))
+        elif success:
             self.set_next_run(task='RyouToppa', finish=True, server=True, success=True)
         else:
             self.set_next_run(task='RyouToppa', finish=True, server=True, success=False)
@@ -222,6 +218,10 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         raise TaskEnd
 
     def plan_tomorrow_ryoutoppa(self):
+        if self.config.ryou_toppa.raid_config.loop_raid:
+            logger.info('Loop raid is enabled, set next run after 30 minutes')
+            self.set_next_run(task='RyouToppa', target=datetime.now().replace(microsecond=0) + timedelta(minutes=30))
+            return
         # 安排下次寮突破，便于复用
         now = datetime.now()
         # 如果时间在00:00-5:00之间则设定时间为当天的自定义时间
@@ -230,38 +230,6 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         # 如果时间在05:00-23:59之间则设定时间为明天的自定义时间
         else:
             self.custom_next_run(task='RyouToppa', custom_time=self.config.ryou_toppa.raid_config.next_ryoutoppa_time, time_delta=1)
-
-    def start_ryou_toppa(self):
-        """
-        开启寮突破
-        :return:
-        """
-        # 点击寮突
-        while 1:
-            self.screenshot()
-            if self.appear_then_click(self.I_SELECT_RYOU_BUTTON, interval=1):
-                time.sleep(1)
-                break
-        logger.info(f'Click {self.I_SELECT_RYOU_BUTTON.name}')
-
-        # 选择第一个寮
-        while 1:
-            self.screenshot()
-            if self.appear_then_click(self.I_GUILD_ORDERS_REWARDS, action=self.C_SELECT_FIRST_RYOU, interval=1):
-                time.sleep(1)
-                break
-        logger.info(f'Click {self.C_SELECT_FIRST_RYOU.name}')
-
-        # 点击开始突入
-        while 1:
-            self.screenshot()
-            if self.appear_then_click(self.I_START_TOPPA_BUTTON, interval=1):
-                time.sleep(1)
-                continue
-            # 出现寮奖励， 说明寮突已开
-            if self.appear(self.I_RYOU_REWARD, threshold=0.8):
-                break
-        logger.info(f'Click {self.I_START_TOPPA_BUTTON.name}')
 
     def has_ticket(self) -> bool:
         """
@@ -322,10 +290,6 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         # 每次进攻前检查区域可用性
         if not self.check_area(index):
             return False
-        # 正式进攻会设定 2s - 10s 的随机延迟，避免攻击间隔及其相近被检测为脚本。
-        if self.config.ryou_toppa.raid_config.random_delay:
-            delay = random_delay()
-            time.sleep(delay)
         rcl = area_map[index].get("rule_click")
         # 塔塔开！
         click_failure_count = 0

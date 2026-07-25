@@ -5914,16 +5914,10 @@
           "title": "Skip Difficult",
           "type": "boolean"
         },
-        "ryou_access": {
+        "loop_raid": {
           "default": false,
-          "description": "ryou_access_help",
-          "title": "Ryou Access",
-          "type": "boolean"
-        },
-        "random_delay": {
-          "default": false,
-          "description": "random_delay_help",
-          "title": "Random Delay",
+          "description": "loop_raid_help",
+          "title": "Loop Raid",
           "type": "boolean"
         }
       },

@@ -3536,12 +3536,12 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>失败后不再攻打该结界</translation>
         </message>
         <message>
-            <source>ryou_access</source>
-            <translation>寮管理开启寮突破</translation>
+            <source>loop_raid</source>
+            <translation>开启循环突破</translation>
         </message>
         <message>
-            <source>ryou_access_help</source>
-            <translation/>
+            <source>loop_raid_help</source>
+            <translation>开启后每次运行完成将下一次运行时间设定为 30 分钟后</translation>
         </message>
         <message>
             <source>random_delay</source>

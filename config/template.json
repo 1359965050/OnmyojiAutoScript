@@ -245,8 +245,7 @@
       "limit_count": 50,
       "next_ryoutoppa_time": "07:00:00",
       "skip_difficult": true,
-      "ryou_access": false,
-      "random_delay": false
+      "loop_raid": false
     },
     "general_battle_config": {
       "lock_team_enable": false,
