@@ -47,7 +47,6 @@ class SixRealmsCommon(GameUi, SixRealmsAssets):
         x, y, width, height = coin_rule.roi_front
         self.O_EXTRA_COIN_NUM.roi = [x + 25, y + 47, width - 5, height - 23]
         extra_coin = self.O_EXTRA_COIN_NUM.ocr_digit(self.device.image)
-        extra_coin = int(extra_coin) if extra_coin != "" else 0
         return extra_coin
 
     def open_shop(self, store_rule: RuleImage, store_page: pages.Page) -> bool:
@@ -69,8 +68,8 @@ class SixRealmsCommon(GameUi, SixRealmsAssets):
         self.appear_then_click(self.I_UI_CANCEL)
         return False
 
-    def enter_battle(self, fire_rule: RuleImage, boss_unlock: RuleImage = None, boss_lock: RuleImage = None,
-                     normal_unlock: RuleImage = None, normal_lock: RuleImage = None) -> bool:
+    def enter_battle(self, fire_rule: RuleImage, boss_unlock: RuleImage | None = None, boss_lock: RuleImage | None = None,
+                     normal_unlock: RuleImage | None = None, normal_lock: RuleImage | None = None) -> bool:
         """
         进入战斗
         :param fire_rule: 点击进入战斗的挑战规则

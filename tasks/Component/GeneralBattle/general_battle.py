@@ -144,7 +144,7 @@ class BattleAction(str, Enum):
     QUICK_EXIT = "quick_exit"
 
 
-class GeneralBattle(GeneralBuff, GeneralBattleAssets):
+class GeneralBattle(GeneralBuff, GameUi, GeneralBattleAssets):
     """
     使用这个通用的战斗必须要求这个任务的 config 有 general_battle_config。
     """
@@ -208,14 +208,14 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             session_page = self.navigator.resolve_page(target)
             if session_page is None:
                 return False
-            return bool(self.match_page_once(session_page))
+            return self.match_page_once(session_page)
         if callable(target) and not isinstance(target, (RuleImage, RuleGif, RuleOcr)):
             return bool(invoke_task_callable(target, self))
 
         matcher = ensure_matcher(target)
         if matcher is None:
             return False
-        return bool(matcher.evaluate(self))
+        return matcher.evaluate(self)
 
     def is_in_battle(self, is_screenshot: bool = True) -> bool:
         """兼容旧任务的战斗态快速检测。
@@ -316,7 +316,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             timed_battle_inspections=self._build_timed_battle_inspections(config, battle_key),
             prepare_click_timer=Timer(PREPARE_CLICK_DELAY),
             buff=buff,
-            quick_exit=bool(config.quick_exit),
+            quick_exit=config.quick_exit,
         )
 
     def _get_battle_behavior_scopes(self, config: GeneralBattleConfig, battle_key: str) -> dict[str, BattleBehaviorScope]:
@@ -478,7 +478,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         context.long_refresh_timer = Timer(180).start()
         context.last_page = None
         context.reward_no_battle_ts = None
-        context.quick_exit = bool(config.quick_exit)
+        context.quick_exit = config.quick_exit
         context.quick_exit_timer = None
         context.continuous_count = continuous_count
         context.round_behavior_state = BattleBehaviorState()
@@ -546,7 +546,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             self.device.stuck_record_add("BATTLE_STATUS_S")
             context.long_refresh_timer.reset()
 
-    def _ensure_battle_stuck_guard(self, context: BattleContext, page: Page) -> None:
+    def _ensure_battle_stuck_guard(self, context: BattleContext, page: Page | None) -> None:
         """在准备/战斗中阶段确保底层长等待标记始终存在。
 
         Args:
@@ -657,6 +657,16 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             self.random_click_swipt()
         return BattleAction.CONTINUE
 
+    def _random_click(self, interval: float = 0.8) -> bool:
+        rc = random_click()
+        if isinstance(rc, list):
+            res = False
+            for click_item in rc:
+                if self.click(click_item, interval=interval):
+                    res = True
+            return res
+        return self.click(rc, interval=interval)
+
     def _handle_result(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
         """处理结算页面逻辑。
 
@@ -671,7 +681,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         context.is_win = not self.appear(self.I_FALSE, threshold=0.8)
         if context.last_page != page_battle_result:
             self.device.click_record_clear()
-        self.click(random_click(), interval=0.8)
+        self._random_click(interval=0.8)
         return BattleAction.CONTINUE
 
     def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
@@ -690,7 +700,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         self.appear_then_click(self.I_GB_SKIN_CONFIRM, interval=0.8)
         if context.last_page != page_reward:
             self.device.click_record_clear()
-        self.click(random_click(), interval=0.8)
+        self._random_click(interval=0.8)
         return BattleAction.CONTINUE
 
     def _handle_missing_battle_page(self, context: BattleContext, config: GeneralBattleConfig,
@@ -756,6 +766,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         """
         if action == BattleAction.EXIT_WIN:
             logger.info("Battle result: Win")
+            self._random_click(interval=0.8)
             return True
         if action == BattleAction.EXIT_LOSE:
             logger.info("Battle result: Lose")
@@ -790,7 +801,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
     def run_general_battle(
         self,
         config: GeneralBattleConfig = None,
-        buff: Union[BuffClass | list[BuffClass]] = None,
+        buff: BuffClass | list[BuffClass] | None = None,
         battle_key: str = "default",
         exit_matcher: ExitMatcher | None = None,
     ) -> bool:
@@ -834,7 +845,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                 if context.quick_exit and not self._in_settlement_stage(context, page):
                     action = BattleAction.QUICK_EXIT
                 else:
-                    handle = self.gb_page_handle_dict.get(page, None)
+                    handle = self.gb_page_handle_dict.get(page, None) if page is not None else None
                     if handle is None:
                         action = self._handle_missing_battle_page(context, config, resolved_exit_matcher)
                     else:
@@ -944,23 +955,29 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             logger.warning("Green mark name is empty")
             return
         timeout_timer = Timer(6).start()
-        best = {'name': '', 'x': -1, 'y': -1, 'similarity': 0.0}
+        best_name: str = ''
+        best_x: int = -1
+        best_y: int = -1
+        best_similarity: float = 0.0
         while not timeout_timer.reached():
             self.screenshot()
             results = self.O_GREEN_MARK_AREA.detect_and_ocr(self.device.image)
             for ret in results:
                 similarity = difflib.SequenceMatcher(None, ret.ocr_text, name).ratio()
-                if similarity > best['similarity']:
-                    x = self.O_GREEN_MARK_AREA.roi[0] + ret.box[0, 0] + 5
-                    y = self.O_GREEN_MARK_AREA.roi[1] + ret.box[0, 1] + 30
+                if similarity > best_similarity:
+                    x = int(self.O_GREEN_MARK_AREA.roi[0] + ret.box[0, 0] + 5)
+                    y = int(self.O_GREEN_MARK_AREA.roi[1] + ret.box[0, 1] + 30)
                     x = 1280 if x > 1280 else x
                     y = 720 if y > 720 else y
-                    best = {'name': ret.ocr_text, 'x': x, 'y': y, 'similarity': similarity}
-            if best['similarity'] > 0.5:
-                logger.info(f'Green name success, text: {best["name"]}[{best["similarity"]:.2f}]')
-                self.device.click(best['x'], best['y'], control_name=best['name'])
+                    best_name = ret.ocr_text
+                    best_x = x
+                    best_y = y
+                    best_similarity = similarity
+            if best_similarity > 0.5:
+                logger.info(f'Green name success, text: {best_name}[{best_similarity:.2f}]')
+                self.device.click(best_x, best_y, control_name=best_name)
                 return
-        logger.warning(f'Green name failed, best text: {best["name"]}[{best["similarity"]:.2f}]')
+        logger.warning(f'Green name failed, best text: {best_name}[{best_similarity:.2f}]')
 
     def switch_preset_team(self, enable: bool = False, preset_group: int = 1, preset_team: int = 1):
         """
@@ -982,7 +999,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         timeout_warning = "Switch preset timeout, use current team"
 
         wait_preset_timer = Timer(4).start()
-        while 1:
+        while True:
             if wait_preset_timer.reached():
                 logger.warning(timeout_warning)
                 return
@@ -1047,7 +1064,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         self.click(tmp)
         logger.info("Click preset ensure")
         wait_ensure_timer = Timer(4).start()
-        while 1:
+        while True:
             if wait_ensure_timer.reached():
                 logger.warning(timeout_warning)
                 return
@@ -1107,7 +1124,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         """
         if enable:
             logger.info("Lock team")
-            while 1:
+            while True:
                 self.screenshot()
                 if self.appear(lock_image):
                     break
@@ -1115,14 +1132,14 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                     continue
         else:
             logger.info("Unlock team")
-            while 1:
+            while True:
                 self.screenshot()
                 if self.appear(unlock_image):
                     break
                 if self.appear_then_click(lock_image, interval=1):
                     continue
 
-    def check_and_open_buff(self, buff: Union[BuffClass | list[BuffClass]] = None):
+    def check_and_open_buff(self, buff: BuffClass | list[BuffClass] | None = None):
         """
         检测是否开启 buff。
 
@@ -1159,7 +1176,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             func(is_open)
             time.sleep(0.1)
         logger.info("Open buff success")
-        while 1:
+        while True:
             self.screenshot()
             if not self.appear(self.I_CLOUD):
                 break
@@ -1184,8 +1201,8 @@ def run_task_or_default_general_battle(task) -> bool:
     battle_handler = getattr(task, "run_general_battle", None)
     if callable(battle_handler):
         if battle_config is not None:
-            return battle_handler(config=battle_config)
-        return battle_handler()
+            return bool(battle_handler(config=battle_config))
+        return bool(battle_handler())
 
     match_page_once = getattr(task, "match_page_once", None)
     navigator = getattr(task, "navigator", None)
@@ -1194,8 +1211,8 @@ def run_task_or_default_general_battle(task) -> bool:
         return False
 
     fallback = GeneralBattle(config=task.config, device=task.device)
-    fallback.navigator = navigator
-    fallback.match_page_once = match_page_once
+    setattr(fallback, "navigator", navigator)
+    setattr(fallback, "match_page_once", match_page_once)
     fallback.current_count = task.current_count
     try:
         if battle_config is not None:

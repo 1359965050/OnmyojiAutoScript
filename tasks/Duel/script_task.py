@@ -216,6 +216,17 @@ class ScriptTask(GameUi, GeneralBattle, DuelAssets, SwitchOnmyoji):
             # 识别错误分数超过一万, 去掉最高位
             logger.warning('Recognition error, score is too high')
             score = int(str(score)[1:])
+
+        # 检查名士段位（3000分及以上）
+        if self.appear(self.I_D_CELEB_STAR) or self.appear(self.I_D_CELEB_HONOR):
+            celeb_stars = self.O_D_CELEB_STAR_COUNT.ocr(self.device.image)
+            if isinstance(celeb_stars, int) and celeb_stars > 0:
+                score = 3000 + celeb_stars * 100
+                logger.info(f'Detected Celeb (名士) rank with {celeb_stars} stars, calculated score: {score}')
+            else:
+                score = max(score, 3000)
+                logger.info(f'Detected Celeb (名士) rank, score set to: {score}')
+
         logger.info(f'battle score: {score}')
         self.current_score = score
         return self.current_score

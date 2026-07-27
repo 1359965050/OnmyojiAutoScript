@@ -16,5 +16,14 @@
     "method": "Default",
     "keyword": "",
     "description": "分数"
+  },
+  {
+    "itemName": "d_celeb_star_count",
+    "roiFront": "640,445,80,40",
+    "roiBack": "640,445,80,40",
+    "mode": "Digit",
+    "method": "Default",
+    "keyword": "",
+    "description": "名士星数"
   }
 ]

@@ -151,5 +151,23 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "胜利分享"
+  },
+  {
+    "itemName": "d_celeb_star",
+    "imageName": "duel_d_celeb_star.png",
+    "roiFront": "620,450,40,40",
+    "roiBack": "450,400,350,150",
+    "method": "Template matching",
+    "threshold": 0.75,
+    "description": "名士星标"
+  },
+  {
+    "itemName": "d_celeb_honor",
+    "imageName": "duel_d_celeb_honor.png",
+    "roiFront": "150,640,50,50",
+    "roiBack": "80,600,180,100",
+    "method": "Template matching",
+    "threshold": 0.75,
+    "description": "名士荣誉殿堂图标"
   }
 ]

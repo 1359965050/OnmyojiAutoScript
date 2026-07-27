@@ -138,7 +138,7 @@ class RuleList:
             self.targets[item] = RuleImage(roi_front=self.roi_back, roi_back=self.roi_back,
                                            method="Template matching", threshold=0.8, file=file)
 
-    def image_appear(self, image: np.array, name: str, frame_id: str = None) -> bool | tuple:
+    def image_appear(self, image: np.ndarray, name: str | list[str], frame_id: str | None = None) -> bool | tuple:
         """
         判断是否出现了某个图片
         :param image: 屏幕的截图
@@ -169,7 +169,7 @@ class RuleList:
             logger.error(f'Mode is not image')
             return False
 
-    def ocr_appear(self, image: np.array, name: str):
+    def ocr_appear(self, image: np.ndarray, name: str | list[str]):
         """
         判断是否出现了某个文字,
         :param image: 屏幕的截图

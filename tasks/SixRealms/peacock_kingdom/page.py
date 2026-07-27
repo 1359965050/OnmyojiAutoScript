@@ -6,15 +6,16 @@ from tasks.GlobalGame.assets import GlobalGameAssets
 from tasks.SixRealms.assets import SixRealmsAssets
 from tasks.SixRealms.page import page_peacock_kingdom, page_sr_prepare_exit, page_sr_open_store
 
-# 孔雀国准备界面
+# 孔雀国准备界面（含初始祝福选择 + 初始技能选择 + 开启确认）
 page_pk_prepare = Page(any_of(SixRealmsAssets.I_PK_START_CONFIRM, SixRealmsAssets.I_PK_START_CONFIRM2,
-                              SixRealmsAssets.I_PK_START_THIRD_SKILL, SixRealmsAssets.I_MFIRST_SKILL))
+                              SixRealmsAssets.I_PK_SKILL_STRANGE_POWER, SixRealmsAssets.I_PK_START_FIRST_SKILL),
+                       category="peacock_kingdom")
 # 孔雀国主界面
 page_pk_main = Page(any_of(SixRealmsAssets.I_PK_CHECK_MAIN, SixRealmsAssets.I_PK_BOSS_PREPARE),
                           category="peacock_kingdom", priority=25)
 page_pk_prepare.connect(page_pk_main, sequence(SixRealmsAssets.I_PK_START_CONFIRM,
-                                               SixRealmsAssets.I_PK_START_CONFIRM2, SixRealmsAssets.I_PK_START_THIRD_SKILL,
-                                               SixRealmsAssets.I_MFIRST_SKILL, success_index=3),
+                                               SixRealmsAssets.I_PK_START_CONFIRM2, SixRealmsAssets.I_PK_SKILL_STRANGE_POWER,
+                                               SixRealmsAssets.I_SELECT_2, success_index=3),
                         key="page_pk_prepare->page_pk_main")
 
 # 挑战页面
@@ -23,23 +24,24 @@ page_pk_challenge = Page(SixRealmsAssets.I_PK_BATTLE_FIRE, category="peacock_kin
 # 宁息之屿
 page_pk_shop_land = Page(all_of(SixRealmsAssets.I_PK_STORE_EXIT, SixRealmsAssets.I_PK_STORE_REFRESH,
                                 SixRealmsAssets.I_PK_STORE_STABLE_FLAG), category="peacock_kingdom")
-page_pk_shop_land.connect(page_pk_main, SixRealmsAssets.I_PK_STORE_EXIT, key="page_pk_shop_land->page_pk_main")
+page_pk_shop_land.connect(page_pk_main, sequence(SixRealmsAssets.I_PK_STORE_EXIT, SixRealmsAssets.C_CONFIRM_LEAVE, success_index=1), key="page_pk_shop_land->page_pk_main")
 
 # 神秘之屿
-page_pk_mistery_land = Page(any_of(SixRealmsAssets.I_PK_MYSTERY_IMITATE, SixRealmsAssets.I_MISTERY_COIN_RIGHT_TOP),
-                            category="peacock_kingdom")
-page_pk_mistery_land.connect(page_pk_main, GlobalGameAssets.I_UI_BACK_BLUE, key="page_pk_mistery_land->page_pk_main")
+page_pk_mistery_land = Page(SixRealmsAssets.I_PK_LAND_MYSTERY_TITLE, category="peacock_kingdom")
+page_pk_mistery_land.connect(page_pk_main, sequence(GlobalGameAssets.I_UI_BACK_BLUE, SixRealmsAssets.C_CONFIRM_LEAVE, success_index=1), key="page_pk_mistery_land->page_pk_main")
 
 # 混沌之屿
 page_pk_chaos_land = Page(any_of(SixRealmsAssets.I_PK_CHAOS_BOX, SixRealmsAssets.I_PK_CHAOS_ELITE_FLAG),
                           category="peacock_kingdom")
-page_pk_chaos_land.connect(page_pk_main, SixRealmsAssets.I_PK_CHAOS_EXIT, key="page_pk_chaos_land->page_pk_main")
+page_pk_chaos_land.connect(page_pk_main, sequence(SixRealmsAssets.I_PK_CHAOS_EXIT, SixRealmsAssets.C_CONFIRM_LEAVE, success_index=1), key="page_pk_chaos_land->page_pk_main")
 page_pk_chaos_land.connect(page_pk_challenge, SixRealmsAssets.C_NPC_FIRE_CENTER, key="page_pk_chaos_land->page_pk_challenge")
 page_pk_challenge.connect(page_pk_chaos_land, GlobalGameAssets.I_UI_BACK_BLUE, key="page_pk_challenge->page_pk_chaos_land")
 
 # 绽放之屿
 page_pk_bloom_land = Page(SixRealmsAssets.I_PK_BLOOM_EXIT, category="peacock_kingdom")
-page_pk_bloom_land.connect(page_pk_main, SixRealmsAssets.I_PK_BLOOM_EXIT, key="page_pk_bloom_land->page_pk_main")
+page_pk_bloom_land.connect(page_pk_main, sequence(SixRealmsAssets.I_PK_BLOOM_EXIT, SixRealmsAssets.C_CONFIRM_LEAVE, success_index=1), key="page_pk_bloom_land->page_pk_main")
+page_pk_bloom_land.connect(page_pk_challenge, SixRealmsAssets.I_PK_BATTLE_FIRE, key="page_pk_bloom_land->page_pk_challenge")
+page_pk_challenge.connect(page_pk_bloom_land, GlobalGameAssets.I_UI_BACK_BLUE, key="page_pk_challenge->page_pk_bloom_land")
 
 # 鏖战之屿
 page_pk_battle_land = Page(SixRealmsAssets.I_PK_BATTLE_COMMON, category="peacock_kingdom")

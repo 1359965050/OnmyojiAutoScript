@@ -10,36 +10,56 @@ from typing import List, Optional
 class BasePeacockKingdom(GeneralBattle, SixRealmsCommon):
     coin_num: int = 0
     skill_roaring_thunder: int = 0
+    skill_qingcheng: int = 0
+    skill_liuyu: int = 0
+    skill_power_level: int = 0
 
-    def get_pk_skill_select(self, skill_rule_list: List[RuleImage]) -> Optional[RuleImage]:
+    def get_pk_skill_select_ocr(self, priority_names: List[str]) -> tuple[Optional[int], Optional[str]]:
         """
-        获取孔雀国技能对应的选择按钮
+        使用OCR读取技能名称，返回 (匹配到的最高优先级技能的中心X坐标, 技能名称)
+        """
+        for name in priority_names:
+            x, y, w, h = self.O_PK_SKILL_NAME.ocr_full(self.device.image, keyword=name)
+            if w > 0:
+                logger.info(f'OCR Recognize skill: {name} at x={x}')
+                return x + w // 2, name
+        return None, None
+
+    def get_pk_skill_select(self, skill_rule_list: List[RuleImage]) -> tuple[Optional[RuleImage], Optional[RuleImage]]:
+        """
+        获取孔雀国技能对应的选择按钮及对应规则
         :param skill_rule_list: 技能列表
-        :return: 技能对应的选择按钮(没识别到技能返回None)
+        :return: (选择按钮, 对应的技能规则)
         """
         if not skill_rule_list:
-            return None
+            return None, None
         for skill_rule in skill_rule_list:
             if not self.appear(skill_rule):
                 continue
             logger.info(f'Recognize skill: {skill_rule.name}')
             x, y = skill_rule.front_center()
+            btn = None
             if 240 < x < 340:
-                return self.I_PK_SELECT_0
-            if 590 <= x < 690:
-                return self.I_PK_SELECT_1
-            if 950 <= x < 1050:
-                return self.I_PK_SELECT_2
-            if 420 <= x < 520:
-                return self.I_PK_SELECT_3
-            if 775 <= x < 875:
-                return self.I_PK_SELECT_4
+                btn = self.I_PK_SELECT_0
+            elif 590 <= x < 690:
+                btn = self.I_PK_SELECT_1
+            elif 950 <= x < 1050:
+                btn = self.I_PK_SELECT_2
+            elif 420 <= x < 520:
+                btn = self.I_PK_SELECT_3
+            elif 775 <= x < 875:
+                btn = self.I_PK_SELECT_4
+            if btn:
+                return btn, skill_rule
             break
-        return None
+        return None, None
 
     def before_run(self):
         self.coin_num = 0
         self.skill_roaring_thunder = 0
+        self.skill_qingcheng = 0
+        self.skill_liuyu = 0
+        self.skill_power_level = 0
         pages.page_battle = self.navigator.resolve_page(pages.page_battle)
         pages.page_battle.recognizer = pages.any_of(self.I_BOSS_SKIP, pages.page_battle.recognizer)
         pages.page_battle_result = self.navigator.resolve_page(pages.page_battle_result)
@@ -71,19 +91,85 @@ class BasePeacockKingdom(GeneralBattle, SixRealmsCommon):
         # 力量或魅力强化
         if self.appear(self.I_PK_SELECT_0, interval=1.5) or self.appear(self.I_PK_SELECT_3, interval=1.5):
             context.is_win = True
-            select_btn = self.get_pk_skill_select([self.I_PK_SKILL_POWER, self.I_PK_SKILL_CHARM])
+            if self.skill_power_level < 8:
+                priority_list = [self.I_PK_SKILL_POWER, self.I_PK_SKILL_CHARM]
+            else:
+                logger.info(f'Power enhancement level reached limit ({self.skill_power_level}/8), priority switch to Charm')
+                priority_list = [self.I_PK_SKILL_CHARM, self.I_PK_SKILL_POWER]
+
+            select_btn, matched_skill = self.get_pk_skill_select(priority_list)
+
+            # 兜底：若优先列表均未识别到，则选择出现的第一个选择按钮
+            if not select_btn:
+                for btn in [self.I_PK_SELECT_0, self.I_PK_SELECT_3, self.I_PK_SELECT_1, self.I_PK_SELECT_2, self.I_PK_SELECT_4]:
+                    if self.appear(btn):
+                        select_btn = btn
+                        break
+
             if select_btn:
-                self.appear_then_click(select_btn, interval=1)
+                if self.appear_then_click(select_btn, interval=1):
+                    if matched_skill == self.I_PK_SKILL_POWER:
+                        self.skill_power_level += 1
+                        logger.info(f'Skill power level updated: {self.skill_power_level}/8')
             return BattleAction.CONTINUE
         # 选择技能
         if self.appear(self.I_SELECT_3, interval=1.5) and self.appear(self.I_PK_SKILL_REFRESH):
+            # 留出时间让弹出的技能和图标动画渲染完毕
+            self.device.sleep(1.5)
             context.is_win = True
             self.coin_num = self.get_coin_num(self.O_COIN_NUM)
-            skill_rules = [self.I_PK_SKILL_ROARING_THUNDER] if self.skill_roaring_thunder == 0 else []
-            select_btn = self.get_skill_select(skill_rules)
-            if self.appear_then_click(select_btn, interval=1):
-                if select_btn != self.I_SELECT_3:
+            
+            select_btn = None
+            matched_skill = None
+            matched_name = None
+
+            # 1. 优先使用 OCR 读取文字
+            ocr_names = []
+            if self.skill_qingcheng == 0: ocr_names.append("倾城之舞")
+            if self.skill_liuyu == 0: ocr_names.append("流羽剑术")
+            if self.skill_roaring_thunder == 0: ocr_names.append("轰雷") # "六道·轰雷"
+            
+            target_x, matched_name = self.get_pk_skill_select_ocr(ocr_names)
+            if target_x:
+                # 既然 OCR 已经锁定了 X 坐标，直接点击下方的按钮即可，跳过图像匹配！
+                logger.info(f'OCR located skill {matched_name} at X={target_x}, clicking directly.')
+                self.device.click(target_x, 601, control_name='pk_skill_select')
+                self.device.sleep(1.0)
+                # 模拟 appear_then_click 成功的逻辑流
+                if matched_name == "倾城之舞":
+                    self.skill_qingcheng = 1
+                    logger.info('Selected skill: 倾城之舞')
+                elif matched_name == "流羽剑术":
+                    self.skill_liuyu = 1
+                    logger.info('Selected skill: 流羽剑术')
+                elif matched_name == "轰雷":
                     self.skill_roaring_thunder = 1
+                    logger.info('Selected skill: 六道轰雷')
+                return BattleAction.CONTINUE
+
+            # 2. 如果 OCR 没找到，降级使用图标图像匹配
+            if not select_btn:
+                skill_rules = []
+                if self.skill_qingcheng == 0: skill_rules.append(self.I_PK_SKILL_QINGCHENG)
+                if self.skill_liuyu == 0: skill_rules.append(self.I_PK_SKILL_LIUYU)
+                if self.skill_roaring_thunder == 0: skill_rules.append(self.I_PK_SKILL_ROARING_THUNDER)
+                    
+                select_btn, matched_skill = self.get_pk_skill_select(skill_rules)
+            
+            # 3. 兜底策略
+            if not select_btn:
+                select_btn = self.I_SELECT_3
+                
+            if self.appear_then_click(select_btn, interval=1):
+                if matched_skill == self.I_PK_SKILL_QINGCHENG:
+                    self.skill_qingcheng = 1
+                    logger.info('Selected skill: 倾城之舞')
+                elif matched_skill == self.I_PK_SKILL_LIUYU:
+                    self.skill_liuyu = 1
+                    logger.info('Selected skill: 流羽剑术')
+                elif matched_skill == self.I_PK_SKILL_ROARING_THUNDER:
+                    self.skill_roaring_thunder = 1
+                    logger.info('Selected skill: 六道轰雷')
         return BattleAction.CONTINUE
 
     def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:

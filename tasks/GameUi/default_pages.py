@@ -4,6 +4,7 @@ from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.Component.GeneralInvite.assets import GeneralInviteAssets
 from tasks.Component.SwitchAccount.assets import SwitchAccountAssets
 from tasks.Exploration.assets import ExplorationAssets
+from tasks.GoryouRealm.assets import GoryouRealmAssets
 from tasks.GameUi.action import conditional_action, sequence
 from tasks.DailyTrifles.assets import DailyTriflesAssets
 from typing import Union
@@ -226,7 +227,7 @@ page_kekkai_toppa.connect(page_shikigami_records, GameUiAssets.I_REALM_RAID_GOTO
 page_realm_raid.connect(page_kekkai_toppa, RyouToppaAssets.I_RYOU_TOPPA, key="page_realm_raid->page_kekkai_toppa")
 page_kekkai_toppa.connect(page_realm_raid, GameUiAssets.I_RYOUTOPPA_GOTO_REALMRAID, key="page_kekkai_toppa->page_realm_raid")
 
-page_goryou_realm = Page(GameUiAssets.I_CHECK_GORYOU, category="global")
+page_goryou_realm = Page(any_of(GameUiAssets.I_CHECK_GORYOU, GoryouRealmAssets.I_GR_FIRE), category="global")
 page_goryou_realm.connect(page_exploration, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_goryou_realm->page_exploration")
 page_exploration.connect(page_goryou_realm, GameUiAssets.I_EXPLORATION_GOTO_GORYOU_REALM, key="page_exploration->page_goryou_realm")
 

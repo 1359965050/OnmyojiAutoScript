@@ -8,7 +8,8 @@ from tasks.Exploration.base import BaseExploration
 from tasks.Exploration.config import AutoRotate, UserStatus, ExplorationLevel
 import tasks.Exploration.page as pages
 from tasks.GameUi.page_definition import Page
-from typing import Callable
+from typing import Callable, cast
+from module.atom.click import RuleClick
 
 
 class InviteFailedException(Exception):
@@ -39,7 +40,7 @@ class ScriptTask(BaseExploration):
             pages.page_battle_prepare: self.run_on_battle,
             pages.page_battle: self.run_on_battle,
             pages.page_battle_result: self.run_on_battle,
-            pages.page_reward: lambda : self.click(pages.random_click(), interval=0.8),
+            pages.page_reward: lambda : self.click(cast(RuleClick, pages.random_click()), interval=0.8),
             pages.page_battle_team: self.run_on_battle_team
         }
 
@@ -50,14 +51,26 @@ class ScriptTask(BaseExploration):
         self.post_process()
 
     def exec_exp_page(self):
-        pages.page_battle_team_exit = self.navigator.resolve_page(pages.page_battle_team_exit)
-        pages.page_battle_team_exit.connect(pages.page_exp_entrance, self.I_UI_CONFIRM, key="page_battle_team_exit->page_exp_entrance")
+        target_page = self.navigator.resolve_page(pages.page_battle_team_exit)
+        if target_page is not None:
+            pages.page_battle_team_exit = target_page
+            pages.page_battle_team_exit.connect(pages.page_exp_entrance, self.I_UI_CONFIRM, key="page_battle_team_exit->page_exp_entrance")
+        none_count = 0
         while True:
             self.screenshot()
             current_page = self.get_current_page()
             if current_page is None:
+                none_count += 1
+                if self.ui_reward_appear_click():
+                    self.device.stuck_record_clear()
+                    none_count = 0
+                elif none_count >= 10:
+                    logger.info("Page is None for 5s, try to goto_page(page_exp_main)")
+                    self.goto_page(pages.page_exp_main)
+                    none_count = 0
                 time.sleep(0.5)
                 continue
+            none_count = 0
             if self.check_exit(current_page):
                 self.appear_then_click(self.I_UI_CANCEL, interval=0.8)  # 处理队长结束的邀请弹窗
                 break
@@ -90,8 +103,10 @@ class ScriptTask(BaseExploration):
         fire_button = self.get_fire_button()
         if fire_button is not None and self.fire(fire_button):
             return
-        if self.fire_monster_type != 'boss' and self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=1.5) and self.arrive_end():
-            self.quit_exp_main()
+        if self.fire_monster_type != 'boss' and self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=1.5):
+            self.device.stuck_record_clear()
+            if self.arrive_end():
+                self.quit_exp_main()
 
     def run_on_exp_entrance(self):
         self.collect_treasure_box()
@@ -141,6 +156,8 @@ class ScriptTask(BaseExploration):
                 raise InviteFailedException('Invite failed, quit')
             case UserStatus.ALONE:
                 self.goto_page(pages.page_exp_main)
+            case UserStatus.MEMBER:
+                pass
 
     def run_on_exp_settings(self):
         if self._config.exploration_config.auto_rotate == AutoRotate.no:

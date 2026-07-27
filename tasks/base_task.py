@@ -29,16 +29,16 @@ from typing import Union
 
 
 class BaseTask(GlobalGameAssets, CostumeBase):
-    config: Config = None
-    device: Device = None
+    config: Config
+    device: Device
 
     folder: str
     name: str
     stage: str
 
-    limit_time: timedelta = None  # 限制运行的时间，是软时间，不是硬时间
-    limit_count: int = None  # 限制运行的次数
-    current_count: int = None  # 当前运行的次数
+    limit_time: timedelta | None = None  # 限制运行的时间，是软时间，不是硬时间
+    limit_count: int | None = None  # 限制运行的次数
+    current_count: int | None = None  # 当前运行的次数
 
     def __init__(self, config: Config, device: Device) -> None:
         """
@@ -204,16 +204,19 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def appear(self,
                target: RuleImage | RuleGif | RuleOcr,
-               interval: float = None,
-               threshold: float = None):
+               interval: float | None = None,
+               threshold: float | None = None) -> bool:
         """
-
-        :param target: 匹配的目标可以是RuleImage, 也可以是RuleOcr
-        :param interval:
+        判断是否出现某个目标
         :param threshold:
-        :return: interval时间到达且匹配成功则返回True, 否则False
+        :param interval:
+        :param target:
+        :return:
         """
-        timer_key = target.name
+        if not target:
+            return False
+
+        timer_key = target.name if hasattr(target, 'name') else str(target)
         if interval:
             if timer_key in self.interval_timer:
                 if self.interval_timer[timer_key].limit != interval:
@@ -226,15 +229,15 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             appear = self.ocr_appear(target, interval)
         elif isinstance(target, RuleImage):
             if threshold is None:
-                cached_result = self.device.get_image_batch_cache(target, frame_id=self.device.image_frame_id)
+                cached_result = self.device.get_image_batch_cache(target, frame_id=self.device.image_frame_id or "")
                 if cached_result is not None:
                     appear = target._apply_match_result(cached_result)
                 else:
-                    appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id)
+                    appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
             else:
-                appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id)
+                appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
         else:
-            appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id)
+            appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
 
         if appear and interval:
             self.interval_timer[timer_key].reset()
@@ -243,10 +246,10 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def appear_then_click(self,
                           target: RuleImage | RuleGif | RuleOcr,
-                          action: Union[RuleClick, RuleLongClick] = None,
-                          interval: float = None,
-                          threshold: float = None,
-                          duration: float = None):
+                          action: Union[RuleClick, RuleLongClick, None] = None,
+                          interval: float | None = None,
+                          threshold: float | None = None,
+                          duration: float | None = None) -> bool:
         """
         出现了就点击，默认点击图片的位置，如果添加了click参数，就点击click的位置
         :param duration: 如果是长按，可以手动指定duration，不指定默认.单位是ms！！！！
@@ -276,7 +279,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
     def wait_until_appear(self,
                           target: RuleImage | RuleOcr,
                           skip_first_screenshot=False,
-                          wait_time: int | float = None) -> bool:
+                          wait_time: int | float | None = None) -> bool:
         """
         等待直到出现目标
         :param wait_time: 等待时间，单位秒
@@ -288,7 +291,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         if wait_time:
             wait_timer = Timer(wait_time)
             wait_timer.start()
-        while 1:
+        while True:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
@@ -303,8 +306,8 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def wait_until_appear_then_click(self,
                                      target: RuleImage,
-                                     action: Union[RuleClick, RuleLongClick] = None,
-                                     wait_time: int = None) -> bool:
+                                     action: Union[RuleClick, RuleLongClick, None] = None,
+                                     wait_time: int | float | None = None) -> bool:
         """
         等待直到出现目标，然后点击
         :param wait_time:
@@ -324,13 +327,13 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         return True
 
     def wait_until_disappear(self, target: RuleImage) -> None:
-        while 1:
+        while True:
             self.screenshot()
             if not self.appear(target):
                 break
 
     def wait_until_pos_stable(self, target: RuleImage, stable_time: float = 0.3, timeout: float = 2,
-                              threshold: float = None, skip_first_screenshot: bool = True) -> bool:
+                              threshold: float | None = None, skip_first_screenshot: bool = True) -> bool:
         """
         等待直到在同一位置稳定出现
         :param skip_first_screenshot:
@@ -349,13 +352,13 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.maybe_screenshot(skip_first_screenshot)
             skip_first_screenshot = False
             # 当前页面能够匹配到target
-            if target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id):
+            if target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or ""):
                 cur_roi_front = target.roi_front
                 logger.info(f'Current:{cur_roi_front}, pre:{pre_roi_front}')
-                target.roi_back = pre_roi_front
+                target.roi_back = tuple(pre_roi_front) if pre_roi_front is not None else origin_roi_back
                 # 上一次匹配到的位置还能匹配到target
                 if pre_roi_front is not None and target.match(self.device.image, threshold=threshold,
-                                                              frame_id=self.device.image_frame_id):
+                                                              frame_id=self.device.image_frame_id or ""):
                     # 到达稳定时间
                     if stable_timer.reached():
                         logger.info(f'{target.name} position has stabilized')
@@ -387,14 +390,14 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         """
         target._match_init = False
         timeout.reset()
-        while 1:
+        while True:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 self.screenshot()
 
             if target._match_init:
-                if target.match(self.device.image, frame_id=self.device.image_frame_id):
+                if target.match(self.device.image, frame_id=self.device.image_frame_id or ""):
                     if timer.reached():
                         break
                 else:
@@ -408,7 +411,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 logger.warning(f'Wait_until_stable({target}) timeout')
                 break
 
-    def wait_animate_stable(self, rule: RuleAnimate, interval: float = None, timeout: float = None):
+    def wait_animate_stable(self, rule: RuleAnimate | RuleClick | RuleImage, interval: float | None = None, timeout: float | None = None):
         """
         不同与上面的wait_until_stable，这个将会匹配连续的两帧图片的特定区域
         @param rule:
@@ -419,7 +422,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         if not isinstance(rule, RuleAnimate):
             rule = RuleAnimate(rule)
         timeout_timer = Timer(timeout).start() if timeout is not None else None
-        while 1:
+        while True:
             self.screenshot()
 
             if interval:
@@ -431,7 +434,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 if not self.interval_timer[rule.name].reached():
                     return False
 
-            stable = rule.stable(self.device.image, frame_id=self.device.image_frame_id)
+            stable = rule.stable(self.device.image, frame_id=self.device.image_frame_id or "")
             if stable:
                 if interval:
                     self.interval_timer[rule.name].reset()
@@ -441,7 +444,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 logger.info(f'Wait_animate_stable({rule}) timeout')
                 break
 
-    def swipe(self, swipe: RuleSwipe, interval: float = None) -> bool:
+    def swipe(self, swipe: RuleSwipe, interval: float | None = None) -> bool:
         """
 
         :param interval:
@@ -472,7 +475,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.interval_timer[swipe.name].reset()
         return True
 
-    def click(self, click: Union[RuleClick, RuleLongClick, RuleImage, RuleOcr] = None, interval: float = None) -> bool:
+    def click(self, click: Union[RuleClick, RuleLongClick, RuleImage, RuleOcr, None] = None, interval: float | None = None) -> bool:
         """
         点击或者长按
         :param interval:
@@ -506,7 +509,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             return True
         return False
 
-    def ocr_appear(self, target: RuleOcr, interval: float = None) -> bool:
+    def ocr_appear(self, target: RuleOcr, interval: float | None = None) -> bool:
         """
         ocr识别目标
         :param interval:
@@ -515,7 +518,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                  但是没有指定keyword，返回的是匹配到的值，具体取决于target的mode
         """
         if not isinstance(target, RuleOcr):
-            return None
+            return False
 
         if interval:
             if target.name in self.interval_timer:
@@ -527,7 +530,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 self.interval_timer[target.name] = Timer(interval)
             # 如果时间还没到达，则不执行
             if not self.interval_timer[target.name].reached():
-                return None
+                return False
 
         result = target.ocr(self.device.image)
         appear = False
@@ -545,6 +548,8 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 appear = result == target.ocr_str_digit_counter(target.keyword)
             case OcrMode.DURATION:
                 appear = result == target.parse_time(target.keyword)
+            case OcrMode.QUANTITY:
+                appear = result == int(target.keyword) if target.keyword and target.keyword.isdigit() else bool(result)
 
         if interval:
             self.interval_timer[target.name].reset()
@@ -553,9 +558,9 @@ class BaseTask(GlobalGameAssets, CostumeBase):
 
     def ocr_appear_click(self,
                          target: RuleOcr,
-                         action: Union[RuleClick, RuleLongClick] = None,
-                         interval: float = None,
-                         duration: float = None) -> bool:
+                         action: Union[RuleClick, RuleLongClick, None] = None,
+                         interval: float | None = None,
+                         duration: float | None = None) -> bool:
         """
         ocr识别目标，如果目标存在，则触发动作
         :param target:
@@ -613,10 +618,10 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.device.swipe(p1=(x1, y1), p2=(x2, y2))
             sleep(random.uniform(0.8, 1.3))  # 等待滑动完成, 待优化
         if appear:
-            return result
+            return result if result is not None else False
         return False
 
-    def list_appear_click(self, target: RuleList, interval: float = None, max_swipe: int = 10) -> bool:
+    def list_appear_click(self, target: RuleList, interval: float | None = None, max_swipe: int = 10) -> bool:
         if interval:
             if target.name in self.interval_timer:
                 # 如果传入的限制时间不一样，则替换限制新的传入的时间
@@ -637,7 +642,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         return False
 
     def set_next_run(self, task: str, finish: bool = False,
-                     success: bool = None, server: bool = True, target: datetime = None) -> None:
+                     success: bool | None = None, server: bool = True, target: datetime | None = None) -> None:
         """
         设置下次运行时间  当然这个也是可以重写的
         :param target: 可以自定义的下次运行时间
@@ -653,7 +658,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             start_time = self.start_time
         self.config.task_delay(task, start_time=start_time, success=success, server=server, target=target)
 
-    def custom_next_run(self, task: str, custom_time: Time = None, time_delta: float = 1) -> None:
+    def custom_next_run(self, task: str, custom_time: Time | None = None, time_delta: float = 1) -> None:
         """
         设置下次自定义运行时间
         :param task: 任务名称，大驼峰的
@@ -661,6 +666,8 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         :param time_delta: 下次运行日期为几天后，默认为第二天
         :return:
         """
+        if custom_time is None:
+            return
         target_time = (datetime.now() + timedelta(days=time_delta)).replace(hour=custom_time.hour,
                                                                             minute=custom_time.minute,
                                                                             second=custom_time.second)
@@ -688,12 +695,12 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         """
         _timer = Timer(10)
         _timer.start()
-        while 1:
+        while True:
             self.screenshot()
 
             if self.ui_reward_appear_click():
                 sleep(0.5)
-                while 1:
+                while True:
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):
@@ -730,7 +737,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         :return: 成功匹配到 stop 返回 True，超时返回 False
         """
         timer = Timer(timeout).start() if timeout else None
-        while 1:
+        while True:
             self.screenshot()
             if self.appear(stop):
                 return True
@@ -746,7 +753,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 continue
 
     def ui_clicks(self, clicks: list[RuleImage | RuleOcr | RuleClick], stop: RuleImage, interval=1):
-        while 1:
+        while True:
             self.screenshot()
             if self.appear(stop):
                 break
@@ -766,7 +773,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         :return: True:出现并点击过, False:没有出现过
         """
         appear_and_clicked = False
-        while 1:
+        while True:
             self.screenshot()
             if not self.appear(click):
                 break
@@ -787,7 +794,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         timeout_timer = Timer(timeout).start()
         while not timeout_timer.reached():
             self.screenshot()
-            if self.appear(stop):
+            if stop is not None and self.appear(stop):
                 return True
             if isinstance(click, RuleImage) and self.appear_then_click(click, interval=interval):
                 continue
@@ -802,7 +809,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         点击一个按钮/区域/文字直到stop消失
 
         """
-        while 1:
+        while True:
             self.screenshot()
             if not self.appear(stop):
                 break

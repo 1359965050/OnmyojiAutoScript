@@ -7,5 +7,14 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "绽放之屿离开"
+  },
+  {
+    "itemName": "pk_bloom_learn",
+    "imageName": "pk_pk_bloom_learn.png",
+    "roiFront": "1115,600,85,85",
+    "roiBack": "1080,570,150,130",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "绽放之屿学习"
   }
 ]

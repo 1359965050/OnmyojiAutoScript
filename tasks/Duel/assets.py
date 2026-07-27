@@ -50,6 +50,10 @@ class DuelAssets:
 	I_DUEL_HONOR = RuleImage(roi_front=(211,636,20,20), roi_back=(200,601,130,100), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_duel_honor.png")
 	# 胜利分享 
 	I_D_WIN_SHARE = RuleImage(roi_front=(1123,608,82,73), roi_back=(1123,608,82,73), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/d_win_share.png")
+	# 名士星标 
+	I_D_CELEB_STAR = RuleImage(roi_front=(620,450,40,40), roi_back=(450,400,350,150), threshold=0.75, method="Template matching", file="./tasks/Duel/duel/duel_d_celeb_star.png")
+	# 名士荣誉殿堂图标 
+	I_D_CELEB_HONOR = RuleImage(roi_front=(150,640,50,50), roi_back=(80,600,180,100), threshold=0.75, method="Template matching", file="./tasks/Duel/duel/duel_d_celeb_honor.png")
 
 
 	# Ocr Rule Assets
@@ -57,5 +61,7 @@ class DuelAssets:
 	O_D_HONOR = RuleOcr(roi=(233,644,131,31), area=(233,643,131,31), mode="DigitCounter", method="Default", keyword="", name="d_honor")
 	# 分数 
 	O_D_SCORE = RuleOcr(roi=(604,484,108,28), area=(604,484,108,28), mode="DigitCounter", method="Default", keyword="", name="d_score")
+	# 名士星数 
+	O_D_CELEB_STAR_COUNT = RuleOcr(roi=(640,445,80,40), area=(640,445,80,40), mode="Digit", method="Default", keyword="", name="d_celeb_star_count")
 
 

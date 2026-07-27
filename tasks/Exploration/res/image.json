@@ -23,7 +23,7 @@
     "roiFront": "104,649,153,44",
     "roiBack": "104,649,153,44",
     "method": "Template matching",
-    "threshold": 0.9,
+    "threshold": 0.8,
     "description": "自动轮换开着"
   },
   {
@@ -32,7 +32,7 @@
     "roiFront": "108,650,150,46",
     "roiBack": "108,650,150,46",
     "method": "Template matching",
-    "threshold": 0.85,
+    "threshold": 0.8,
     "description": "自动轮换关闭"
   },
   {
@@ -92,7 +92,7 @@
   {
     "itemName": "e_settings_button",
     "imageName": "res_e_settings_button.png",
-    "roiFront": "37,692,53,26",
+    "roiFront": "33,694,60,44",
     "roiBack": "37,692,53,26",
     "method": "Template matching",
     "threshold": 0.8,
@@ -104,7 +104,7 @@
     "roiFront": "636,263,42,39",
     "roiBack": "0,0,1279,719",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.72,
     "description": "普通怪"
   },
   {
@@ -246,9 +246,9 @@
     "itemName": "e_reward_box_small",
     "imageName": "res_e_reward_box_small.png",
     "roiFront": "234,626,43,32",
-    "roiBack": "0,597,327,100",
+    "roiBack": "0,0,1279,719",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "探索入口&主界面小宝箱"
   },
   {
