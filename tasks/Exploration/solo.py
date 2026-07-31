@@ -15,6 +15,7 @@ from tasks.Exploration.config import ChooseRarity, AutoRotate, UserStatus, Explo
 class SoloExploration(BaseExploration):
     INVITE_FLAG_OFF = (157, 109, 83)
     INVITE_FLAG_ON = (227, 193, 153)
+    FRIEND_LEAVE_TIMEOUT = 10
     explore_init = False
 
     @cached_property
@@ -28,9 +29,37 @@ class SoloExploration(BaseExploration):
             default_invite=False
         )
 
+    def _handle_treasure_box(self) -> bool:
+        if self.appear(self.I_TREASURE_BOX_CLICK):
+            logger.info('Treasure box appear, get it.')
+            self.ui_click_until_disappear(self.I_TREASURE_BOX_CLICK)
+            return True
+        return False
+
+    def _check_mate_leave(self, friend_leave_timer: Timer) -> bool:
+        if self.appear(self.I_TEAM_EMOJI) or self.appear(self.I_TEAM_EMOJI_FIGHT):
+            if friend_leave_timer.started():
+                logger.warning('Team emoji appear again, clear friend_leave_timer')
+                friend_leave_timer.clear()
+            return False
+
+        logger.warning('Team emoji not appear')
+        if not friend_leave_timer.started():
+            logger.warning('Mate leave, start timer')
+            friend_leave_timer.start()
+            return False
+        if not friend_leave_timer.reached():
+            return False
+
+        logger.warning('Mate leave timer reached')
+        logger.warning('Exit team')
+        self.quit_explore()
+        return True
+
     def run_solo(self):
         logger.hr('solo')
         search_fail_cnt = 0
+        swipe_unchanged_cnt = 0
 
         while 1:
             self.screenshot()
@@ -40,24 +69,17 @@ class SoloExploration(BaseExploration):
             scene = self.get_current_scene()
             #
             if scene == Scene.WORLD:
+                swipe_unchanged_cnt = 0
                 # 打开右边箭头
                 if not self.wait_world_stable():
                     continue
-                if self.appear(self.I_TREASURE_BOX_CLICK):
-                    # 宝箱
-                    logger.info('Treasure box appear, get it.')
-                    self.ui_click_until_disappear(self.I_TREASURE_BOX_CLICK)
-                    logger.info('Wait 1 second after opening treasure box')
-                    sleep(1)
-                    logger.info('Click to close treasure box reward')
-                    self.click(self.I_UI_CANCEL)
-                    sleep(1)
                 if self.check_exit():
                     break
                 self.open_expect_level()
                 continue
             #
             elif scene == Scene.ENTRANCE:
+                swipe_unchanged_cnt = 0
                 if self.check_exit():
                     break
                 self.ui_click(self.I_E_EXPLORATION_CLICK, stop=self.I_E_SETTINGS_BUTTON)
@@ -70,6 +92,8 @@ class SoloExploration(BaseExploration):
                     self.ui_click(self.I_E_AUTO_ROTATE_OFF, stop=self.I_E_AUTO_ROTATE_ON)
                     self.explore_init = True
                     continue
+                if self._handle_treasure_box():
+                    continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
                     if self.ui_get_reward(self.I_BATTLE_REWARD):
@@ -77,23 +101,37 @@ class SoloExploration(BaseExploration):
                 # boss
                 if self.appear(self.I_BOSS_BATTLE_BUTTON):
                     if self.fire(self.I_BOSS_BATTLE_BUTTON):
+                        swipe_unchanged_cnt = 0
                         logger.info(f'Boss battle, minions cnt {self.minions_cnt}')
                     continue
                 # 小怪
                 fight_button = self.search_up_fight()
                 if fight_button is not None:
                     if self.fire(fight_button):
+                        swipe_unchanged_cnt = 0
                         logger.info(f'Fight, minions cnt {self.minions_cnt}')
                     continue
                 # 向后拉,寻找怪
                 if search_fail_cnt >= 2:
                     search_fail_cnt = 0
-                    if (self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28\
-                        and self.appear(self.I_SWIPE_END))\
-                            or self._match_end.stable(self.device.image, refresh_after_stable=True):
+                    # I_SWIPE_END 是第 28 章的末尾标识，其他章节不要用它判断退出。
+                    if (
+                        self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28
+                        and self.appear(self.I_SWIPE_END)
+                    ):
                         self.quit_explore()
                         continue
+                    before_image = self.device.image.copy()
                     if self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=3):
+                        self.screenshot()
+                        # 单次画面没变化可能是偶发，连续两次滑不动才认为到尽头。
+                        if self.is_swipe_unchanged(before_image, self.device.image):
+                            swipe_unchanged_cnt += 1
+                        else:
+                            swipe_unchanged_cnt = 0
+                        if swipe_unchanged_cnt >= 2:
+                            logger.info('Swipe unchanged twice, quit exploration')
+                            self.quit_explore()
                         continue
                 else:
                     search_fail_cnt += 1
@@ -107,7 +145,8 @@ class SoloExploration(BaseExploration):
     def run_leader(self):
         logger.hr('leader')
         search_fail_cnt = 0
-        friend_leave_timer = Timer(10)
+        swipe_unchanged_cnt = 0
+        friend_leave_timer = Timer(self.FRIEND_LEAVE_TIMEOUT)
 
         while 1:
             self.screenshot()
@@ -117,25 +156,10 @@ class SoloExploration(BaseExploration):
             scene = self.get_current_scene()
             # 探索大世界
             if scene == Scene.WORLD:
+                swipe_unchanged_cnt = 0
                 # 打开右边箭头
                 if not self.wait_world_stable():
                     continue
-                if self.appear(self.I_TREASURE_BOX_CLICK):
-                    # 宝箱
-                    logger.info('Treasure box appear, get it.')
-                    self.wait_until_stable(self.I_UI_CANCEL, timer=Timer(0.6, 1))
-                    while 1:
-                        self.screenshot()
-                        if self.appear(self.I_REWARD):
-                            self.ui_click_until_disappear(self.I_REWARD)
-                            logger.info('Get reward.')
-                            break
-                        if self.ui_reward_appear_click():
-                            continue
-                        if self.appear_then_click(self.I_UI_CANCEL, interval=0.8):
-                            continue
-                        if self.appear_then_click(self.I_TREASURE_BOX_CLICK, interval=1):
-                            continue
                 if self.check_exit():
                     self.wait_until_stable(self.I_UI_CANCEL, timer=Timer(0.6, 2))
                     if self.appear(self.I_UI_CANCEL):
@@ -150,6 +174,7 @@ class SoloExploration(BaseExploration):
 
             # 邀请好友, 非常有可能是后面邀请好友，然后直接跳到组队了
             elif scene == Scene.ENTRANCE:
+                swipe_unchanged_cnt = 0
                 while 1:
                     self.screenshot()
                     if self.is_in_room():
@@ -189,47 +214,51 @@ class SoloExploration(BaseExploration):
                     if self._config.exploration_config.auto_rotate == AutoRotate.yes:
                         self.enter_settings_and_do_operations()
                     self.ui_click(self.I_E_AUTO_ROTATE_OFF, stop=self.I_E_AUTO_ROTATE_ON)
-                    friend_leave_timer = Timer(10)
                     self.explore_init = True
+                    continue
+                if self._handle_treasure_box():
                     continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
                     if self.ui_get_reward(self.I_BATTLE_REWARD):
                         continue
                 # 中途有人跑路
-                if not self.appear(self.I_TEAM_EMOJI):
-                    if not friend_leave_timer.started():
-                        logger.warning('Mate leave, start timer')
-                        friend_leave_timer = Timer(10)
-                        friend_leave_timer.start()
-                    elif friend_leave_timer.started() and friend_leave_timer.reached():
-                        logger.warning('Mate leave timer reached')
-                        logger.warning('Exit team')
-                        self.quit_explore()
-                        continue
-                else:
-                    logger.warning('Team emoji appear again, clear friend_leave_timer')
-                    friend_leave_timer = Timer(10)
+                if self._check_mate_leave(friend_leave_timer):
+                    continue
                 # boss
                 if self.appear(self.I_BOSS_BATTLE_BUTTON):
                     if self.fire(self.I_BOSS_BATTLE_BUTTON):
+                        swipe_unchanged_cnt = 0
                         logger.info(f'Boss battle, minions cnt {self.minions_cnt}')
                     continue
                 # 小怪
                 fight_button = self.search_up_fight()
                 if fight_button is not None:
                     if self.fire(fight_button):
+                        swipe_unchanged_cnt = 0
                         logger.info(f'Fight, minions cnt {self.minions_cnt}')
                     continue
                 # 向后拉,寻找怪
                 if search_fail_cnt >= 2:
                     search_fail_cnt = 0
-                    if (self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28\
-                        and self.appear(self.I_SWIPE_END))\
-                            or self._match_end.stable(self.device.image, refresh_after_stable=True):
+                    # I_SWIPE_END 是第 28 章的末尾标识，其他章节不要用它判断退出。
+                    if (
+                        self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28
+                        and self.appear(self.I_SWIPE_END)
+                    ):
                         self.quit_explore()
                         continue
+                    before_image = self.device.image.copy()
                     if self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=4.5):
+                        self.screenshot()
+                        # 单次画面没变化可能是偶发，连续两次滑不动才认为到尽头。
+                        if self.is_swipe_unchanged(before_image, self.device.image):
+                            swipe_unchanged_cnt += 1
+                        else:
+                            swipe_unchanged_cnt = 0
+                        if swipe_unchanged_cnt >= 2:
+                            logger.info('Swipe unchanged twice, quit exploration')
+                            self.quit_explore()
                         continue
                 else:
                     search_fail_cnt += 1
@@ -243,7 +272,7 @@ class SoloExploration(BaseExploration):
     def run_member(self):
         logger.hr('member')
         wait_timer = Timer(50)
-        friend_leave_timer = Timer(10)
+        friend_leave_timer = Timer(self.FRIEND_LEAVE_TIMEOUT)
 
         while 1:
             self.screenshot()
@@ -253,19 +282,11 @@ class SoloExploration(BaseExploration):
                 # 打开右边箭头
                 if not self.wait_world_stable():
                     continue
-                if self.appear(self.I_TREASURE_BOX_CLICK):
-                    # 宝箱
-                    logger.info('Treasure box appear, get it.')
-                    self.ui_click_until_disappear(self.I_TREASURE_BOX_CLICK)
-                    logger.info('Wait 1 second after opening treasure box')
-                    sleep(1)
-                    logger.info('Click to close treasure box reward')
-                    self.click(self.I_UI_CANCEL)
-                    sleep(1)
                 if self.check_exit():
                     break
                 if self.check_then_accept():
-                    pass
+                    wait_timer.clear()
+                    continue
                 if wait_timer.started() and wait_timer.reached():
                     logger.warning('Wait timer reached')
                     break
@@ -285,27 +306,16 @@ class SoloExploration(BaseExploration):
                     self.ui_click(self.I_E_AUTO_ROTATE_OFF, stop=self.I_E_AUTO_ROTATE_ON)
                     self.explore_init = True
                     continue
+                if self._handle_treasure_box():
+                    continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
                     if self.ui_get_reward(self.I_BATTLE_REWARD):
                         continue
-                #
-                if not self.appear(self.I_TEAM_EMOJI):
-                    logger.warning('Team emoji not appear')
-                    if not friend_leave_timer.started():
-                        logger.warning('Mate leave, start timer')
-                        friend_leave_timer = Timer(10)
-                        friend_leave_timer.start()
-                    elif friend_leave_timer.started() and friend_leave_timer.reached():
-                        logger.warning('Mate leave timer reached')
-                        logger.warning('Exit team')
-                        self.quit_explore()
-                        wait_timer = Timer(50)
-                        wait_timer.start()
-                        continue
-                else:
-                    logger.warning('Team emoji appear again, clear friend_leave_timer')
-                    friend_leave_timer = Timer(10)
+                # 队友离队检测
+                if self._check_mate_leave(friend_leave_timer):
+                    wait_timer.clear()
+                    continue
             #
             elif scene == Scene.BATTLE_PREPARE or scene == Scene.BATTLE_FIGHTING:
                 logger.info('[run_member] Handling scene: BATTLE')

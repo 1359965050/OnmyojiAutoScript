@@ -95,10 +95,14 @@ class ExplorationAssets:
 	I_RED_CLOSE = RuleImage(roi_front=(1027,129,41,42), roi_back=(1021,121,54,55), threshold=0.6, method="Template matching", file="./tasks/Exploration/res/res_red_close.png")
 	# description 
 	I_E_EXIT_CONFIRM = RuleImage(roi_front=(694,380,163,49), roi_back=(694,380,163,49), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_exit_confirm.png")
+	# 宝箱 
+	I_TREASURE_BOX_CLICK = RuleImage(roi_front=(31,537,39,29), roi_back=(11,520,378,65), threshold=0.65, method="Template matching", file="./tasks/Exploration/res/res_treasure_box_click.png")
 	# 困28滚动到最后 
 	I_SWIPE_END = RuleImage(roi_front=(994,234,119,100), roi_back=(968,196,311,165), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_swipe_end.png")
 	# 队伍的表情标志 
 	I_TEAM_EMOJI = RuleImage(roi_front=(36,437,44,46), roi_back=(4,407,100,100), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_team_emoji.png")
+	# 战斗/移动时的队伍表情 
+	I_TEAM_EMOJI_FIGHT = RuleImage(roi_front=(108,187,20,20), roi_back=(1,105,162,248), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_team_emoji_fight.png")
 	# 组队按钮 
 	I_EXP_CREATE_TEAM = RuleImage(roi_front=(902,599,79,47), roi_back=(875,560,134,126), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_exp_create_team.png")
 	# 创建确认 
@@ -117,6 +121,8 @@ class ExplorationAssets:
 	I_E_ROTATE_EXIST_RIGHT = RuleImage(roi_front=(829,580,33,35), roi_back=(700,574,450,46), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_ratate_exsit.png")
 	# 大世界界面右侧面板的主线按钮 
 	I_E_MAIN_LINE = RuleImage(roi_front=(1080,140,85,50), roi_back=(1050,120,200,120), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_main_line.png")
+	# 組隊時隊長是否在副本内 
+	I_EXP_LEADER = RuleImage(roi_front=(119,299,17,21), roi_back=(1,105,162,248), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_exp_leader.png")
 
 
 	# Long Click Rule Assets

@@ -80,7 +80,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         context.is_win = not self.appear(self.I_FALSE, threshold=0.8)
         if context.last_page != page_battle_result:
             self.device.click_record_clear()
-        self.click(random_click(), interval=1.5)
+        self.click(self.C_RANDOM_TOP, interval=1.5)
         return BattleAction.CONTINUE
 
     def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
@@ -89,7 +89,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
         self.appear_then_click(self.I_GB_SKIN_CONFIRM, interval=1.5)
         if context.last_page != page_reward:
             self.device.click_record_clear()
-        self.click(random_click(), interval=1.5)
+        self.click(self.C_RANDOM_TOP, interval=1.5)
         return BattleAction.CONTINUE
 
     def run(self):
@@ -198,14 +198,13 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
                 break
             # 进攻
             res = self.attack_area(area_index)
-            # 如果战斗失败或区域不可用，则弹出当前区域索引，开始进攻下一个
-            if not res:
-                area_index += 1
-                if area_index >= len(area_map):
-                    logger.warning('All areas are not available, it will flush the area cache')
-                    area_index = 0
-                    self.flush_area_cache()
-                continue
+            # 无论战斗成功与否，都将索引移至下一个区域，避免由于已攻破印记识别失败而在同一区域无效连点
+            area_index += 1
+            if area_index >= len(area_map):
+                logger.warning('All areas are not available, it will flush the area cache')
+                area_index = 0
+                self.flush_area_cache()
+            continue
 
         if ryou_config.raid_config.loop_raid:
             logger.info('Loop raid is enabled, set next run after 30 minutes')
@@ -249,18 +248,16 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
 
     def check_area(self, index: int) -> bool:
         """
-        检查该区域是否攻略失败
+        检查该区域是否攻略失败或已攻破
         :return:
         """
         f1, f2 = area_map[index].get("fail_sign")
         f3, f4 = area_map[index].get("finished_sign")
         self.screenshot()
-        # 如果该区域已经被攻破则退出
-        # Ps: 这时候能打过的都打过了，没有能攻打的结界了, 代表任务已经完成，set_next_run time=1d
+        # 如果该区域已经被攻破，则跳过该区域
         if self.appear(f3, threshold=0.8) or self.appear(f4, threshold=0.8):
-            logger.info('RyouToppa has tried to attack')
-            self.plan_tomorrow_ryoutoppa()
-            raise TaskEnd
+            logger.info('Area [%s] is already finished, skip.' % str(index + 1))
+            return False
         # 如果该区域攻略失败返回 False
         if self.appear(f1, threshold=0.8) or self.appear(f2, threshold=0.8):
             logger.info('Area [%s] is futile attack, skip.' % str(index + 1))

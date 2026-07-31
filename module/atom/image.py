@@ -217,6 +217,14 @@ class RuleImage:
             step = self.DEFAULT_MULTI_SCALE_STEP
         return min_scale, max_scale, step
 
+    def match_multi_scale(self, image: np.array, threshold: float = None, scale_range=None) -> bool:
+        old_scale_range = self.scale_range
+        if scale_range is not None:
+            self.scale_range = scale_range
+        res = self.multi_scale_template_match(image, threshold=threshold)
+        self.scale_range = old_scale_range
+        return res
+
     def multi_scale_template_match(self, image: np.array, threshold: float = None) -> bool:
         if threshold is None:
             threshold = self.threshold

@@ -2,7 +2,7 @@
 # @author runhey
 # github https://github.com/runhey
 from pathlib import Path
-from cached_property import cached_property
+from module.base.decorator import cached_property
 
 from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
@@ -24,11 +24,17 @@ class HighlightGif(RuleGif):
     def pre_process(self, image):
         return highlight(image)
 
+    def match_with_multi_scale(self, image, threshold: float | None = None, scale_range=(0.8, 1.1, 0.05)):
+        return self.search_with_multi_scale(image, threshold=threshold, scale_range=scale_range)[0]
+
+    def match_origin(self, image, threshold: float | None = None) -> bool:
+        return self.search(image, threshold=threshold)[0]
+
 
 class HighLight(BaseTask, ExplorationAssets):
 
     @cached_property
-    def TEMPLATE_GIF(self) -> RuleGif:
+    def TEMPLATE_GIF(self) -> HighlightGif:
         return HighlightGif(
             targets=[
                 self.I_LIGHT1, self.I_LIGHT2, self.I_LIGHT3, self.I_LIGHT4, self.I_LIGHT5,

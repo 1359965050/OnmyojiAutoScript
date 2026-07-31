@@ -24,7 +24,7 @@ class RuleGif:
         return image
 
 
-    def search(self, image, roi: list = None, threshold: float = None, frame_id: str = None) -> tuple:
+    def search(self, image, roi: list | tuple | None = None, threshold: float | None = None, frame_id: str | None = None) -> tuple:
         """
 
         :param image:
@@ -36,9 +36,9 @@ class RuleGif:
         processed_image = self.pre_process(image)
         #
         threshold = self.targets[0].threshold if threshold is None else threshold
-        roi = self.targets[0].roi_back if roi is None else roi
+        active_roi = tuple(self.targets[0].roi_back) if roi is None else tuple(roi)
         for target in self.targets:
-            target.roi_back = roi
+            target.roi_back = active_roi
 
         payloads = [target.to_service_payload() for target in self.targets]
         active_frame_id = frame_id if processed_image is image else None
@@ -55,7 +55,19 @@ class RuleGif:
                 return True, target
         return False, None
 
-    def match(self, image, threshold: float = None, frame_id: str = None) -> bool:
+    def search_with_multi_scale(self, image, roi: list | tuple | None = None, threshold: float | None = None, scale_range=(0.8, 1.1, 0.05)):
+        processed_image = self.pre_process(image)
+        active_threshold = self.targets[0].threshold if threshold is None else threshold
+        active_roi = tuple(self.targets[0].roi_back) if roi is None else tuple(roi)
+        for target in self.targets:
+            target.roi_back = active_roi
+            if target.match_multi_scale(processed_image, threshold=active_threshold, scale_range=scale_range):
+                self.roi_front = target.roi_front
+                self.appear_target = target
+                return True, target
+        return False, None
+
+    def match(self, image, threshold: float | None = None, frame_id: str | None = None) -> bool:
         return self.search(image, threshold=threshold, frame_id=frame_id)[0]
 
 

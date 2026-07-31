@@ -34,7 +34,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
             context.reward_no_battle_ts = None
             context.is_win = not self.appear(self.I_FALSE)
             return BattleAction.EXIT_WIN if context.is_win else BattleAction.EXIT_LOSE
-        return super()._handle_result(context, config)
+        context.reward_no_battle_ts = None
+        context.is_win = not self.appear(self.I_FALSE, threshold=0.8)
+        if context.last_page != page_battle_result:
+            self.device.click_record_clear()
+        self.click(self.C_RANDOM_TOP, interval=1.5)
+        return BattleAction.CONTINUE
+
+    def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
+        context.reward_no_battle_ts = None
+        context.is_win = True
+        self.appear_then_click(self.I_GB_SKIN_CONFIRM, interval=1.5)
+        if context.last_page != page_reward:
+            self.device.click_record_clear()
+        self.click(self.C_RANDOM_TOP, interval=1.5)
+        return BattleAction.CONTINUE
 
     def _exit_matcher(self) -> ExitMatcher:
         return self.I_BACK_RED

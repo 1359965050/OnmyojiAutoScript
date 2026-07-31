@@ -23,7 +23,7 @@ class WQExplore(ExplorationScriptTask, HighLight):
         categories.add("exploration")
         return categories
 
-    def search_up_fight(self, up_type: UpType = None) -> Optional[RuleImage | RuleGif]:
+    def search_up_fight(self, up_type: UpType | None = None) -> Optional[RuleImage | RuleGif]:
         if self.appear(self.TEMPLATE_GIF):
             self.fire_monster_type = 'wq_normal'
             return self.TEMPLATE_GIF
@@ -50,6 +50,14 @@ class WQExplore(ExplorationScriptTask, HighLight):
         logger.info(f'Start exploring with number: {num}')
         self._max_cnt = num
         self._explor_cnt = 0
+        # https://github.com/runhey/OnmyojiAutoScript/pull/1697 云景阆苑 皮肤
+        from tasks.Component.Costume.config import MainType
+        if (self.config.global_game and self.config.global_game.costume_config and
+                self.config.global_game.costume_config.costume_main_type == MainType.COSTUME_MAIN_13):
+            self.TEMPLATE_GIF.match = self.TEMPLATE_GIF.match_with_multi_scale
+            logger.info("Costume '云景阆苑' detected, enable multi-scale matching for highlight")
+        else:
+            self.TEMPLATE_GIF.match = self.TEMPLATE_GIF.match_origin
         while True:
             self.screenshot()
             if pages.page_exp_entrance == self.get_current_page():

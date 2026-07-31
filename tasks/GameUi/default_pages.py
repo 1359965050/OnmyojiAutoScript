@@ -29,7 +29,7 @@ from tasks.RyouToppa.assets import RyouToppaAssets
 def random_click(
     low: int | None = None,
     high: int | None = None,
-    ltrb: tuple = (True, False, True, False),
+    ltrb: tuple = (False, True, False, False),
 ) -> Union[RuleClick | list[RuleClick]]:
     """从常用结算点击区域中随机选择安全点击点。
 
@@ -319,7 +319,7 @@ page_battle_result = Page(
     category="global",
     priority=25
 )
-page_battle_result.add_enter_success_hooks(lambda _task: random_click())
+page_battle_result.add_enter_success_hooks(lambda _task: random_click(ltrb=(False, True, False, False)))
 
 page_reward = Page(
     any_of(
@@ -337,7 +337,7 @@ page_reward = Page(
     category="global",
     priority=25
 )
-page_reward.add_enter_success_hooks(lambda _task: random_click())
+page_reward.add_enter_success_hooks(lambda _task: random_click(ltrb=(False, True, False, False)))
 
 page_battle_team_exit = Page(GeneralBattleAssets.I_GB_CHECK_TEAM_EXIT, priority=75)
 page_battle_team = Page(any_of(GeneralInviteAssets.I_GI_EMOJI_1, GeneralInviteAssets.I_GI_EMOJI_2,
