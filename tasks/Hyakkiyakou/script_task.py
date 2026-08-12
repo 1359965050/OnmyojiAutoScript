@@ -249,10 +249,6 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 break
             if not self.appear(self.I_CHECK_RUN):
                 continue
-            if not init_bean_flag:
-                init_bean_flag = True
-                self.bean_05to10()
-                time.sleep(0.5)
             #修改：在这里不再区分freeze，而是将状态传到decision用于执行冻结策略
             #目前被禁用了 因为冰冻状态下检测正确率约等于0 全是蝉冰雪女 =.=
             if not self.appear(self.I_HFREEZE):
@@ -294,6 +290,11 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
             return
         if state[0] <= 0:
             return
+        if state[2] != bean:  # 当前撒豆数量不等于要撒的数量则切换
+            if state[2] == 10 and bean == 5:
+                self.bean_10to05()
+            elif state[2] == 5 and bean == 10:
+                self.bean_05to10()
         self.fast_click(x=x, y=y, control_method=self._config.debug_config.hya_control_method)
 
 

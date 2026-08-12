@@ -21,7 +21,7 @@ from module.logger import logger
 from module.base.timer import Timer
 
 
-class ScriptTask(GameUi, GeneralBattle, SwitchSoul, GeneralRoom, GeneralInvite, NianAssets):
+class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, NianAssets):
 
     def run(self) -> None:
         def cd_exit(cd: timedelta=False):

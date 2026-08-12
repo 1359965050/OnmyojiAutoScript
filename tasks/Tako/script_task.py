@@ -17,7 +17,7 @@ from tasks.Component.GeneralInvite.general_invite import GeneralInvite
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 
 
-class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul):
+class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul):
 
     def run(self):
         conf = self.config.tako

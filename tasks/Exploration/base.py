@@ -24,7 +24,7 @@ from module.atom.animate import RuleAnimate
 from typing import Optional
 
 
-class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigami, SwitchSoul, ExplorationAssets):
+class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigami, SwitchSoul, GameUi, ExplorationAssets):
     fire_monster_type: str = ''
     need_exit: bool = False
     user_status: UserStatus = UserStatus.ALONE

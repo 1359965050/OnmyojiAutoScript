@@ -9,6 +9,7 @@ from module.atom.long_click import RuleLongClick
 from module.atom.ocr import RuleOcr
 from tasks.base_task import BaseTask
 from tasks.Component.SwitchSoul.assets import SwitchSoulAssets
+from tasks.GameUi.assets import GameUiAssets
 from module.logger import logger
 
 
@@ -20,6 +21,18 @@ def switch_parser(switch_str: str) -> tuple:
 
 
 class SwitchSoul(BaseTask, SwitchSoulAssets):
+
+    def goto_shikigami_records(self, button):
+        """
+        进入式神录
+        """
+        while 1:
+            self.screenshot()
+            if self.appear(GameUiAssets.I_CHECK_RECORDS):
+                break
+            if self.appear_then_click(button, interval=1.5):
+                continue
+        logger.info('Entry shikigami records')
 
     def run_switch_soul(self, target: tuple | list[tuple] | str):
         """

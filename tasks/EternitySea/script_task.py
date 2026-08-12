@@ -24,7 +24,7 @@ from module.exception import RequestHumanTakeover
 from tasks.GameUi.page import page_main, page_reward, page_soul_zones, page_shikigami_records
 from time import sleep
 
-class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, EternitySeaAssets):
+class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, EternitySeaAssets):
     """永生之海"""
 
     @property

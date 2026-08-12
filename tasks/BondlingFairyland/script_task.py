@@ -29,7 +29,7 @@ class BondlingNumberMax(Exception):
     pass
 
 
-class ScriptTask(GameUi, GeneralInvite, GeneralRoom, GeneralBattle, SwitchSoul, BondlingFairylandAssets, RichManAssets):
+class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, BondlingFairylandAssets, RichManAssets):
     """ 契灵 """
 
     last_plate_count: int = None  # 上一次识别到的契灵盘子数量
@@ -316,6 +316,8 @@ class ScriptTask(GameUi, GeneralInvite, GeneralRoom, GeneralBattle, SwitchSoul, 
                     elif bondling_config.bondling_search_enable and bondling_config.user_status == UserStatus.ALONE:
                         if self.run_search(bondling_config, limit_cnt=random.randint(5, 20)):
                             logger.info('Bondling search finish, try to run catch')
+                            # 切御魂
+                            self._switch_soul_capture()
                             continue
                         else:
                             break  # 时间到了或次数到了直接退出
@@ -339,15 +341,7 @@ class ScriptTask(GameUi, GeneralInvite, GeneralRoom, GeneralBattle, SwitchSoul, 
                 # 否则就是模式1
                 break
 
-        # 退出的时候如果是在结契的界面，要退回到探查界面
-        while 1:
-            self.screenshot()
-            if self.in_search_ui():
-                break
-            if self.in_catch_ui():
-                self.appear_then_click(self.I_UI_BACK_YELLOW, interval=1)
         logger.info('BondlingFairyland task finished')
-
         self.goto_page(page_main)
         self.set_next_run(task='BondlingFairyland', finish=True, success=True)
         raise TaskEnd
@@ -393,6 +387,7 @@ class ScriptTask(GameUi, GeneralInvite, GeneralRoom, GeneralBattle, SwitchSoul, 
         (4) 打满对应limit_cnt次, (探查界面)返回True
         """
         self.lock_team()
+        self._switch_soul_search()
         while 1:
             # 检查是不是在探查界面，
             if not self.in_search_ui(screenshot=True):
@@ -770,6 +765,36 @@ class ScriptTask(GameUi, GeneralInvite, GeneralRoom, GeneralBattle, SwitchSoul, 
         if bondling_config.bondling_search_enable and bondling_config.user_status == UserStatus.ALONE:
             type_str, (group, team) = bondling_switch_soul.get_switch_by_name('search_switch')
             do_switch_soul(type_str, group, team)
+
+    def _switch_soul_to(self, ts, g, te):
+        def _do_switch_soul(ts: str, g: str | int, te: str | int):
+            if ts is None:
+                raise ValueError(f'Invalid switch soul config on {self.config.bondling_fairyland.bondling_config.bondling_stone_class.value}')
+            if ts == 'int':
+                self.run_switch_soul((g, te))
+            if ts == 'str':
+                self.run_switch_soul_by_name(g, te)
+
+        if ts is None:
+            logger.warning('Switch soul preset not configured, skip')
+            return
+
+        self.goto_shikigami_records(self.I_GOTO_SHIKIGAMI_COMMON)
+        _do_switch_soul(ts, g, te)
+        self.exit_shikigami_records()
+
+    def _switch_soul_search(self):
+        logger.info("切换御魂-探查")
+        if not self.config.bondling_fairyland.bondling_switch_soul.enable: return
+        ts, (g, te) = self.config.bondling_fairyland.bondling_switch_soul.get_switch_by_name('search_switch')
+        self._switch_soul_to(ts, g, te)
+
+    def _switch_soul_capture(self):
+        logger.info("切换御魂-捕获")
+        cong = self.config.bondling_fairyland
+        if not cong.bondling_switch_soul.enable: return
+        ts, (g, te) = cong.bondling_switch_soul.get_switch_by_enum(cong.bondling_config.bondling_stone_class)
+        self._switch_soul_to(ts, g, te)
 
 
 if __name__ == '__main__':

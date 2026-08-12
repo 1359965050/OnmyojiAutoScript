@@ -20,7 +20,7 @@ from tasks.AbyssShadows.assets import AbyssShadowsAssets
 from tasks.DemonRetreat.config import DemonRetreat
 
 
-class ScriptTask(GameUi, GeneralBattle, SwitchSoul, DemonRetreatAssets, AbyssShadowsAssets):
+class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssShadowsAssets):
 
     def run(self):
         """

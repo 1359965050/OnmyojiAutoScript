@@ -12,7 +12,6 @@ from module.base.timer import Timer
 
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchOnmyoji.switch_onmyoji import SwitchOnmyoji
-from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_duel, page_onmyodo, random_click
 from tasks.Duel.config import Duel
 from tasks.Duel.assets import DuelAssets
@@ -21,7 +20,7 @@ from tasks.GameUi.page import page_main, page_shikigami_records
 """ 斗技 """
 
 
-class ScriptTask(GameUi, GeneralBattle, DuelAssets, SwitchOnmyoji):
+class ScriptTask(GeneralBattle, DuelAssets, SwitchOnmyoji):
     # TODO: 斗技适配页面模块
 
     battle_win_count = 0

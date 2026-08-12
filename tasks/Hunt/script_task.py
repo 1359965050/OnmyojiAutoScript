@@ -17,7 +17,7 @@ from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.Hunt.assets import HuntAssets
 
 
-class ScriptTask(GameUi, GeneralBattle, GeneralInvite, SwitchSoul, HuntAssets):
+class ScriptTask(GeneralBattle, GeneralInvite, GameUi, SwitchSoul, HuntAssets):
     kirin_day = True  # 不是麒麟就是阴界之门
     tomorrow_kirin_day = True  # 明天是麒麟还是阴界之门
 

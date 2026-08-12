@@ -17,7 +17,7 @@ from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GoldYoukai.assets import GoldYoukaiAssets
 
 
-class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, GoldYoukaiAssets):
+class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, GoldYoukaiAssets):
 
     def before_run(self):
         page_battle_result = self.navigator.resolve_page(pages.page_battle_result)

@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta, time
 import random  # type: ignore
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 
 from tasks.Component.GeneralBattle.general_battle import BattleAction, BattleContext, ExitMatcher, GeneralBattle
@@ -21,7 +22,7 @@ from typing import Callable
 import tasks.GameUi.page as pages
 
 
-class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
+class ScriptTask(GeneralBattle, GameUi, HeroTestAssets, SwitchSoul):
 
     conf: HeroTest
     page_hero_mode: pages.Page  # 当前英杰对应模式界面(经验or技能)
@@ -151,9 +152,18 @@ class ScriptTask(GameUi, GeneralBattle, HeroTestAssets, SwitchSoul):
             SkillMode.PVP: pvp_skill,
         }
         target_skills = target_skill_dict[self.conf.herotest.skill_mode]
-        if any(self.appear_then_click(ts, interval=1) for ts in target_skills):
-            pass
-        return self.appear_then_click(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1.5)
+        timer = Timer(10).start()
+        while True:
+            self.screenshot()
+            if timer.reached_and_reset():
+                if self.appear(self.I_BCMJ_SKILL_ADD_CONFIRM):
+                    logger.warning('No skill selected for 10s, panel still open, retrying')
+                    continue
+                logger.warning('Skill selection panel closed unexpectedly, exit')
+                break
+            if any(self.appear_then_click(ts, interval=1) for ts in target_skills):
+                break
+        self.ui_click_until_disappear(self.I_BCMJ_SKILL_ADD_CONFIRM, interval=1.5)
 
     def switch_hero(self, layer: Layer):
         """切换英杰"""

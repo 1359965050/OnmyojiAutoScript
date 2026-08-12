@@ -15,7 +15,6 @@ from tasks.base_task import BaseTask
 from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.ActivityShikigami.config import GeneralBattleConfig, ActivityShikigami
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
-from tasks.GameUi.game_ui import GameUi
 import tasks.ActivityShikigami.page as pages
 from typing import Optional, Callable
 
@@ -102,7 +101,7 @@ class StateMachine(BaseTask):
         return True
 
 
-class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigamiAssets):
+class BaseAct(StateMachine, GeneralBattle, SwitchSoul, ActivityShikigamiAssets):
     """爬塔活动基类"""
 
     def _exit_matcher(self) -> ExitMatcher | None:
@@ -146,14 +145,21 @@ class BaseAct(StateMachine, GameUi, GeneralBattle, SwitchSoul, ActivityShikigami
                 logger.warning(f'{climb_type} battle config is not supported')
                 continue
             self.lock_team(cur_battle_conf)
+            unknown_page_count = 0
             try:
                 while True:
                     self.screenshot()
                     self.update_status()
                     current_page = self.get_current_page()
                     if current_page is None:
+                        unknown_page_count += 1
+                        if unknown_page_count >= 30:
+                            logger.warning('Unknown page for too long, try goto destination page')
+                            self.goto_page(dest_page)
+                            unknown_page_count = 0
                         time.sleep(0.5)
                         continue
+                    unknown_page_count = 0
                     handle = self.act_page_handle_dict.get(current_page, None)
                     if handle is None:
                         self.goto_page(dest_page)

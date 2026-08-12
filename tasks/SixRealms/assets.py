@@ -24,8 +24,6 @@ class SixRealmsAssets:
 	C_NPC_FIRE_RIGHT = RuleClick(roi_front=(792,278,90,129), roi_back=(792,278,90,129), name="npc_fire_right")
 	# 中间的精英 
 	C_NPC_FIRE_CENTER = RuleClick(roi_front=(668,211,110,171), roi_back=(668,211,110,171), name="npc_fire_center")
-	# 离开岛屿确认 
-	C_CONFIRM_LEAVE = RuleClick(roi_front=(670,400,190,70), roi_back=(670,400,190,70), name="confirm_leave")
 	# 默认的 
 	C_ISLAND_ENTER = RuleClick(roi_front=(1,0,101,101), roi_back=(1,0,101,101), name="island_enter")
 
@@ -197,8 +195,8 @@ class SixRealmsAssets:
 	I_PK_CHECK_MAP = RuleImage(roi_front=(1120,19,142,233), roi_back=(1103,0,177,271), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_check_map.png")
 	# 战斗中的六道轰雷 
 	I_PK_BATTLE_THUNDER = RuleImage(roi_front=(79,94,29,30), roi_back=(12,83,205,52), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_battle_thunder.png")
-	# 选择第一个初始祝福（绽放之舞） 
-	I_PK_START_FIRST_SKILL = RuleImage(roi_front=(230,601,85,41), roi_back=(230,601,85,41), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_start_first_skill.png")
+	# 选择祈愿之舞 
+	I_PK_START_THIRD_SKILL = RuleImage(roi_front=(1006,601,85,41), roi_back=(1006,601,85,41), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_start_third_skill.png")
 	# 孔雀国主界面标志 
 	I_PK_CHECK_MAIN = RuleImage(roi_front=(93,18,112,48), roi_back=(93,18,112,48), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_check_main.png")
 
@@ -227,8 +225,6 @@ class SixRealmsAssets:
 	I_PK_LAND_FIRE = RuleImage(roi_front=(286,280,24,82), roi_back=(107,144,1041,439), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_land_fire.png")
 	# 宁息商店 
 	I_PK_LAND_STORE = RuleImage(roi_front=(463,430,24,82), roi_back=(107,144,1041,439), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_land_store.png")
-	# 神秘之屿左上角标题（通用识别标识）
-	I_PK_LAND_MYSTERY_TITLE = RuleImage(roi_front=(110,22,120,38), roi_back=(80,10,180,60), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_land_mystery_title.png")
 
 
 	# Image Rule Assets
@@ -241,6 +237,8 @@ class SixRealmsAssets:
 	# Image Rule Assets
 	# 绽放之屿离开 
 	I_PK_BLOOM_EXIT = RuleImage(roi_front=(1153,630,62,60), roi_back=(1141,615,84,98), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_bloom_exit.png")
+	# 绽放之屿学习 
+	I_PK_BLOOM_LEARN = RuleImage(roi_front=(1115,600,85,85), roi_back=(1080,570,150,130), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_bloom_learn.png")
 
 
 	# Image Rule Assets
@@ -250,9 +248,6 @@ class SixRealmsAssets:
 	I_PK_CHAOS_EXIT = RuleImage(roi_front=(1158,632,54,53), roi_back=(1158,632,54,53), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_chaos_exit.png")
 	# 精英标志 
 	I_PK_CHAOS_ELITE_FLAG = RuleImage(roi_front=(684,531,97,99), roi_back=(684,531,97,99), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_chaos_elite_flag.png")
-
-
-
 
 
 	# Image Rule Assets
@@ -267,16 +262,16 @@ class SixRealmsAssets:
 
 
 	# Image Rule Assets
-	# 六道轰雷技能 
-	I_PK_SKILL_ROARING_THUNDER = RuleImage(roi_front=(734,174,62,55), roi_back=(113,145,960,119), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_roaring_thunder.png")
 	# 技能刷新 
 	I_PK_SKILL_REFRESH = RuleImage(roi_front=(1189,622,50,52), roi_back=(1168,602,92,88), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_refresh.png")
 	# 力量强化 
 	I_PK_SKILL_POWER = RuleImage(roi_front=(273,246,39,54), roi_back=(202,220,871,102), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_power.png")
-	# 魅力强化 
+	# 技巧强化 
 	I_PK_SKILL_CHARM = RuleImage(roi_front=(982,245,39,54), roi_back=(202,220,871,102), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_charm.png")
 	# 怪力乱神 
 	I_PK_SKILL_STRANGE_POWER = RuleImage(roi_front=(923,175,62,55), roi_back=(113,145,960,200), threshold=0.75, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_strange_power.png")
+	# 六道轰雷 
+	I_PK_SKILL_ROARING_THUNDER = RuleImage(roi_front=(734,174,62,55), roi_back=(113,145,960,119), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_roaring_thunder.png")
 	# 倾城之舞 
 	I_PK_SKILL_QINGCHENG = RuleImage(roi_front=(0,0,50,50), roi_back=(113,145,960,200), threshold=0.75, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_skill_qingcheng.png")
 	# 流羽剑术 
@@ -294,8 +289,6 @@ class SixRealmsAssets:
 
 
 	# Ocr Rule Assets
-	# 技能名称区域 
-	O_PK_SKILL_NAME = RuleOcr(roi=(0,260,1280,100), area=(0,260,1280,100), mode="Full", method="Default", keyword="", name="pk_skill_name")
 	# 商店刷新次数 
 	O_PK_STORE_REFRESH_TIME = RuleOcr(roi=(585,660,114,29), area=(585,660,114,29), mode="Single", method="Default", keyword="", name="pk_store_refresh_time")
 

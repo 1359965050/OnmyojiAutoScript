@@ -33,7 +33,7 @@ class LanternClass(Enum):
     BOSS = 6  # 大鬼王
 
 
-class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets, SwitchSoul):
+class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonEncounterAssets):
     conf: DemonEncounter = None
 
     def run(self):
