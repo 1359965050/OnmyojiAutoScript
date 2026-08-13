@@ -4,9 +4,8 @@ from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.Component.GeneralInvite.assets import GeneralInviteAssets
 from tasks.Component.SwitchAccount.assets import SwitchAccountAssets
 from tasks.Exploration.assets import ExplorationAssets
-from tasks.GoryouRealm.assets import GoryouRealmAssets
 from tasks.GameUi.action import conditional_action, sequence
-from tasks.DailyTrifles.assets import DailyTriflesAssets
+from tasks.Pets.assets import PetsAssets
 from typing import Union
 
 """GameUi 全局页面定义。"""
@@ -29,7 +28,7 @@ from tasks.RyouToppa.assets import RyouToppaAssets
 def random_click(
     low: int | None = None,
     high: int | None = None,
-    ltrb: tuple = (False, True, False, False),
+    ltrb: tuple = (True, False, True, False),
 ) -> Union[RuleClick | list[RuleClick]]:
     """从常用结算点击区域中随机选择安全点击点。
 
@@ -144,11 +143,11 @@ page_travel.add_enter_failure_hooks(conditional_action(condition=GameUiAssets.I_
 page_travel.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_travel->page_main")
 page_main.connect(page_travel, GameUiAssets.I_MAIN_GOTO_TRAVEL, key="page_main->page_travel")
 
-page_pet = Page(any_of(DailyTriflesAssets.I_PET_CLAW, DailyTriflesAssets.I_PET_FEAST), category="global")
+page_pet = Page(any_of(PetsAssets.I_PET_CLAW, PetsAssets.I_PET_FEAST), category="global")
 page_pet.connect(page_main, GlobalGameAssets.I_UI_BACK_CIRCLE, key="page_pet->page_main")
-page_main.connect(page_pet, DailyTriflesAssets.I_PET_HOUSE, key="page_main->page_pet")
-page_pet.add_enter_success_hooks(conditional_action(condition=lambda task: not task.appear(DailyTriflesAssets.I_PET_FEAST),
-                                                    action=DailyTriflesAssets.I_PET_CLAW))
+page_main.connect(page_pet, PetsAssets.I_PET_HOUSE, key="page_main->page_pet")
+page_pet.add_enter_success_hooks(conditional_action(condition=lambda task: not task.appear(PetsAssets.I_PET_FEAST),
+                                                    action=PetsAssets.I_PET_CLAW))
 
 # 活动列表页。
 page_act_list = Page(GameUiAssets.I_CHECK_ACT_LIST, category="global", priority=25)
@@ -187,22 +186,13 @@ page_draft_duel = Page(GameUiAssets.I_CHECK_DRAFT_DUEL, category="global")
 page_draft_duel.connect(page_town, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_draft_duel->page_town")
 page_town.connect(page_draft_duel, GameUiAssets.I_TOWN_GOTO_DRAFT_DUEL, key="page_town->page_draft_duel")
 
-page_hyakkisen = Page(GameUiAssets.I_CHECK_HYAKKISEN, category="global")
-page_hyakkisen.connect(page_town, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_hyakkisen->page_town")
-page_town.connect(page_hyakkisen, GameUiAssets.I_TOWN_GOTO_HYAKKISEN, key="page_town->page_hyakkisen")
-
 page_hyakkiyakou = Page(GameUiAssets.I_CHECK_KYAKKIYAKOU, category="global")
 page_hyakkiyakou.connect(page_town, GlobalGameAssets.I_UI_BACK_RED, key="page_hyakkiyakou->page_town")
 page_town.connect(page_hyakkiyakou, GameUiAssets.I_TOWN_GOTO_HYAKKIYAKOU, key="page_town->page_hyakkiyakou")
 
 
-# 邮件页面。
-page_mail = Page(RestartAssets.I_HARVEST_MAIL_TITLE, category="global", priority=25)
-page_mail.connect(page_main, GlobalGameAssets.I_UI_BACK_RED, key="page_mail->page_main")
-page_main.connect(page_mail, DailyTriflesAssets.I_DT_HARVEST_MAIL_COPY, key="page_main->page_mail")
-
 # 探索主页。
-page_exploration = Page(any_of(GameUiAssets.I_CHECK_EXPLORATION, GameUiAssets.I_EXPLORATION_GOTO_SOUL_ZONE), category="global")
+page_exploration = Page(GameUiAssets.I_CHECK_EXPLORATION, category="global")
 page_exploration.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_exploration->page_main")
 page_exploration.add_enter_failure_hooks(ExplorationAssets.I_E_OPEN_FOLDER)
 page_main.connect(page_exploration, GameUiAssets.I_MAIN_GOTO_EXPLORATION, key="page_main->page_exploration")
@@ -227,7 +217,7 @@ page_kekkai_toppa.connect(page_shikigami_records, GameUiAssets.I_REALM_RAID_GOTO
 page_realm_raid.connect(page_kekkai_toppa, RyouToppaAssets.I_RYOU_TOPPA, key="page_realm_raid->page_kekkai_toppa")
 page_kekkai_toppa.connect(page_realm_raid, GameUiAssets.I_RYOUTOPPA_GOTO_REALMRAID, key="page_kekkai_toppa->page_realm_raid")
 
-page_goryou_realm = Page(any_of(GameUiAssets.I_CHECK_GORYOU, GoryouRealmAssets.I_GR_FIRE), category="global")
+page_goryou_realm = Page(GameUiAssets.I_CHECK_GORYOU, category="global")
 page_goryou_realm.connect(page_exploration, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_goryou_realm->page_exploration")
 page_exploration.connect(page_goryou_realm, GameUiAssets.I_EXPLORATION_GOTO_GORYOU_REALM, key="page_exploration->page_goryou_realm")
 
@@ -319,12 +309,13 @@ page_battle_result = Page(
     category="global",
     priority=25
 )
-page_battle_result.add_enter_success_hooks(lambda _task: random_click(ltrb=(False, True, False, False)))
+page_battle_result.add_enter_success_hooks(lambda _task: random_click())
 
 page_reward = Page(
     any_of(
         GeneralBattleAssets.I_REWARD,
         GeneralBattleAssets.I_GB_SKIN_CONFIRM,
+        GeneralBattleAssets.I_OVER_GHOST,
         GeneralBattleAssets.I_REWARD_STATISTICS,
         GeneralBattleAssets.I_REWARD_GOLD,
         GeneralBattleAssets.I_REWARD_EXP_SOUL_4,
@@ -337,7 +328,21 @@ page_reward = Page(
     category="global",
     priority=25
 )
-page_reward.add_enter_success_hooks(lambda _task: random_click(ltrb=(False, True, False, False)))
+
+def handle_battle_reward_page(task) -> bool:
+    """处理战斗奖励页面(页面跳转才会使用该逻辑)
+
+    Args:
+        task: 当前触发页面 hook 的任务实例。
+
+    Returns:
+        bool: 执行结果
+    """
+    if task.appear_then_click(GeneralBattleAssets.I_OVER_GHOST, interval=0.8):
+        return True
+    return task.click(random_click(), interval=0.8)
+
+page_reward.add_enter_success_hooks(handle_battle_reward_page)
 
 page_battle_team_exit = Page(GeneralBattleAssets.I_GB_CHECK_TEAM_EXIT, priority=75)
 page_battle_team = Page(any_of(GeneralInviteAssets.I_GI_EMOJI_1, GeneralInviteAssets.I_GI_EMOJI_2,

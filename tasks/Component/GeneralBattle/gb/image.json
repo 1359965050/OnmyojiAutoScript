@@ -92,8 +92,8 @@
   {
     "itemName": "exit_ensure",
     "imageName": "gb_exit_ensure.png",
-    "roiFront": "669,385,142,76",
-    "roiBack": "669,385,142,76",
+    "roiFront": "674,388,135,63",
+    "roiBack": "674,388,135,63",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "退出确认"
@@ -259,5 +259,14 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "战斗组队退出页面标志"
+  },
+  {
+    "itemName": "over_ghost",
+    "imageName": "gb_over_ghost.png",
+    "roiFront": "697,409,89,32",
+    "roiBack": "697,409,89,32",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "御魂溢出"
   }
 ]

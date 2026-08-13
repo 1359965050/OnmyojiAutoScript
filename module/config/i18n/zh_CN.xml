@@ -769,7 +769,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>mt_use_pass_2_help</source>
-            <translation>普通搜寻券用完后自动切换到注灵搜寻券继续挑战</translation>
+            <translation>开启后优先使用注灵搜寻券, 用完后切换到普通搜寻券</translation>
         </message>
     </context>
     <context>
