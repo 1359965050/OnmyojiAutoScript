@@ -36,13 +36,13 @@ def check_mro():
                     pass
 
     if mro_errors:
-        logger.error(f"❌ MRO Check failed! Found {len(mro_errors)} files with invalid inheritance order:")
+        logger.error(f"[FAIL] MRO Check failed! Found {len(mro_errors)} files with invalid inheritance order:")
         for path, err in mro_errors:
             logger.error(f"  - [{path}]: {err}")
         logger.error("Fix tip: Ensure derived components (e.g., GeneralBattle) are listed BEFORE base components (e.g., GameUi).")
         sys.exit(1)
     else:
-        logger.info(f"✅ MRO Check passed! Checked {checked_count} modules with zero MRO errors.")
+        logger.info(f"[PASS] MRO Check passed! Checked {checked_count} modules with zero MRO errors.")
         sys.exit(0)
 
 

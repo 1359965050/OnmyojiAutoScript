@@ -67,7 +67,7 @@ class PeacockKingdom(BasePeacockKingdom):
     def run_on_pk_prepare(self):
         """进入孔雀国主界面前的准备界面（含初始祝福选择 + 初始技能选择 + 开启确认）"""
         # 1. 初始祝福选择界面（"精进我的一种舞技吧"）
-        if self.appear_then_click(self.I_PK_START_FIRST_SKILL, interval=1.5):
+        if self.appear_then_click(self.I_PK_START_THIRD_SKILL, interval=1.5):
             logger.info('Select blessing: 绽放之舞 (First Option)')
             return
         # 2. 初始技能选择界面（怪力乱神等）

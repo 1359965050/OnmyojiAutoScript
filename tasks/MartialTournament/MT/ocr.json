@@ -19,7 +19,7 @@
   },
   {
     "itemName": "o_pass2",
-    "roiFront": "1151,19,69,26",
+    "roiFront": "1196,19,28,25",
     "roiBack": "1151,19,69,26",
     "mode": "Digit",
     "method": "Default",

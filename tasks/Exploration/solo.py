@@ -7,9 +7,9 @@ from cached_property import cached_property
 from module.logger import logger
 from module.base.timer import Timer
 
-from tasks.Component.GeneralInvite.config_invite import InviteConfig, InviteNumber, FindMode
-from tasks.Exploration.base import BaseExploration, UpType, Scene
-from tasks.Exploration.config import ChooseRarity, AutoRotate, UserStatus, ExplorationLevel
+from tasks.Component.GeneralInvite.config_invite import InviteConfig, FindMode
+from tasks.Exploration.base import BaseExploration
+from tasks.Exploration.config import ChooseRarity, AutoRotate, UserStatus, ExplorationLevel, UpType
 
 
 class SoloExploration(BaseExploration):
@@ -21,9 +21,7 @@ class SoloExploration(BaseExploration):
     @cached_property
     def _invite_config(self) -> InviteConfig:
         return InviteConfig(
-            invite_number=InviteNumber.ONE,
-            friend_1=self._config.invite_config.friend_1,
-            friend_2='',
+            friend_list=self._config.invite_config.friend_list,
             find_mode=self._config.invite_config.find_mode,
             wait_time=self._config.invite_config.wait_time,
             default_invite=False

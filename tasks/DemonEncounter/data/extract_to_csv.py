@@ -4,12 +4,21 @@
 import re
 import rich
 import csv
-import pandas as pd
 
-from utils import remove_symbols
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+try:
+    from tasks.DemonEncounter.data.utils import remove_symbols
+except ImportError:
+    from utils import remove_symbols
 
 class Extracter:
     def __init__(self, data_file: str='data.csv'):
+        if pd is None:
+            raise ImportError("pandas is required for Extracter. Please install pandas via pip.")
         self.data_file = data_file
         self.df = pd.read_csv(self.data_file)
 

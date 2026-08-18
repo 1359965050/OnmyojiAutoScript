@@ -55,6 +55,6 @@ class MartialTournamentAssets:
 	# 体力门票数量 
 	O_O_AP = RuleOcr(roi=(1148,16,82,28), area=(1148,16,82,28), mode="Digit", method="Default", keyword="", name="o_ap")
 	# 注灵门票数量 
-	O_O_PASS2 = RuleOcr(roi=(1151,19,69,26), area=(1151,19,69,26), mode="Digit", method="Default", keyword="", name="o_pass2")
+	O_O_PASS2 = RuleOcr(roi=(1196,19,28,25), area=(1151,19,69,26), mode="Digit", method="Default", keyword="", name="o_pass2")
 
 

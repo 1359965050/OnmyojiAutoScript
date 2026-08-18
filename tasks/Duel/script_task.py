@@ -12,15 +12,15 @@ from module.base.timer import Timer
 
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchOnmyoji.switch_onmyoji import SwitchOnmyoji
-from tasks.GameUi.page import page_duel, page_onmyodo, random_click
+from tasks.GameUi.game_ui import GameUi
+from tasks.GameUi.page import page_duel, page_main, page_onmyodo, page_shikigami_records, random_click
 from tasks.Duel.config import Duel
 from tasks.Duel.assets import DuelAssets
-from tasks.GameUi.page import page_main, page_shikigami_records
 
 """ 斗技 """
 
 
-class ScriptTask(GeneralBattle, DuelAssets, SwitchOnmyoji):
+class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
     # TODO: 斗技适配页面模块
 
     battle_win_count = 0
@@ -211,10 +211,13 @@ class ScriptTask(GeneralBattle, DuelAssets, SwitchOnmyoji):
         """
         self.maybe_screenshot(skip_screenshot)
         score, remain, total = self.O_D_SCORE.ocr(self.device.image)
-        if score > 10000:
+        if isinstance(score, int) and score > 10000:
             # 识别错误分数超过一万, 去掉最高位
             logger.warning('Recognition error, score is too high')
-            score = int(str(score)[1:])
+            score_str = str(score)[1:]
+            score = int(score_str) if score_str.isdigit() else 0
+        elif not isinstance(score, int):
+            score = 0
 
         # 检查名士段位（3000分及以上）
         if self.appear(self.I_D_CELEB_STAR) or self.appear(self.I_D_CELEB_HONOR):
