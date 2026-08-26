@@ -7,8 +7,9 @@ import operator
 import threading
 import random
 
+from typing import Any
 from datetime import datetime, timedelta
-from cached_property import cached_property
+from functools import cached_property
 from threading import Lock
 
 from module.base.filter import Filter
@@ -106,7 +107,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         self.model = ConfigModel(config_name=config_name)
         self.scheduler_update_dt = None  # 调度器更新时间
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """
         一开始是打算直接继承ConfigModel的，但是pydantic会接管所有的变量
         故而选择持有ConfigModel

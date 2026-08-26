@@ -3,8 +3,9 @@ import time
 from datetime import datetime, timedelta
 import random
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle, ExitMatcher, BattleContext, BattleAction
-from cached_property import cached_property
+from functools import cached_property
 
+from module.atom.click import RuleClick
 from module.atom.image import RuleImage
 from module.base.protect import random_sleep
 from module.base.timer import Timer
@@ -12,11 +13,12 @@ from module.exception import TaskEnd
 from module.logger import logger
 
 from tasks.base_task import BaseTask
+from tasks.GameUi.game_ui import GameUi
 from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.ActivityShikigami.config import GeneralBattleConfig, ActivityShikigami
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 import tasks.ActivityShikigami.page as pages
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 
 
 class LimitTimeOut(Exception):
@@ -101,7 +103,7 @@ class StateMachine(BaseTask):
         return True
 
 
-class BaseAct(StateMachine, GeneralBattle, SwitchSoul, ActivityShikigamiAssets):
+class BaseAct(GeneralBattle, GameUi, SwitchSoul, StateMachine, ActivityShikigamiAssets):
     """爬塔活动基类"""
 
     def _exit_matcher(self) -> ExitMatcher | None:
@@ -113,8 +115,10 @@ class BaseAct(StateMachine, GeneralBattle, SwitchSoul, ActivityShikigamiAssets):
         return super()._handle_result(context, config)
 
     def before_run(self):
-        pages.page_battle_result = self.navigator.resolve_page(pages.page_battle_result)
-        pages.page_battle_result.recognizer = pages.any_of(self.I_UI_BACK_RED, pages.page_battle_result.recognizer)
+        page_battle_result = self.navigator.resolve_page(pages.page_battle_result)
+        if page_battle_result and page_battle_result.recognizer:
+            pages.page_battle_result = page_battle_result
+            pages.page_battle_result.recognizer = pages.any_of(self.I_UI_BACK_RED, page_battle_result.recognizer)
 
     @property
     def act_page_handle_dict(self) -> dict[pages.Page, Callable]:
@@ -128,7 +132,7 @@ class BaseAct(StateMachine, GeneralBattle, SwitchSoul, ActivityShikigamiAssets):
                                                                        battle_key=f'act_{self.climb_type}'),
             pages.page_battle: lambda: self.run_general_battle(getattr(self.conf, f'{self.climb_type}_battle_conf'),
                                                                        battle_key=f'act_{self.climb_type}'),
-            pages.page_reward: lambda: self.click(pages.random_click(ltrb=(False, False, True, False)), interval=1.5),
+            pages.page_reward: lambda: self.click(cast(RuleClick, pages.random_click(ltrb=(False, False, True, False))), interval=1.5),
         }
 
     def run(self):

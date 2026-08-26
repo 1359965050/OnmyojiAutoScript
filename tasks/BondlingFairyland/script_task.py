@@ -5,7 +5,7 @@
 from time import sleep
 
 import random
-from cached_property import cached_property
+from functools import cached_property
 from datetime import datetime
 from datetime import timedelta, time
 from module.base.timer import Timer
@@ -32,9 +32,6 @@ class BondlingNumberMax(Exception):
 class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, BondlingFairylandAssets, RichManAssets):
     """ 契灵 """
 
-    last_plate_count: int = None  # 上一次识别到的契灵盘子数量
-    plate_interval: int = None  # 契灵盘子数量间隔(一般为1)
-
     def _exit_matcher(self) -> ExitMatcher | None:
         return any_of(self.I_BALL_FIRE, self.I_CHECK_BONDLING_FAIRYLAND, self.I_GI_EMOJI_1, self.I_GI_EMOJI_2)
 
@@ -43,13 +40,21 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
         if page_result is None:
             return
         logger.info('Update page_battle_result')
-        page_result.recognizer = any_of(self.I_BATTLE_FAIL_ABANDON, self.I_CAP_AGAIN, self.I_CAP_SUCCESS,
-                                        self.I_CAP_FAILURE, self.I_BATTLE_FAIL, self.I_BATTLE_SUCCESS,
-                                        page_result.recognizer)
+        recognizers = [
+            self.I_BATTLE_FAIL_ABANDON,
+            self.I_CAP_AGAIN,
+            self.I_CAP_SUCCESS,
+            self.I_CAP_FAILURE,
+            self.I_BATTLE_FAIL,
+            self.I_BATTLE_SUCCESS,
+        ]
+        if page_result.recognizer is not None:
+            recognizers.append(page_result.recognizer)
+        page_result.recognizer = any_of(*recognizers)
         # 契灵结算弹窗会叠在战斗页面上，需要更高优先级避免被底层战斗页抢先识别。
         page_result.priority = 50
 
-    def _handle_result(self, context: BattleContext, cfg: GeneralBattleConfig) -> BattleAction:
+    def _handle_result(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
         context.reward_no_battle_ts = None
         bondling_mode = self.config.bondling_fairyland.bondling_config.bondling_mode
         cap_again = bondling_mode in [BondlingMode.MODE3, BondlingMode.MODE4]
@@ -64,7 +69,12 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
                 clicked = True
         context.is_win = self.appear(self.I_CAP_SUCCESS) or self.appear(self.I_BATTLE_SUCCESS)
         if not clicked:
-            self.click(random_click(), interval=1.2)
+            target_click = random_click()
+            if isinstance(target_click, list):
+                for c in target_click:
+                    self.click(c, interval=1.2)
+            else:
+                self.click(target_click, interval=1.2)
         return BattleAction.CONTINUE
 
     def _handle_reward(self, context: BattleContext, config: GeneralBattleConfig) -> BattleAction:
@@ -132,13 +142,19 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
         logger.hr('Start run leader', 2)
         success = True
         is_first = True
+        no_plate = False
         while 1:
             def create_bond_team():
+                nonlocal no_plate
                 click_count = 0
                 while 1:
                     self.screenshot()
                     if self.appear(self.I_GI_IN_ROOM):
                         return True
+                    if self.appear_then_click(self.I_C_PLATE_LESS, interval=1):
+                        logger.info('棋盘不足,准备退出')
+                        no_plate = True
+                        return False
                     if click_count >= 6:
                         logger.error('Click fire failed')
                         logger.error(
@@ -171,12 +187,19 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
 
             if success:
                 is_first = True
-                if not create_bond_team():
+                if not create_bond_team() and not no_plate:
                     return True
+
+            if no_plate:
+                #  TODO 不知为何无法识别，但会自动切换页面，不用也行
+                #  if self.appear(self.I_C_PLATE_BUY):
+                #     self.click(random_click(ltrb=(True, False, False, False)), interval=1.2)
+                logger.info('棋盘不足，退出')
+                return False
 
             self.check_and_invite(True)
 
-            if self.current_count >= self.limit_count:
+            if self.current_count is not None and self.limit_count is not None and self.current_count >= self.limit_count:
                 if self.appear(self.I_GI_IN_ROOM):
                     # 次数达到也要邀请好友进房间,然后退出,不然队员无法判断是否完成契灵,出现异常
                     self.invite_friends(self.config.bondling_fairyland.invite_config)
@@ -377,7 +400,7 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             if self.appear_then_click(self.I_STONE_SURE, interval=1):
                 continue
 
-    def run_search(self, bondling_config: BondlingConfig, limit_cnt: int = None):
+    def run_search(self, bondling_config: BondlingConfig, limit_cnt: int | None = None):
         """
         运行探查
         :return:
@@ -396,7 +419,7 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             if limit_cnt is not None and limit_cnt <= 0:
                 return True
             # 检查是否有挑战次数
-            if self.current_count >= bondling_config.limit_count:
+            if self.current_count is not None and self.current_count >= bondling_config.limit_count:
                 logger.warning(f'No challenge count, exit')
                 return False
             # 检查是否到了限制时间
@@ -424,33 +447,6 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
         logger.hr('Start run catch', 2)
         self.lock_team()
 
-        def check_plate_number():
-            match bondling_config.bondling_mode:
-                case BondlingMode.MODE2:
-                    target_plate = self.O_B_LOW_NUMBER
-                case BondlingMode.MODE3:
-                    target_plate = self.O_B_MEDIUM_NUMBER
-                case BondlingMode.MODE4:
-                    target_plate = self.O_B_HIGH_NUMBER
-                case _:
-                    logger.error('Invalid bondling mode')
-                    return False
-            self.screenshot()
-            cu, res, total = target_plate.ocr(self.device.image)
-            # TODO: 优化此处, 仅用上一次识别结果来判断, 可能还会继续引起偏差, 但是用有限队列存储则强制需要多个正确识别结果, 要求较高
-            if cu == 0 and cu + res == total:
-                # 识别成0, 但是和上次数据之间波动较大, 认为当前这次识别出错
-                if self.plate_interval and self.last_plate_count and cu != self.last_plate_count - self.plate_interval:
-                    logger.warning(f'Plate number maybe recognize error, continue fire. last plate number:{self.last_plate_count}')
-                    self.last_plate_count = self.last_plate_count - self.plate_interval  # 计算本次真实值
-                    return True
-                logger.warning(f'No plate number, exit')
-                return False
-            if self.last_plate_count and not self.plate_interval:
-                self.plate_interval = self.last_plate_count - cu
-            self.last_plate_count = cu
-            return True
-
         def check_ball_number():
             self.screenshot()
             cu, res, total = self.O_B_BALL_NUMBER.ocr(self.device.image)
@@ -459,9 +455,6 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
                 return False
             return True
 
-        # 检查盘子
-        if not check_plate_number():
-            return False
         # 检查抓捕契灵剩余数量
         if not check_ball_number():
             return False
@@ -479,12 +472,8 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             if not self.in_catch_ui():
                 continue
 
-            # 检查是否有盘子
-            if not check_plate_number():
-                logger.warning(f'No plate number, exit')
-                return False
             # 检查是否有挑战次数
-            if self.current_count >= bondling_config.limit_count:
+            if self.current_count is not None and self.current_count >= bondling_config.limit_count:
                 logger.warning(f'No challenge count, exit')
                 return False
             # 检查是否到了限制时间
@@ -496,11 +485,17 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             cong = self.config.bondling_fairyland
             match cong.bondling_config.user_status:
                 case UserStatus.ALONE:
-                    self.run_alone()
+                    if not self.run_alone():
+                        # TODO 不知为何无法识别，但会自动切换页面，不用也行
+                        # if self.appear(self.I_C_PLATE_BUY):
+                        #     self.click(random_click(ltrb=(True, False, False, False)), interval=1.2)
+                        logger.info('棋盘不足，退出')
+                        return False
                     self.run_general_battle(battle_config)
                 case _:
                     if self.run_leader():
                         return success
+                    return False
 
     def is_room_dead(self) -> bool:
         # 如果在探索界面或者是出现在组队界面，那就是可能房间死了
@@ -635,7 +630,10 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
         while 1:
             self.screenshot()
             if not self.appear(self.I_BALL_FIRE, threshold=0.7):
-                break
+                return True
+            # 盘子少于10个停止,略过具体数量防止ocr识别错误导致退出
+            if self.appear_then_click(self.I_C_PLATE_LESS, interval=1):
+                return False
             if self.appear_then_click(self.I_BALL_FIRE, interval=1):
                 click_count += 1
                 continue

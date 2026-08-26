@@ -53,7 +53,14 @@ async def on_startup():
     :return:
     """
     ensure_api_logger()
-    logger.info('OAS web service startup done')
+    # 预热默认配置与菜单缓存，确保前端连接后首次读取菜单/配置 0 延迟响应
+    try:
+        mm.config_cache('template')
+        logger.info('Config model template pre-warmed successfully')
+    except Exception as e:
+        logger.warning(f'Failed to pre-warm config cache: {e}')
+
+    logger.info('OAS web service startup done - all systems ready')
     if app.state.script_instances:
         await mm.restart_processes(app.state.script_instances)
 

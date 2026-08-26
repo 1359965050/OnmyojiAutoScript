@@ -77,15 +77,34 @@ def fun(ev: threading.Event):
     args, _ = parser.parse_known_args()
 
     host = args.host or State.deploy_config.WebuiHost or "0.0.0.0"
-    port = args.port or int(State.deploy_config.WebuiPort) or 22270
+    port = args.port or int(State.deploy_config.WebuiPort) or 7788
 
     logger.hr("Launcher config")
     logger.attr("Host", host)
     logger.attr("Port", port)
     logger.attr("Reload", ev is not None)
 
-    ensure_image_server_ready()
-    ensure_ocr_server_ready()
+    # 并发预热核心后台服务（图像服务 + OCR 服务与权重预热）
+    from concurrent.futures import ThreadPoolExecutor, wait
+    t_start = time.perf_counter()
+    logger.hr("Pre-warming background services", 1)
+
+    def _warmup_image():
+        t0 = time.perf_counter()
+        ensure_image_server_ready()
+        logger.info(f"Image Server pre-warmed in {time.perf_counter() - t0:.3f}s")
+
+    def _warmup_ocr():
+        t0 = time.perf_counter()
+        ensure_ocr_server_ready(warmup=True)
+        logger.info(f"OCR Server & Model pre-warmed in {time.perf_counter() - t0:.3f}s")
+
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="prewarm") as executor:
+        f_img = executor.submit(_warmup_image)
+        f_ocr = executor.submit(_warmup_ocr)
+        wait([f_img, f_ocr])
+
+    logger.info(f"All core background services fully pre-warmed in {time.perf_counter() - t_start:.3f}s")
 
     try:
         uvicorn.run("module.server.app:fastapi_app",

@@ -1,5 +1,5 @@
-# This Python file uses the following encoding: utf-8
-# copy from alas https://github.com/LmeSzinc/AzurLaneAutoScript
+import hashlib
+from pathlib import Path
 from urllib.parse import urlparse
 
 from deploy.config import DeployConfig
@@ -23,13 +23,34 @@ class PipManager(DeployConfig):
     def pip(self):
         return f'"{self.python}" -m pip'
 
-    def pip_install(self):
-        logger.hr('Update Dependencies', 0)
+    def _get_requirements_hash(self) -> str:
+        req_file = self.requirements_file
+        if not os.path.exists(req_file):
+            return ""
+        try:
+            with open(req_file, 'rb') as f:
+                return hashlib.md5(f.read()).hexdigest()
+        except Exception:
+            return ""
 
+    def pip_install(self, force: bool = False):
         if not self.InstallDependencies:
             logger.info('InstallDependencies is disabled, skip')
             return
 
+        hash_file = Path('config/.requirements_hash')
+        current_hash = self._get_requirements_hash()
+
+        if not force and current_hash and hash_file.exists():
+            try:
+                saved_hash = hash_file.read_text(encoding='utf-8').strip()
+                if saved_hash == current_hash:
+                    logger.info('Dependencies are up to date (hash matched), skipping pip install.')
+                    return
+            except Exception:
+                pass
+
+        logger.hr('Update Dependencies', 0)
         logger.hr('Check Python', 1)
         self.execute(f'"{self.python}" --version')
 
@@ -52,3 +73,12 @@ class PipManager(DeployConfig):
         logger.hr('Update Dependencies', 1)
         arg = ' ' + ' '.join(arg) if arg else ''
         self.execute(f'{self.pip} install -r {self.requirements_file}{arg}')
+
+        # Save hash on success
+        if current_hash:
+            try:
+                hash_file.parent.mkdir(parents=True, exist_ok=True)
+                hash_file.write_text(current_hash, encoding='utf-8')
+            except Exception as e:
+                logger.warning(f'Failed to write requirements hash: {e}')
+

@@ -127,10 +127,10 @@ def ensure_image_server_started() -> bool:
     )
     _IMAGE_SERVER_PROCESS.start()
     logger.info(f"Start image server on {host}:{port}")
-    for _ in range(50):
+    for _ in range(100):
         if _is_port_in_use("127.0.0.1", port):
             return True
-        time.sleep(0.1)
+        time.sleep(0.015)
     logger.error(f"Image server is not ready on port {port}")
     return False
 

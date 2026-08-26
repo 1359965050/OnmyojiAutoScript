@@ -115,6 +115,20 @@ class OcrRuntime:
     def ping(self) -> bool:
         return True
 
+    def warmup(self) -> bool:
+        """
+        预热 OCR 模型：在 worker 线程中加载 TextSystem 并执行一次微型推理，
+        保证模型 ONNX 权重预先加载入内存，首个请求达到 0 延迟。
+        """
+        try:
+            dummy_img = np.zeros((32, 100, 3), dtype=np.uint8)
+            self._run_request(self._ocr_single_line, dummy_img)
+            logger.info("OCR runtime pre-warmed successfully")
+            return True
+        except Exception as e:
+            logger.warning(f"OCR warmup failed: {e}")
+            return False
+
     def get_server_info(self) -> dict[str, Any]:
         with self._lock:
             request_stats = dict(self._request_stats)
@@ -291,15 +305,15 @@ def ensure_ocr_server_started() -> bool:
     )
     _OCR_SERVER_PROCESS.start()
     logger.info(f"Start OCR server on {host}:{port}")
-    for _ in range(50):
+    for _ in range(100):
         if _is_port_in_use("127.0.0.1", port):
             return True
-        time.sleep(0.1)
+        time.sleep(0.015)
     logger.error(f"OCR server is not ready on port {port}")
     return False
 
 
-def ensure_ocr_server_ready() -> bool:
+def ensure_ocr_server_ready(warmup: bool = True) -> bool:
     from module.server.setting import State
 
     deploy_config = State.deploy_config
@@ -308,8 +322,10 @@ def ensure_ocr_server_ready() -> bool:
 
     address = deploy_config.OcrClientAddress or "127.0.0.1:22268"
     try:
-        get_ocr_client(address=address, refresh=True)
-        logger.info(f"OCR server ready: {address}")
+        client = get_ocr_client(address=address, refresh=True)
+        if warmup:
+            client.warmup()
+        logger.info(f"OCR server ready (warmed up): {address}")
         return True
     except Exception as exc:
         raise ScriptError(f"OCR server connection failed: {address}") from exc
@@ -366,6 +382,13 @@ class ModelProxy:
 
     def ping(self) -> bool:
         return bool(self.client.ping())
+
+    def warmup(self) -> bool:
+        try:
+            return bool(self.client.warmup())
+        except Exception as e:
+            logger.warning(f"OCR ModelProxy warmup call failed: {e}")
+            return False
 
     def get_server_info(self) -> dict[str, Any]:
         return self.client.get_server_info()
