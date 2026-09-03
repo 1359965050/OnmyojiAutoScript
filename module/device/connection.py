@@ -575,7 +575,10 @@ class Connection(ConnectionAttr):
                 # cannot connect to 127.0.0.1:55555:
                 # No connection could be made because the target machine actively refused it. (10061)
                 logger.info(msg)
-                logger.warning('No such device exists, please restart the emulator or set a correct serial')
+                logger.warning(
+                    f'目标端口 {serial} 积极拒绝连接 (10061)。'
+                    f'模拟器可能未启动、正在启动中或 ADB 调试端口不一致。'
+                )
                 raise EmulatorNotRunningError
 
         # Failed to connect
@@ -804,8 +807,7 @@ class Connection(ConnectionAttr):
         If serial=='auto' and only 1 device detected, use it
         """
         logger.hr('Detect device')
-        logger.info('Here are the available devices, '
-                    'copy to Alas.Emulator.Serial to use it or set Alas.Emulator.Serial="auto"')
+        logger.info('正在检测可用设备。若需指定设备，请复制设备序列号至 [设置 -> 模拟器设置 -> 模拟器 Serial]；或直接填入 "auto"')
         devices = self.list_device()
 
         # Show available devices
@@ -824,18 +826,15 @@ class Connection(ConnectionAttr):
 
         # Auto device detection
         if self.config.script.device.serial == 'auto':
-        # if self.config.Emulator_Serial == 'auto':
             if available.count == 0:
-                logger.critical('No available device found, auto device detection cannot work, '
-                                'please set an exact serial in Alas.Emulator.Serial instead of using "auto"')
+                logger.critical('未检测到任何可用的在线设备，自动设备探测失败。请先手动启动模拟器，并在 [设置 -> 模拟器设置 -> 模拟器 Serial] 填入正确的模拟器 Serial。')
                 raise RequestHumanTakeover
             elif available.count == 1:
                 logger.info(f'Auto device detection found only one device, using it')
                 self.serial = devices[0].serial
                 del_cached_property(self, 'adb')
             else:
-                logger.critical('Multiple devices found, auto device detection cannot decide which to choose, '
-                                'please copy one of the available devices listed above to Alas.Emulator.Serial')
+                logger.critical('检测到多个可用设备，自动检测无法判断应连接哪一台。请从上方列出的设备中复制一个序列号填入 [设置 -> 模拟器设置 -> 模拟器 Serial]。')
                 raise RequestHumanTakeover
 
         # Handle LDPlayer
@@ -920,8 +919,7 @@ class Connection(ConnectionAttr):
         packages = self.list_app_packages(keywords=keywords)
 
         # Show packages
-        logger.info(f'Here are the available packages in device "{self.serial}", '
-                    f'copy to Alas.Emulator.PackageName to use it')
+        logger.info(f'已检测到设备 "{self.serial}" 上的包名。可复制目标包名填入 [设置 -> 模拟器设置 -> 游戏客户端]：')
         if len(packages):
             for package in packages:
                 logger.info(package)
@@ -930,20 +928,19 @@ class Connection(ConnectionAttr):
 
         # Auto package detection
         if len(packages) == 0:
-            logger.critical(f'No {keywords[0]} package found, '
-                            f'please confirm {keywords[0]} has been installed on device "{self.serial}"')
+            logger.critical(f'未在设备 "{self.serial}" 上检测到 {keywords[0]} 游戏客户端，请确认模拟器已安装对应游戏应用。')
             raise RequestHumanTakeover
         if len(packages) == 1:
             logger.info('Auto package detection found only one package, using it')
             self.package = packages[0]
             # Set config
             if set_config:
-                self.config.Emulator_PackageName = self.package
+                self.config.script.device.package_name = self.package
             # Set server
             logger.info('Server changed, release resources')
             set_server(self.package)
         else:
             logger.critical(
-                f'Multiple {keywords[0]} packages found, auto package detection cannot decide which to choose, '
-                'please copy one of the available devices listed above to Alas.Emulator.PackageName')
+                f'在设备上找到多个符合 {keywords[0]} 的应用，自动检测无法决定选择哪个。'
+                '请从上方列出的包名中复制一个填入 [设置 -> 模拟器设置 -> 游戏客户端]。')
             raise RequestHumanTakeover

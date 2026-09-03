@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 import re
 import socket
 import time
@@ -406,6 +407,14 @@ class Minitouch(Connection):
     _minitouch_ws: websockets.WebSocketClientProtocol
     max_x: int
     max_y: int
+    max_pressure: int = 100
+
+    def _humanized_pressure(self) -> int:
+        top = getattr(self, 'max_pressure', 100) or 100
+        return random.randint(max(20, top // 2), top)
+
+    def _humanized_dwell(self) -> int:
+        return int(random.triangular(45, 130, 65))
 
     @cached_property
     def minitouch_builder(self):
@@ -468,7 +477,10 @@ class Minitouch(Connection):
         # self.max_contacts = max_contacts
         self.max_x = int(max_x)
         self.max_y = int(max_y)
-        # self.max_pressure = max_pressure
+        try:
+            self.max_pressure = int(max_pressure)
+        except (ValueError, TypeError):
+            self.max_pressure = 100
 
         # $ <pid>
         out = socket_out.readline().replace("\n", "").replace("\r", "")
@@ -569,7 +581,10 @@ class Minitouch(Connection):
     @retry
     def click_minitouch(self, x, y):
         builder = self.minitouch_builder
-        builder.down(x, y).commit()
+        pressure = self._humanized_pressure()
+        builder.down(x, y, pressure=pressure).commit().wait(self._humanized_dwell())
+        mx, my = x + random.randint(-2, 2), y + random.randint(-2, 2)
+        builder.move(mx, my, pressure=pressure).commit().wait(random.randint(8, 20))
         builder.up().commit()
         self.minitouch_send()
 
@@ -586,11 +601,11 @@ class Minitouch(Connection):
         points = insert_swipe(p0=p1, p3=p2)
         builder = self.minitouch_builder
 
-        builder.down(*points[0]).commit()
+        builder.down(*points[0], pressure=self._humanized_pressure()).commit()
         self.minitouch_send()
 
         for point in points[1:]:
-            builder.move(*point).commit().wait(10)
+            builder.move(*point).commit().wait(random.randint(6, 15))
         self.minitouch_send()
 
         builder.up().commit()
@@ -607,7 +622,7 @@ class Minitouch(Connection):
         self.minitouch_send()
 
         for point in points[1:]:
-            builder.move(*point).commit().wait(10)
+            builder.move(*point).commit().wait(random.randint(6, 15))
         self.minitouch_send()
 
         builder.move(*p2).commit().wait(140)

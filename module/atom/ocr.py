@@ -7,6 +7,7 @@ import cv2
 
 from module.ocr.base_ocr import BaseCor, OcrMode, OcrMethod, OcrMethodType
 from module.ocr.sub_ocr import Full, Single, Digit, DigitCounter, Duration, Quantity
+from module.base.utils.utils import random_normal_distribution_int
 from module.logger import logger
 
 
@@ -86,8 +87,8 @@ class RuleOcr(Digit, DigitCounter, Duration, Single, Full, Quantity):
             area = self.roi
 
         x, y, w, h = area
-        x = np.random.randint(x, x + w)
-        y = np.random.randint(y, y + h)
+        x = random_normal_distribution_int(x, x + w)
+        y = random_normal_distribution_int(y, y + h)
         return x, y
 
 

@@ -34,6 +34,13 @@
       "schedule_rule": "Filter",
       "queue_mode": false,
       "queue_idle_threshold": 10
+    },
+    "anti_ban": {
+      "enable": false,
+      "sleep_start": "02:00:00",
+      "sleep_end": "08:00:00",
+      "daily_active_limit": "00 00:00:00",
+      "long_rest_duration": "00 02:00:00"
     }
   },
   "restart": {
@@ -289,6 +296,7 @@
       "auto_fill": false,
       "shikigami_class": "N",
       "shikigami_order": 4,
+      "min_run_interval": "00 00:00:00",
       "harvest_guild_max_times": 3,
       "utilize_harvest": true,
       "utilize_enable": true,

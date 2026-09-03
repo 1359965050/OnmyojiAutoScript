@@ -3216,6 +3216,47 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <source>Quiz</source>
             <translation>逢魔密信</translation>
         </message>
+        <message>
+            <source>anti_ban</source>
+            <translation>防风控作息</translation>
+        </message>
+        <message>
+            <source>antiban_enable_help</source>
+            <translation>开启后启用作息约束（睡眠时间窗、累计活跃上限、强制休息），用于避免24小时不间断/深夜连续运行这类服务端可见的异常行为特征。
+注意：点击/滑动的拟人化（真实按压时长、坐标高斯化、微动、压力抖动）始终生效，不受此开关控制。</translation>
+        </message>
+        <message>
+            <source>sleep_start</source>
+            <translation>睡眠开始时间</translation>
+        </message>
+        <message>
+            <source>sleep_start_help</source>
+            <translation>进入睡眠时间窗的时刻。此区间内停止一切操作，并按“任务队列清空后”的空闲策略关闭游戏/模拟器，到点自动唤醒。支持跨午夜（如 23:00 到次日 06:00）。</translation>
+        </message>
+        <message>
+            <source>sleep_end</source>
+            <translation>睡眠结束时间</translation>
+        </message>
+        <message>
+            <source>sleep_end_help</source>
+            <translation>退出睡眠时间窗、恢复运行的时刻。</translation>
+        </message>
+        <message>
+            <source>daily_active_limit</source>
+            <translation>累计活跃上限</translation>
+        </message>
+        <message>
+            <source>daily_active_limit_help</source>
+            <translation>累计活跃时长达到此值后强制长休息一段（休息结束重新计）。设为 0 表示不限制。用于打破长时间不间断在线。格式：天 时:分:秒。</translation>
+        </message>
+        <message>
+            <source>long_rest_duration</source>
+            <translation>强制休息时长</translation>
+        </message>
+        <message>
+            <source>long_rest_duration_help</source>
+            <translation>触发累计活跃上限后的强制休息时长。格式：天 时:分:秒。</translation>
+        </message>
     </context>
     <context>
         <name>_cn_restart</name>
@@ -4305,6 +4346,14 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
         <message>
             <source>harvest_guild_max_times_help</source>
             <translation>默认3次</translation>
+        </message>
+        <message>
+            <source>min_run_interval</source>
+            <translation>最小再运行间隔</translation>
+        </message>
+        <message>
+            <source>min_run_interval_help</source>
+            <translation>防风控：两次蹭卡运行之间的最小间隔，避免蹭卡过于频繁被服务端标记。设为 0（默认）保持原逻辑（按结界卡剩余时间安排下次）。格式：天 时:分:秒。</translation>
         </message>
     </context>
     <context>

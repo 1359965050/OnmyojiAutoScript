@@ -46,8 +46,12 @@ class Device(Platform, Screenshot, Control, AppControl):
                     self.emulator_start()
                 else:
                     logger.critical(
-                        f'No emulator with serial "{self.config.Emulator_Serial}" found, '
-                        f'please set a correct serial'
+                        f'未检测到模拟器实例，无法自动拉起模拟器，连接设备 "{self.serial}" 失败。\n'
+                        f'==================== [排查建议] ====================\n'
+                        f'1. 模拟器是否未启动？请先手动启动模拟器（如 MuMu 12），确认进入安卓桌面后再运行脚本。\n'
+                        f'2. 端口是否一致？当前设置连接端口为 {self.serial}，请确认模拟器设置中的 ADB 端口是否与之一致。\n'
+                        f'3. 若端口经常变化或多开，可在前端 [设置 -> 模拟器设置 -> 模拟器 Serial] 填写 "auto" 尝试自动检测。\n'
+                        f'===================================================='
                     )
                     raise RequestHumanTakeover
 
@@ -258,7 +262,7 @@ class Device(Platform, Screenshot, Control, AppControl):
     def app_start(self):
         if not self.config.script.error.handle_error:
             logger.critical('No app stop/start, because HandleError disabled')
-            logger.critical('Please enable Alas.Error.HandleError or manually login to AzurLane')
+            logger.critical('Please enable script.error.handle_error or manually login to Onmyoji')
             raise RequestHumanTakeover
         super().app_start()
         self.stuck_record_clear()
@@ -267,7 +271,7 @@ class Device(Platform, Screenshot, Control, AppControl):
     def app_stop(self):
         if not self.config.script.error.handle_error:
             logger.critical('No app stop/start, because HandleError disabled')
-            logger.critical('Please enable Alas.Error.HandleError or manually login to AzurLane')
+            logger.critical('Please enable script.error.handle_error or manually login to Onmyoji')
             raise RequestHumanTakeover
         super().app_stop()
         self.stuck_record_clear()
