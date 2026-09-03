@@ -26,12 +26,21 @@ class ScriptTask(BaseTask):
         :return:
         """
         try:
+            if self.config.model.restart.emulator_restart_config.restart_emulator:
+                self.restart_emulator()
             self.recover_app()
             self.finish_recovery()
         except RequestHumanTakeover:
             if not self.delay_pending_tasks(reason='login failed during Restart recovery'):
                 raise
         raise TaskEnd
+
+    def restart_emulator(self):
+        logger.hr('Restart emulator')
+        if not self.device.emulator_restart():
+            logger.error('Failed to restart emulator during scheduled restart')
+            raise RequestHumanTakeover
+
 
     def app_stop(self):
         logger.hr('App stop')

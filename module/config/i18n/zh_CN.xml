@@ -2998,7 +2998,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>restart_config</source>
-            <translation>restart_config</translation>
+            <translation>重启配置</translation>
         </message>
         <message>
             <source>save_date</source>
@@ -3347,6 +3347,18 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>enable_ap</source>
             <translation>体力</translation>
+        </message>
+        <message>
+            <source>emulator_restart_config</source>
+            <translation>模拟器重启配置</translation>
+        </message>
+        <message>
+            <source>restart_emulator</source>
+            <translation>重启模拟器</translation>
+        </message>
+        <message>
+            <source>restart_emulator_help</source>
+            <translation>执行重启任务时，是否先关闭并重新启动模拟器，再启动游戏并登录</translation>
         </message>
         <message>
             <source>tasks_config_reset</source>
@@ -6152,7 +6164,7 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         </message>
         <message>
             <source>login_character_config</source>
-            <translation>重启</translation>
+            <translation>同一账号多个区服配置</translation>
         </message>
         <message>
             <source>max_continuous</source>

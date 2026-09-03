@@ -23,8 +23,13 @@ class RestartConfig(ConfigBase):
     enable_daily: bool = Field(default=True, description='是否重启之后启动每日琐事任务')
 
 
+class EmulatorRestartConfig(ConfigBase):
+    restart_emulator: bool = Field(default=False, description='restart_emulator_help')
+
+
 class Restart(ConfigBase):
     scheduler: RestartScheduler = Field(default_factory=RestartScheduler)
     restart_config: RestartConfig = Field(default_factory=RestartConfig)
+    emulator_restart_config: EmulatorRestartConfig = Field(default_factory=EmulatorRestartConfig)
     tasks_config_reset: TasksReset = Field(default_factory=TasksReset)
     login_character_config: LoginCharacterConfig = Field(default_factory=LoginCharacterConfig)

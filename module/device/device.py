@@ -21,6 +21,7 @@ from module.exception import (GameNotRunningError,
                               GameTooManyClickError,
                               RequestHumanTakeover,
                               EmulatorNotRunningError)
+from module.base.decorator import del_cached_property
 from module.logger import logger
 
 
@@ -313,6 +314,35 @@ class Device(Platform, Screenshot, Control, AppControl):
             time.sleep(interval)
 
         logger.info('Wait game start ready timeout, continue with login flow')
+
+    def emulator_restart(self) -> bool:
+        """
+        重启模拟器：优雅释放截屏/触控资源，停止模拟器，重新拉起并刷新句柄与截屏缓存。
+        """
+        logger.hr('Emulator restart', level=1)
+        if self.emulator_instance is None:
+            logger.warning('No emulator instance detected, cannot restart emulator')
+            return False
+
+        self.release_during_wait()
+        if not self.emulator_stop():
+            logger.warning('Emulator stop returned False, proceeding to start attempt')
+
+        time.sleep(2)
+
+        if not self.emulator_start():
+            logger.error('Failed to start emulator during restart')
+            return False
+
+        # 清理由于窗口重新创建导致的句柄与截图尺寸缓存
+        del_cached_property(self, 'root_node')
+        del_cached_property(self, 'screenshot_handle_num')
+        del_cached_property(self, 'screenshot_size')
+        self._screen_size_checked = False
+        self._screen_black_checked = False
+        logger.info('Emulator restart completed successfully')
+        return True
+
 
 
 if __name__ == "__main__":
