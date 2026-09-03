@@ -354,6 +354,16 @@
 Frida Server 会自动推送到模拟器并启动，无需手动操作。</translation>
         </message>
         <message>
+            <source>manual_claim</source>
+            <translation>是否手动领取</translation>
+        </message>
+        <message>
+            <source>checkin_big_god_manual_claim_help</source>
+            <translation>1. 启用后使用纯UI操作领取福利（不依赖Frida）。
+2. 适用于Frida不可用或Root环境异常的情况。
+3. 需确保模拟器已登录「网易大神」APP并绑定阴阳师角色，同时添加阴阳师圈子！！！</translation>
+        </message>
+        <message>
             <source>GuguArtStudio</source>
             <translation>呱呱画室</translation>
         </message>
@@ -5930,6 +5940,10 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>costume_shikigami_10</source>
             <translation>今宵胧明</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_11</source>
+            <translation>花札幕台</translation>
         </message>
         <message>
             <source>costume_shikigami_6</source>

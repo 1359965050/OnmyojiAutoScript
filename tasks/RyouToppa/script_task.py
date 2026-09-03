@@ -305,7 +305,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RyouToppaAssets):
                 continue
             if self.click(rcl, interval=5):
                 click_failure_count += 1
-                time.sleep(1)
+                time.sleep(random.uniform(0.2, 0.5))
                 continue
 
 
