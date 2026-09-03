@@ -3257,6 +3257,14 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <source>long_rest_duration_help</source>
             <translation>触发累计活跃上限后的强制休息时长。格式：天 时:分:秒。</translation>
         </message>
+        <message>
+            <source>use_ocr</source>
+            <translation>使用OCR检测</translation>
+        </message>
+        <message>
+            <source>use_ocr_help</source>
+            <translation>启用后通过识别游戏内通知文字触发活动，适用于无法通过ADB获取通知的模拟器</translation>
+        </message>
     </context>
     <context>
         <name>_cn_restart</name>
@@ -3626,6 +3634,30 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         <message>
             <source>costume_shikigami_5</source>
             <translation>契光水境</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_6</source>
+            <translation>月下火舞</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_7</source>
+            <translation>赤溟幽界</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_8</source>
+            <translation>童梦基地</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_9</source>
+            <translation>眠鹿之森</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_10</source>
+            <translation>今宵胧明</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_11</source>
+            <translation>花札幕台</translation>
         </message>
         <message>
             <source>costume_sign_default</source>
@@ -5985,30 +6017,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>costume_main_16</source>
             <translation>琦梦茨庭</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_10</source>
-            <translation>今宵胧明</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_11</source>
-            <translation>花札幕台</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_6</source>
-            <translation>月下火舞</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_7</source>
-            <translation>赤溟幽界</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_8</source>
-            <translation>童梦基地</translation>
-        </message>
-        <message>
-            <source>costume_shikigami_9</source>
-            <translation>眠鹿之森</translation>
         </message>
         <message>
             <source>default</source>
