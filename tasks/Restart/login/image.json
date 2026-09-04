@@ -160,5 +160,23 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "取消继续战斗"
+  },
+  {
+    "itemName": "login_cadpa_right",
+    "imageName": "login_login_cadpa_right.png",
+    "roiFront": "1155,570,90,125",
+    "roiBack": "1130,550,140,160",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "PC端右下角CADPA适龄提示"
+  },
+  {
+    "itemName": "login_pc_enter_game",
+    "imageName": "login_login_pc_enter_game.png",
+    "roiFront": "584,426,112,40",
+    "roiBack": "520,390,240,110",
+    "method": "Template matching",
+    "threshold": 0.65,
+    "description": "PC端网易通行证登录弹窗进入游戏按钮"
   }
 ]

@@ -65,7 +65,9 @@ class RestartAssets:
 	# 卷轴关闭区域点击(用于点击I_LOGIN_SCROOLL_CLOSE的区域而不依赖图片识别) 
 	C_LOGIN_SCROLL_CLOSE_AREA = RuleClick(roi_front=(1181,634,28,39), roi_back=(1162,595,77,112), name="login_scroll_close_area")
 	# 登录动画点击屏幕中央区域 
-	C_LOGIN_ANIMATION_CENTER = RuleClick(roi_front=(580,300,120,120), roi_back=(580,300,120,120), name="login_animation_center")
+	C_LOGIN_ANIMATION_CENTER = RuleClick(roi_front=(584,430,112,35), roi_back=(584,430,112,35), name="login_animation_center")
+	# PC端网易通行证登录弹窗进入游戏按钮点击区域 
+	C_LOGIN_PC_ENTER_GAME = RuleClick(roi_front=(584,430,112,35), roi_back=(584,426,112,40), name="login_pc_enter_game")
 
 
 	# Image Rule Assets
@@ -105,11 +107,15 @@ class RestartAssets:
 	I_EARLY_SERVER_CANCEL = RuleImage(roi_front=(435,404,172,56), roi_back=(435,404,172,56), threshold=0.8, method="Template matching", file="./tasks/Restart/login/login_early_server_cancel.png")
 	# 取消继续战斗 
 	I_CANCEL_BATTLE = RuleImage(roi_front=(471,395,129,55), roi_back=(367,227,545,296), threshold=0.8, method="Template matching", file="./tasks/Restart/login/login_cancel_battle.png")
+	# PC端右下角CADPA适龄提示 
+	I_LOGIN_CADPA_RIGHT = RuleImage(roi_front=(1155,570,90,125), roi_back=(1130,550,140,160), threshold=0.7, method="Template matching", file="./tasks/Restart/login/login_login_cadpa_right.png")
+	# PC端网易通行证登录弹窗进入游戏按钮 
+	I_LOGIN_PC_ENTER_GAME = RuleImage(roi_front=(584,426,112,40), roi_back=(520,390,240,110), threshold=0.65, method="Template matching", file="./tasks/Restart/login/login_login_pc_enter_game.png")
 
 
 	# Ocr Rule Assets
 	# 进入游戏 
-	O_LOGIN_ENTER_GAME = RuleOcr(roi=(543,530,194,125), area=(543,530,194,125), mode="Full", method="Default", keyword="进入", name="login_enter_game")
+	O_LOGIN_ENTER_GAME = RuleOcr(roi=(450,400,380,260), area=(450,400,380,260), mode="Full", method="Default", keyword="进入", name="login_enter_game")
 	# 点击屏幕跳过 
 	O_LOGIN_SKIP_1 = RuleOcr(roi=(1046,35,130,37), area=(1046,35,130,37), mode="Single", method="Default", keyword="点击屏幕跳过", name="login_skip_1")
 	# 登录动画-跳过 

@@ -72,6 +72,22 @@ class Control(Minitouch, Adb, Scrcpy, Window):
         elapsed = time.perf_counter() - start
         logger.info(f'{self._format_action_duration(elapsed)}Click {point2str(x, y)} @ {control_name}')
 
+    def click_foreground(self, x: int, y: int, control_check=True, control_name='ClickForeground') -> None:
+        """
+        前台物理模拟点击（基于 Windows 全局屏幕坐标与硬件鼠标事件，用于穿透 CEF/Webview 等模态控件）
+        """
+        if control_check:
+            self.handle_control_check(control_name)
+        x, y = ensure_int(x, y)
+        self._invalidate_image_batch_cache()
+        start = time.perf_counter()
+        if hasattr(self, 'click_window_foreground'):
+            self.click_window_foreground(x, y)
+        else:
+            self.click(x, y, control_check=False, control_name=control_name)
+        elapsed = time.perf_counter() - start
+        logger.info(f'{self._format_action_duration(elapsed)}Click (Foreground) {point2str(x, y)} @ {control_name}')
+
 
     def multi_click(self, button, n, interval=(0.1, 0.2)):
         """

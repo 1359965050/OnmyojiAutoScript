@@ -2378,18 +2378,6 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>出错时，保留最后 X 张截图</translation>
         </message>
         <message>
-            <source>notify_enable</source>
-            <translation>启用消息推送</translation>
-        </message>
-        <message>
-            <source>notify_config</source>
-            <translation>消息推送配置</translation>
-        </message>
-        <message>
-            <source>notify_config_help</source>
-            <translation>输入为yaml格式，&quot;:&quot;冒号后有一个空格，具体请翻阅文档[消息推送]</translation>
-        </message>
-        <message>
             <source>screenshot_interval</source>
             <translation>放慢截图速度至 X 秒一张</translation>
         </message>
@@ -2438,7 +2426,63 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>emulatorinfo_path_help</source>
-            <translation>举例：&quot;E:\ProgramFiles\MuMuPlayer-12.0\shell\MuMuPlayer.exe&quot;</translation>
+            <translation>选填，仅安卓模拟器使用。举例：&quot;E:\ProgramFiles\MuMuPlayer-12.0\shell\MuMuPlayer.exe&quot;</translation>
+        </message>
+        <message>
+            <source>client_path</source>
+            <translation>桌面版客户端路径</translation>
+        </message>
+        <message>
+            <source>client_path_help</source>
+            <translation>选填，仅 Windows 桌面版渠道使用。留空则自动按常见目录查找，举例：&quot;F:\online\yys\Launch.exe&quot;</translation>
+        </message>
+        <message>
+            <source>WindowsClient</source>
+            <translation>Windows 桌面版</translation>
+        </message>
+        <message>
+            <source>WINDOWS_ONMYOJI</source>
+            <translation>阴阳师桌面版</translation>
+        </message>
+        <message>
+            <source>onmyoji.exe</source>
+            <translation>阴阳师桌面版</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.wyzymnqsd_cps</source>
+            <translation>网易官方扫码版</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji</source>
+            <translation>网易官方非扫码版</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.mi</source>
+            <translation>小米渠道服</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.huawei</source>
+            <translation>华为渠道服</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.bili</source>
+            <translation>哔哩哔哩渠道服</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.vivo</source>
+            <translation>vivo渠道服</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.m4399</source>
+            <translation>4399渠道服</translation>
+        </message>
+        <message>
+            <source>com.netease.onmyoji.nearme.gamecenter</source>
+            <translation>OPPO渠道服</translation>
+        </message>
+        <message>
+            <source>com.tencent.tmgp.yys.zqb</source>
+            <translation>腾讯应用宝渠道</translation>
         </message>
         <message>
             <source>ALL</source>
@@ -6089,10 +6133,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>enable_switch_pass_by_name</source>
             <translation>按名称切换</translation>
-        </message>
-        <message>
-            <source>error_repeated</source>
-            <translation>Error Repeated</translation>
         </message>
         <message>
             <source>fish</source>

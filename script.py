@@ -2,6 +2,9 @@
 # @author runhey
 # github https://github.com/runhey
 
+from module.base.dpi import enable_dpi_awareness
+enable_dpi_awareness()
+
 import zerorpc
 import zmq
 import re
@@ -477,11 +480,15 @@ class Script:
         if not self.config.script.device.run_background_only and IS_WINDOWS:
             from module.device.platform2.platform_windows import minimize_by_name, show_window_by_name
             target_window_name = self.config.script.device.handle  # 在这里输入你的具体窗口名称
-            if self.config.script.device.emulator_window_minimize:
-                minimize_by_name(target_window_name)
-                logger.info(f'重新显示: {target_window_name}')
-            else:
-                show_window_by_name(target_window_name)
+            is_win_client = getattr(self.device, 'is_windows_client', False) if hasattr(self, 'device') else False
+            if is_win_client and (not target_window_name or target_window_name == 'auto' or 'mumu' in str(target_window_name).lower()):
+                target_window_name = '阴阳师'
+            if target_window_name:
+                if self.config.script.device.emulator_window_minimize:
+                    minimize_by_name(target_window_name)
+                    logger.info(f'重新显示: {target_window_name}')
+                else:
+                    show_window_by_name(target_window_name)
                 
         while 1:
             if date.today() > start_day:
@@ -546,9 +553,6 @@ class Script:
                     title=f'{I18n.trans_zh_cn(task)}{task}',
                     content=f"<{self.config_name}> 任务连续失败三次，请上线查看"
                 )
-                # 关闭模拟器
-                if self.config.script.error.error_repeated:
-                    self.device.emulator_stop()
                 exit(1)
 
             if success:

@@ -95,6 +95,13 @@ class Connection(ConnectionAttr):
             config (AzurLaneConfig, str): Name of the user config under ./config
         """
         super().__init__(config)
+        if self.is_windows_client:
+            self.adb = None
+            self.package = 'onmyoji.exe'
+            logger.attr('AdbDevice', 'None (Windows Native Client)')
+            logger.attr('PackageName', self.package)
+            return
+
         if not self.is_over_http:
             self.detect_device()
 
@@ -127,6 +134,8 @@ class Connection(ConnectionAttr):
         Returns:
             str:
         """
+        if self.is_windows_client:
+            return b""
         cmd = list(map(str, cmd))
         cmd = [self.adb_binary, '-s', self.serial] + cmd
         logger.info(f'Execute: {cmd}')
@@ -169,6 +178,8 @@ class Connection(ConnectionAttr):
             bytes if stream=True and recvall=True
             socket if stream=True and recvall=False
         """
+        if self.is_windows_client:
+            return "" if not stream else b""
         if not isinstance(cmd, str):
             cmd = list(map(str, cmd))
 
@@ -751,6 +762,10 @@ class Connection(ConnectionAttr):
                 2: 'HOME key on the top'
                 3: 'HOME key on the left'
         """
+        if getattr(self, 'is_windows_client', False):
+            self.orientation = 0
+            return 0
+
         _DISPLAY_RE = re.compile(
             r'.*DisplayViewport{.*valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*'
         )

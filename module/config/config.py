@@ -127,10 +127,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
 
     @cached_property
     def notifier(self):
-        notifier = Notifier(self.model.script.error.notify_config, enable=self.model.script.error.notify_enable)
-        notifier.config_name = self.config_name.upper()
-        logger.info(f'Notifier: {notifier.config_name}')
-        return notifier
+        return Notifier("", enable=False)
 
     def gui_args(self, task: str) -> str:
         """
@@ -291,8 +288,8 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.info(f"Task call: {task} (skipped because disabled by user)")
             return False
 
-    def task_delay(self, task: str, start_time: datetime = None,
-                   success: bool = None, server: bool = True, target: datetime = None) -> None:
+    def task_delay(self, task: str, start_time: datetime | None = None,
+                   success: bool | None = None, server: bool = True, target: datetime | None = None) -> None:
         """
         设置下次运行时间  当然这个也是可以重写的
         :param target: 可以自定义的下次运行时间

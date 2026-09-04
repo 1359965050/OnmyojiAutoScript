@@ -636,6 +636,9 @@ class PlatformWindows(PlatformBase, EmulatorManager):
         return True
 
     def emulator_start(self):
+        if getattr(self, 'is_windows_client', False):
+            logger.info('Running on Windows Native Client, bypass emulator_start')
+            return True
         logger.hr('Emulator start', level=1)
         for i in range(3):
             attempt = i + 1

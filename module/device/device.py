@@ -2,6 +2,7 @@
 from collections import deque
 from datetime import datetime
 import time
+import numpy as np
 
 # Patch pkg_resources before importing adbutils and uiautomator2
 from module.device.pkg_resources import get_distribution
@@ -34,6 +35,92 @@ class Device(Platform, Screenshot, Control, AppControl):
     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'PREPARE_BEFORE_BATTLE']
 
     def __init__(self, *args, **kwargs):
+        # 预先探测是否为 Windows 桌面版渠道
+        config_obj = args[0] if args else kwargs.get('config', None)
+        is_pc = False
+        if config_obj:
+            try:
+                device_cfg = getattr(config_obj.script, 'device', None)
+                if device_cfg:
+                    emu_type = getattr(device_cfg, 'emulatorinfo_type', '')
+                    emu_val = getattr(emu_type, 'value', emu_type)
+                    emu_str = f"{emu_type} {emu_val}".lower()
+                    pkg = getattr(device_cfg, 'package_name', '')
+                    pkg_val = getattr(pkg, 'value', pkg)
+                    pkg_str = f"{pkg} {pkg_val}".lower()
+                    serial = str(getattr(device_cfg, 'serial', '')).lower()
+                    if ('windowsclient' in emu_str or 'windows_client' in emu_str or emu_str.strip() == 'pc'
+                            or 'windows-0' in serial or serial in ('pc', 'windows')
+                            or 'onmyoji.exe' in pkg_str or 'windows_onmyoji' in pkg_str):
+                        is_pc = True
+            except Exception:
+                pass
+
+        if is_pc:
+            super().__init__(*args, **kwargs)
+            from tasks.Script.config_device import ScreenshotMethod, ControlMethod
+            self.config.script.device.screenshot_method = ScreenshotMethod.WINDOW_BACKGROUND
+            self.config.script.device.control_method = ControlMethod.WINDOW_MESSAGE
+            self.screenshot_interval_set()
+            self._image_batch_cache_frame_id: str | None = None
+            self._image_batch_cache: dict[int, dict] = {}
+            from module.device.handle import is_handle_valid, Handle
+            need_login = False
+            if not self.app_is_alive():
+                logger.info('Onmyoji PC client is not running, launching...')
+                self.app_start()
+                need_login = True
+            # 无论是刚拉起还是已在拉起中，轮询等待直到有效窗口句柄被成功捕获（最长等待 25s）
+            hwnd = getattr(self, 'screenshot_handle_num', 0)
+            if not hwnd or not is_handle_valid(hwnd):
+                for wait_i in range(50):
+                    time.sleep(0.5)
+                    # 轻量检查是否有阴阳师可见窗口，避免在等待期间刷屏产生 ERROR
+                    win_list = Handle.all_windows()
+                    has_yys = any('阴阳师' in w or 'Onmyoji' in w for w in win_list)
+                    if has_yys:
+                        if hasattr(self, 'init_handle'):
+                            self.init_handle()
+                        hwnd = getattr(self, 'screenshot_handle_num', 0)
+                        if hwnd and is_handle_valid(hwnd):
+                            logger.info(f'Onmyoji PC client window ready after {(wait_i + 1) * 0.5:.1f}s.')
+                            if hasattr(self, 'bring_to_front'):
+                                self.bring_to_front()
+                            break
+                    if (wait_i + 1) % 4 == 0:  # 每 2 秒提示一次
+                        logger.info(f'Waiting for Onmyoji PC client window to appear (elapsed: {(wait_i + 1) * 0.5:.1f}s)...')
+                else:
+                    logger.warning('Timeout waiting for Onmyoji PC client window to appear.')
+                    if hasattr(self, 'init_handle'):
+                        self.init_handle()
+            logger.info('Device initialized successfully for Windows Native Client.')
+
+            # 关键等待：等待客户端窗口脱离启动黑屏阶段，确保游戏画面渲染就绪
+            self.wait_app_start_ready(timeout=25.0)
+
+            # 将游戏主窗口置于前台激活
+            if hasattr(self, 'bring_to_front'):
+                self.bring_to_front()
+
+            # 若新拉起客户端或当前停留在登录界面，在进入业务功能任务前先完成登录进入庭院
+            try:
+                from module.image.rpc import ensure_image_server_ready
+                ensure_image_server_ready()
+                from tasks.Restart.assets import RestartAssets
+                from tasks.Component.Login.service import LoginService
+                self.screenshot()
+                is_at_login = (
+                    need_login
+                    or RestartAssets.I_LOGIN_PC_ENTER_GAME.match(self.image)
+                    or RestartAssets.I_LOGIN_CADPA_RIGHT.match(self.image)
+                )
+                if is_at_login:
+                    logger.info('Detected login screen on PC client, handling login to enter courtyard first...')
+                    LoginService(config=self.config, device=self).app_handle_login()
+            except Exception as e:
+                logger.warning(f'Auto login in Device init: {e}')
+            return
+
         for trial in range(4):
             try:
                 super().__init__(*args, **kwargs)
@@ -136,6 +223,22 @@ class Device(Platform, Screenshot, Control, AppControl):
             np.ndarray:
         """
         self.stuck_record_check()
+
+        if getattr(self, 'is_windows_client', False):
+            from module.device.handle import is_handle_valid, Handle
+            hwnd = getattr(self, 'screenshot_handle_num', 0)
+            if not hwnd or not is_handle_valid(hwnd):
+                for retry in range(6):
+                    win_list = Handle.all_windows()
+                    if any('阴阳师' in w or 'Onmyoji' in w for w in win_list):
+                        if hasattr(self, 'init_handle'):
+                            self.init_handle()
+                        hwnd = getattr(self, 'screenshot_handle_num', 0)
+                        if hwnd and is_handle_valid(hwnd):
+                            break
+                    time.sleep(0.5)
+                if not hwnd or not is_handle_valid(hwnd):
+                    raise GameNotRunningError('Onmyoji PC client window not found')
 
         try:
             super().screenshot()
@@ -307,8 +410,11 @@ class Device(Platform, Screenshot, Control, AppControl):
                 continue
 
             color = get_color(image, area=(0, 0, 1280, 720))
-            if sum(color) >= 1:
-                logger.info(f'Game start ready, frame color: {color}')
+            mean_brightness = float(np.mean(image)) if hasattr(image, 'mean') else sum(color) / 3.0
+            if mean_brightness >= 12 and sum(color) >= 30:
+                logger.info(f'Game start ready, frame mean brightness: {mean_brightness:.1f}, color: {color}')
+                # 给予游戏首屏渲染与 CEF 控件就绪的稳定缓冲时间
+                time.sleep(1.0)
                 return
 
             time.sleep(interval)

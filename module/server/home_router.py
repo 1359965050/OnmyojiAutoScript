@@ -32,7 +32,7 @@ async def home_test():
 #  gcc -Wall -pedantic -shared -fPIC -o group_work.so group_work.c -lwiringPi
 @home_app.get('/home_menu')
 async def home_menu():
-    return {'Home': [], 'Updater': []}
+    return {'Home': []}
 
 
 @home_app.get('/image_server_info')

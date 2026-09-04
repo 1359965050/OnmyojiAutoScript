@@ -283,9 +283,11 @@ class BaseTask(GlobalGameAssets, CostumeBase):
     def wait_until_appear(self,
                           target: RuleImage | RuleOcr,
                           skip_first_screenshot=False,
-                          wait_time: int | float | None = None) -> bool:
+                          wait_time: int | float | None = None,
+                          log_level: str = 'warning') -> bool:
         """
         等待直到出现目标
+        :param log_level: 超时日志级别，支持 'warning', 'info', 'debug', None
         :param wait_time: 等待时间，单位秒
         :param target:
         :param skip_first_screenshot:
@@ -301,7 +303,13 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             else:
                 self.screenshot()
             if wait_timer and wait_timer.reached():
-                logger.warning(f"Wait until appear {target.name} timeout")
+                msg = f"Wait until appear {target.name} timeout"
+                if log_level == 'info':
+                    logger.info(msg)
+                elif log_level == 'debug':
+                    logger.debug(msg)
+                elif log_level == 'warning':
+                    logger.warning(msg)
                 return False
             if isinstance(target, RuleImage) and self.appear(target):
                 return True
@@ -508,6 +516,33 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.device.click(x=x, y=y, control_name=click.name)
 
         # 执行后，如果有限制时间，则重置限制时间
+        if interval:
+            self.interval_timer[click.name].reset()
+            return True
+        return False
+
+    def click_foreground(self, click: Union[RuleClick, RuleLongClick, RuleImage, RuleOcr, None] = None, interval: float | None = None) -> bool:
+        """
+        前台物理模拟点击
+        """
+        if not click:
+            return False
+
+        if interval:
+            if click.name in self.interval_timer:
+                if self.interval_timer[click.name].limit != interval:
+                    self.interval_timer[click.name] = Timer(interval)
+            else:
+                self.interval_timer[click.name] = Timer(interval)
+            if not self.interval_timer[click.name].reached():
+                return False
+
+        x, y = click.coord()
+        if hasattr(self.device, 'click_foreground'):
+            self.device.click_foreground(x=x, y=y, control_name=click.name)
+        else:
+            self.device.click(x=x, y=y, control_name=click.name)
+
         if interval:
             self.interval_timer[click.name].reset()
             return True

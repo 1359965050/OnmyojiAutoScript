@@ -17,6 +17,20 @@ class AppControl(Adb, Uiautomator2):
 
         这用于区分“应用被切到后台”和“应用已经被真正杀掉”两种情况。
         """
+        if getattr(self, 'is_windows_client', False):
+            import psutil
+            target = (package_name or self.package or 'onmyoji.exe').lower()
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    pname = p.info['name']
+                    if pname and 'onmyoji' in pname.lower():
+                        logger.attr('Package_pid', str(p.info['pid']))
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            logger.attr('Package_pid', 'None')
+            return False
+
         if not package_name:
             package_name = self.package
 
@@ -31,6 +45,14 @@ class AppControl(Adb, Uiautomator2):
         return bool(result)
 
     def app_is_running(self) -> bool:
+        if getattr(self, 'is_windows_client', False):
+            hwnd = getattr(self, 'screenshot_handle_num', 0)
+            if hwnd:
+                from win32gui import IsWindow, IsWindowVisible
+                if IsWindow(hwnd) and IsWindowVisible(hwnd):
+                    return True
+            return self.app_is_alive()
+
         method = self.config.script.device.control_method
         # if self.is_wsa:
         #     package = self.app_current_wsa()
@@ -44,6 +66,65 @@ class AppControl(Adb, Uiautomator2):
         return package == self.package
 
     def app_start(self):
+        if getattr(self, 'is_windows_client', False):
+            logger.info('App start (Windows): onmyoji.exe')
+            import subprocess, os
+            path = getattr(self.config.script.device, 'client_path', '')
+            if not path:
+                path = getattr(self.config.script.device, 'emulatorinfo_path', '')
+            if path:
+                p_lower = path.lower().replace('\\', '/')
+                is_emu_path = any(emu in p_lower for emu in ['mumu', 'nox', 'ldplayer', 'nemu', 'leidian', 'bluestacks', 'memu'])
+                is_yys_path = 'onmyoji' in p_lower or 'launch' in p_lower
+                if is_emu_path and not is_yys_path:
+                    logger.warning(f'Detected emulator path in WindowsClient mode: {path}. Bypassing it to avoid launching emulator.')
+                    path = ''
+            if path and os.path.isdir(path):
+                for candidate in ['Launch.exe', os.path.join('bin', 'onmyoji.exe'), 'onmyoji.exe']:
+                    c_path = os.path.join(path, candidate)
+                    if os.path.exists(c_path):
+                        path = c_path
+                        break
+
+            if not path or not os.path.exists(path) or os.path.isdir(path):
+                default_paths = [
+                    r'F:\online\yys\Launch.exe',
+                    r'F:\online\yys\bin\onmyoji.exe',
+                    r'D:\Onmyoji\Launch.exe',
+                    r'C:\Program Files\Onmyoji\Launch.exe',
+                ]
+                for dp in default_paths:
+                    if os.path.exists(dp):
+                        path = dp
+                        break
+
+            if path and os.path.exists(path) and not os.path.isdir(path):
+                cwd = os.path.dirname(path)
+                logger.info(f'Launching Onmyoji client: {path} (cwd: {cwd})')
+                try:
+                    subprocess.Popen([path], cwd=cwd, shell=False)
+                except OSError as e:
+                    logger.warning(f'Failed to launch {path} directly ({e}). Trying shell launch or bin/onmyoji.exe fallback...')
+                    # 尝试使用 Windows Shell 打开（可唤起系统的 UAC 提示）
+                    try:
+                        os.startfile(path)
+                        return
+                    except Exception:
+                        pass
+
+                    bin_path = os.path.join(cwd, 'bin', 'onmyoji.exe') if not path.endswith('onmyoji.exe') else path
+                    root_dir = cwd if not path.endswith('onmyoji.exe') else os.path.dirname(cwd)
+                    if os.path.exists(bin_path):
+                        try:
+                            subprocess.Popen([bin_path], cwd=root_dir, shell=False)
+                        except OSError as e2:
+                            logger.warning(f'Automatic client launch requires UAC elevation: {e2}. Please start Onmyoji PC client manually.')
+                    else:
+                        logger.warning('Please start Onmyoji PC client manually.')
+            else:
+                logger.warning('Onmyoji desktop executable not found. Please check client_path in settings or start the game manually.')
+            return
+
         method = self.config.script.device.screenshot_method
         logger.info(f'App start: {self.package}')
         # if self.config.Emulator_Serial == 'wsa-0':
@@ -54,6 +135,22 @@ class AppControl(Adb, Uiautomator2):
             self.app_start_adb()
 
     def app_stop(self):
+        if getattr(self, 'is_windows_client', False):
+            logger.info('App stop (Windows): onmyoji.exe')
+            import psutil
+            stopped = False
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    pname = p.info['name']
+                    if pname and 'onmyoji' in pname.lower():
+                        p.terminate()
+                        stopped = True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            if stopped:
+                logger.info('Terminated onmyoji.exe process')
+            return
+
         method = self.config.script.device.screenshot_method
         logger.info(f'App stop: {self.package}')
         if method in AppControl._app_u2_family:

@@ -1788,12 +1788,6 @@
           "title": "Handle Error",
           "type": "boolean"
         },
-        "error_repeated": {
-          "default": false,
-          "description": "是否多次出错关闭模拟器",
-          "title": "Error Repeated",
-          "type": "boolean"
-        },
         "save_error": {
           "default": true,
           "description": "",
@@ -1806,18 +1800,6 @@
           "minimum": 1,
           "title": "Screenshot Length",
           "type": "integer"
-        },
-        "notify_enable": {
-          "default": false,
-          "description": "",
-          "title": "Notify Enable",
-          "type": "boolean"
-        },
-        "notify_config": {
-          "default": "provider: null",
-          "description": "notify_config_help",
-          "title": "Notify Config",
-          "type": "multi_line"
         }
       },
       "title": "Error",

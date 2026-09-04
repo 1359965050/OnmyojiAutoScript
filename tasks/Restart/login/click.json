@@ -13,8 +13,14 @@
   },
   {
     "itemName": "login_animation_center",
-    "roiFront": "580,300,120,120",
-    "roiBack": "580,300,120,120",
-    "description": "登录动画点击屏幕中央区域"
+    "roiFront": "584,430,112,35",
+    "roiBack": "584,430,112,35",
+    "description": "登录动画与进入游戏安全点击区域(避开账号输入框)"
+  },
+  {
+    "itemName": "login_pc_enter_game",
+    "roiFront": "584,426,112,40",
+    "roiBack": "584,426,112,40",
+    "description": "PC端网易通行证登录弹窗进入游戏按钮点击区域"
   }
 ]

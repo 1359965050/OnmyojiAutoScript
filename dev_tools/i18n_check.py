@@ -302,7 +302,7 @@ def main() -> int:
             print(f"    - {item}")
 
     if not has_error:
-        print("\n✅ No missing translations or collisions.")
+        print("\n[OK] No missing translations or collisions.")
 
     return 1 if has_error else 0
 

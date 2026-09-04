@@ -3,6 +3,9 @@
 # github https://github.com/runhey
 import re
 
+from module.base.dpi import enable_dpi_awareness
+enable_dpi_awareness()
+
 from enum import Enum
 from cached_property import cached_property
 from anytree import NodeMixin, RenderTree, PreOrderIter
@@ -10,12 +13,14 @@ from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage
 from win32print import GetDeviceCaps
 from win32process import GetWindowThreadProcessId
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
-                      IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
+                      IsWindow, GetWindowRect, GetClientRect, SetWindowPos,
+                      GetWindowDC, DeleteObject,
                       SetForegroundWindow, IsWindowVisible, GetDC, GetParent,
                       EnumChildWindows)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
-                      WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE)
+                      WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
+                      SWP_NOMOVE, SWP_NOZORDER)
 from module.config.config import Config
 from module.logger import logger
 
@@ -45,6 +50,25 @@ def is_handle_valid(num: int) -> bool:
     :return:
     """
     return IsWindow(num)
+
+
+def is_handle_healthy(num: int) -> bool:
+    """
+    检查窗口句柄是否健康可用（句柄有效、窗口可见且非最小化状态）
+    :param num: 窗口句柄号
+    :return: bool
+    """
+    if not num or not isinstance(num, int):
+        return False
+    try:
+        if not IsWindow(num) or not IsWindowVisible(num):
+            return False
+        rect = GetWindowRect(num)
+        w = rect[2] - rect[0]
+        h = rect[3] - rect[1]
+        return w > 0 and h > 0
+    except Exception:
+        return False
 
 
 def handle_num2pid(num: int) -> int:
@@ -93,6 +117,7 @@ class EmulatorFamily(Enum):
     FAMILY_MEMU = 40  # 逍遥模拟器
     FAMILY_BLUESTACKS = 50  # 蓝叠模拟器
     FAMILY_OTHER = 60  # 其他模拟器 待定
+    FAMILY_WINDOWS_CLIENT = 70  # 阴阳师桌面版
 
 
 # 各个模拟器的句柄树*******************************************************************************************************
@@ -133,6 +158,8 @@ class Handle:
                      '夜神',
                      '蓝叠',
                      '逍遥',
+                     '阴阳师',
+                     'Onmyoji',
                      '模拟器']  # 最后一个我又不知道还有哪些模拟器
     emulator_handle = {
         # 夜神
@@ -168,6 +195,18 @@ class Handle:
                 self.config = Config(config, task=None)
             else:
                 self.config = config
+
+        self.init_handle()
+
+    def init_handle(self) -> None:
+        """
+        探测并初始化窗口句柄树及相关属性。支持重试刷新。
+        """
+        if getattr(self, 'is_windows_client', False):
+            h_str = str(self.config.script.device.handle or '').lower()
+            if not h_str or any(emu in h_str for emu in ['mumu', 'nox', '雷电', '逍遥', '蓝叠']):
+                self.config.script.device.handle = 'auto'
+
         if not self.config.script.device.handle:
             logger.info('Handle is empty. oas not use handle')
             return
@@ -175,16 +214,25 @@ class Handle:
             logger.info('Handle is empty. oas not use handle')
             return
 
+        # 清除可能缓存的旧属性
+        for prop in ('emulator_family', 'screenshot_handle_num', 'screenshot_size'):
+            if prop in self.__dict__:
+                del self.__dict__[prop]
+
         # 获取根的句柄
         self.root_handle_title = ''
         self.root_handle_num = 0
         self.root_handle = self.config.script.device.handle
+        is_win_client = getattr(self, 'is_windows_client', False)
         if self.root_handle == "auto":
             logger.info('Handle is auto. oas will find window emulator')
             window_list = Handle.all_windows()
-            self.root_handle_title = self.auto_handle_title(window_list)
-            self.root_handle_num = handle_title2num(self.root_handle_title)
-        if isinstance(self.root_handle, str):
+            self.root_handle_title = self.auto_handle_title(window_list, is_windows_client=is_win_client)
+            if self.root_handle_title:
+                self.root_handle_num = handle_title2num(self.root_handle_title)
+            else:
+                self.root_handle_num = 0
+        elif isinstance(self.root_handle, str):
             try:
                 self.root_handle_num = int(self.root_handle)
                 logger.info('Handle is handle num. oas use it as root handle num')
@@ -197,6 +245,14 @@ class Handle:
                     self.root_handle_num = handle_title2num(self.root_handle)
                     self.root_handle_title = self.root_handle
         logger.info(f'The root handle title is {self.root_handle_title} and num is {self.root_handle_num}')
+
+        if not self.root_handle_num or not is_handle_valid(self.root_handle_num):
+            if is_win_client:
+                logger.info('No valid Onmyoji game window handle found yet.')
+            else:
+                logger.warning('No valid emulator or game window handle found.')
+            self.root_node = WindowNode(name=self.root_handle_title or 'Unknown', num=0)
+            return
 
         # 获取句柄树
         self.root_node = WindowNode(name=self.root_handle_title, num=self.root_handle_num)
@@ -225,22 +281,38 @@ class Handle:
         """
 
         def enum_windows_callback(hwnd, windows):
-            window_text = GetWindowText(hwnd)
-            windows.append(window_text)
+            if IsWindowVisible(hwnd):
+                window_text = GetWindowText(hwnd)
+                if window_text:
+                    windows.append(window_text)
 
         windows = []
-        EnumWindows(enum_windows_callback, windows)
+        try:
+            EnumWindows(enum_windows_callback, windows)
+        except Exception:
+            pass
         return windows
 
     @classmethod
-    def auto_handle_title(cls, windows: list) -> str:
+    def auto_handle_title(cls, windows: list, is_windows_client: bool = False) -> str:
         """
         返回第一个找到的有模拟器的标题
         :param windows:
+        :param is_windows_client: 是否为 Windows 桌面版渠道
         :return:
         """
         if windows is None:
             logger.error("handle_auto not get all wnidow")
+
+        # 优先检测阴阳师桌面版窗口
+        for window_title in windows:
+            if '阴阳师' in window_title or 'Onmyoji' in window_title:
+                logger.info(f'Found Onmyoji Windows client title: {window_title}')
+                return window_title
+
+        if is_windows_client:
+            logger.info('Onmyoji PC client window is not present yet.')
+            return None
 
         emu_list = []
         for window_title in windows:
@@ -301,6 +373,11 @@ class Handle:
         通过句柄树来判断这个是那个模拟器大类
         :return:
         """
+        if getattr(self, 'is_windows_client', False):
+            return EmulatorFamily.FAMILY_WINDOWS_CLIENT
+        if '阴阳师' in self.root_handle_title or 'Onmyoji' in self.root_handle_title:
+            return EmulatorFamily.FAMILY_WINDOWS_CLIENT
+
         children_num = len(self.root_node.children)
         if children_num == 1:  #
             name = self.root_node.children[0].name
@@ -322,7 +399,9 @@ class Handle:
         # 基于句柄标题的判定
         for emu in Handle.emulator_list:
             if self.root_handle_title.find(emu) != -1:
-                if emu == 'MuMu':
+                if emu in ('阴阳师', 'Onmyoji'):
+                    return EmulatorFamily.FAMILY_WINDOWS_CLIENT
+                elif emu == 'MuMu':
                     return EmulatorFamily.FAMILY_MUMU
                 elif emu == '雷电':
                     return EmulatorFamily.FAMILY_LD
@@ -338,8 +417,14 @@ class Handle:
     def screenshot_handle_num(self) -> int:
         """
         截屏的句柄其实并不是根句柄
-        :return:  出错返回None
+        :return:  出错返回0
         """
+        if not getattr(self, 'root_node', None) or not getattr(self.root_node, 'num', 0):
+            return 0
+
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            return self.root_node.num
+
         if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
             # 使用正则匹配12 来判定是不是mumu12这并不是一个好的方法
             name = self.root_node.children[0].name
@@ -383,6 +468,24 @@ class Handle:
         2023.7.1 在高缩放的设备上应该输出1280X720
         :return:
         """
+        hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not is_handle_valid(hwnd):
+            return None
+
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            crect = GetClientRect(hwnd)
+            scale_rate = window_scale_rate()
+            width_raw = crect[2] - crect[0]
+            height_raw = crect[3] - crect[1]
+            width = int(round(width_raw * scale_rate))
+            height = int(round(height_raw * scale_rate))
+            if abs(width - 1280) < 15:
+                width = 1280
+            if abs(height - 720) < 15:
+                height = 720
+            logger.info(f'Windows client screenshot size: raw=({width_raw}, {height_raw}), scale={scale_rate}, final=({width}, {height})')
+            return width, height
+
         winRect = GetWindowRect(self.screenshot_handle_num)
         scale_rate = window_scale_rate()
         width_before: int = winRect[2] - winRect[0]  # 右x-左x

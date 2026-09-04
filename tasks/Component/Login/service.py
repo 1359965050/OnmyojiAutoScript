@@ -1,12 +1,15 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+import time
+import numpy as np
 from module.base.timer import Timer
 from module.exception import RequestHumanTakeover, GameTooManyClickError, GameStuckError
 from module.logger import logger
 from tasks.GameUi.assets import GameUiAssets
 from tasks.Restart.assets import RestartAssets
 from tasks.base_task import BaseTask
+from module.device.handle import EmulatorFamily
 
 
 class LoginService(BaseTask, RestartAssets, GameUiAssets):
@@ -30,13 +33,25 @@ class LoginService(BaseTask, RestartAssets, GameUiAssets):
         skip_login_animation = True
         skip_click_mx_cnt = 5
         login_success = False
+        anim_skip_first_wait = True
 
-        while 1:
+        if hasattr(self.device, 'bring_to_front'):
+            self.device.bring_to_front()
+
+        while True:
             if not login_success and orientation_timer.reached():
                 self.device.get_orientation()
                 orientation_timer.reset()
 
             self.screenshot()
+
+            # 游戏启动初期或场景切换可能存在纯黑屏加载阶段，避免在未完成渲染时过早触发 OCR 或误操作
+            if hasattr(self.device, 'image') and self.device.image is not None:
+                if float(np.mean(self.device.image)) < 12:
+                    logger.info('Game window is loading (black screen), waiting for rendering...')
+                    time.sleep(0.5)
+                    continue
+
             if self.appear_then_click(self.I_CANCEL_BATTLE, interval=0.8):
                 logger.info('Cancel continue battle')
                 continue
@@ -78,7 +93,7 @@ class LoginService(BaseTask, RestartAssets, GameUiAssets):
                 logger.info('Close yellow close')
                 continue
             if self.appear_then_click(self.I_LOGIN_LOGIN_GOTO_BIND_PHONE):
-                while 1:
+                while True:
                     self.screenshot()
                     if self.appear_then_click(self.I_LOGIN_LOGIN_CANCEL_BIND_PHONE):
                         logger.info("Close bind phone")
@@ -117,17 +132,41 @@ class LoginService(BaseTask, RestartAssets, GameUiAssets):
 
             # 已进入庭院或登录成功后，不再执行任何登录/进入游戏逻辑
             if not login_success and not self.appear(self.I_CHECK_MAIN):
-                # 进入登录页面后或点击超过一定次数不再处理登录动画逻辑
-                if self.appear(self.I_LOGIN_8, interval=0.6) or skip_click_mx_cnt <= 0:
+                # 检测到登录页面标志后，立即终止登录动画逻辑
+                if (self.appear(self.I_LOGIN_8)
+                        or self.appear(self.I_LOGIN_CADPA_RIGHT)
+                        or skip_click_mx_cnt <= 0):
                     skip_login_animation = False
+
                 if skip_login_animation:
+                    if anim_skip_first_wait:
+                        logger.info('Wait 2s before checking LOGIN_ANIMATION_SKIP...')
+                        time.sleep(2.0)
+                        anim_skip_first_wait = False
+                        self.screenshot()
+
                     if self.ocr_appear_click(self.O_LOGIN_ANIMATION_SKIP, interval=3):  # 点击跳过登录动画
                         continue
-                    if self.click(self.C_LOGIN_ANIMATION_CENTER, interval=5):  # 点击屏幕中央触发跳过显示
-                        skip_click_mx_cnt -= 1
+                    if self.ocr_appear_click(self.O_LOGIN_SKIP_1, interval=3):  # 点击屏幕跳过
+                        continue
+                    is_win_client = (getattr(self.device, 'emulator_family', None) == EmulatorFamily.FAMILY_WINDOWS_CLIENT)
+                    if is_win_client:
+                        if self.click_foreground(self.C_LOGIN_ANIMATION_CENTER, interval=3.0):
+                            skip_click_mx_cnt -= 1
+                    else:
+                        if self.click(self.C_LOGIN_ANIMATION_CENTER, interval=3.5):  # 点击安全区域触发跳过显示或跳过CG
+                            skip_click_mx_cnt -= 1
                 else:
-                    if self.ocr_appear_click(self.O_LOGIN_ENTER_GAME, interval=4):
-                        self.wait_until_appear(self.I_LOGIN_SPECIFIC_SERVE, True, wait_time=3)
+                    # 选区界面：优先使用 OCR 点击金色【进入游戏】按钮
+                    if self.ocr_appear_click(self.O_LOGIN_ENTER_GAME, interval=2):
+                        logger.info('Click enter game via OCR')
+                        self.wait_until_appear(self.I_LOGIN_SPECIFIC_SERVE, True, wait_time=3, log_level='info')
+                        continue
+
+                    # 若在选区界面检测到适龄提示（支持左下角 I_LOGIN_8 与右下角 I_LOGIN_CADPA_RIGHT），点击进入游戏
+                    if self.appear(self.I_LOGIN_8, interval=2.5) or self.appear(self.I_LOGIN_CADPA_RIGHT, interval=2.5):
+                        logger.info('Click screen to enter game on server select page')
+                        self.device.click(x=636, y=595, control_name='login_enter_game_fallback')
                         continue
 
         return login_success

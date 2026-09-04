@@ -34,6 +34,12 @@ class ConnectionAttr:
         else:
             self.config = config
 
+        if self.is_windows_client:
+            self.serial = 'windows-0'
+            self.config.DEVICE_OVER_HTTP = False
+            logger.info('Device connection mode: Windows Native Client (Bypassing ADB)')
+            return
+
         # Init adb client
         logger.attr('AdbBinary', self.adb_binary)
         # Monkey patch to custom adb
@@ -73,6 +79,9 @@ class ConnectionAttr:
         """
         serial check
         """
+        if self.is_windows_client:
+            self.serial = 'windows-0'
+            return
         if '：' in self.serial:
             old_serial = self.serial
             self.serial = self.serial.replace('：', ':')
@@ -102,6 +111,28 @@ class ConnectionAttr:
                     f'ControlMethod can only use ["ADB", "uiautomator2", "minitouch"]'
                 )
                 raise RequestHumanTakeover
+
+    @cached_property
+    def is_windows_client(self):
+        try:
+            device_cfg = getattr(self.config.script, 'device', None)
+            if device_cfg:
+                emu_type = getattr(device_cfg, 'emulatorinfo_type', '')
+                emu_val = getattr(emu_type, 'value', emu_type)
+                emu_str = f"{emu_type} {emu_val}".lower()
+                if 'windowsclient' in emu_str or 'windows_client' in emu_str or emu_str.strip() == 'pc':
+                    return True
+                pkg = getattr(device_cfg, 'package_name', '')
+                pkg_val = getattr(pkg, 'value', pkg)
+                pkg_str = f"{pkg} {pkg_val}".lower()
+                if 'onmyoji.exe' in pkg_str or 'windows_onmyoji' in pkg_str:
+                    return True
+                ser = str(getattr(device_cfg, 'serial', '')).lower()
+                if ser in ('windows-0', 'pc', 'windows'):
+                    return True
+        except Exception:
+            pass
+        return False
 
     @cached_property
     def is_bluestacks4_hyperv(self):

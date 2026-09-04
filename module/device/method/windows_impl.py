@@ -7,19 +7,20 @@ import numpy as np
 import time
 
 from math import dist
-from cached_property import cached_property
+from functools import cached_property
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
-                      SetForegroundWindow, IsWindowVisible, GetDC, GetParent,
-                      EnumChildWindows, SetForegroundWindow)
+                      SetForegroundWindow, IsWindowVisible, GetDC, ReleaseDC, GetParent,
+                      EnumChildWindows, ClientToScreen, ScreenToClient, WindowFromPoint, GetAncestor,
+                      ShowWindow, IsIconic)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
                       WM_PARENTNOTIFY, WM_MOUSEACTIVATE, WM_MOUSEWHEEL,
-                      WM_SETFOCUS)
+                      WM_SETFOCUS, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, GA_ROOT,
+                      SW_RESTORE, SW_SHOW)
 from win32ui import CreateDCFromHandle, CreateBitmap
-from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage
-from win32con import SRCCOPY
+from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage, SetCursorPos, mouse_event
 
 
 from module.base.cBezier import BezierTrajectory
@@ -40,45 +41,87 @@ class Window(Handle):
 
     def screenshot_window_background(self):
         """
-        后台截屏
-        :return:
+        后台截屏（强化版：具备 GDI 严格零泄漏保障、最小化防护与句柄动态自愈）
+        :return: np.ndarray (RGB)
         """
+        handle = self.screenshot_handle_num
+        # 句柄健康检查与动态自愈
+        if not handle or not IsWindow(handle):
+            logger.warning(f"Screenshot handle {handle} is invalid, re-initializing handle...")
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            handle = self.screenshot_handle_num
+            if not handle or not IsWindow(handle):
+                raise ScriptError(f"Cannot capture screen: window handle {handle} is invalid")
+
         widthScreen, heightScreen = self.screenshot_size
-        # 返回句柄窗口的设备环境，覆盖整个窗口，包括非客户区，标题栏，菜单，边框
-        hwndDc = GetWindowDC(self.screenshot_handle_num)
-        # 创建设备描述表
-        mfcDc = CreateDCFromHandle(hwndDc)
-        # 创建内存设备描述表
-        saveDc = mfcDc.CreateCompatibleDC()
-        # 创建位图对象准备保存图片
-        saveBitMap = CreateBitmap()
-        # 为bitmap开辟存储空间
-        saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
-        # 将截图保存到saveBitMap中
-        saveDc.SelectObject(saveBitMap)
-        # 保存bitmap到内存设备描述表
-        saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
+        # 窗口尺寸异常/最小化检测与保护
+        if widthScreen <= 0 or heightScreen <= 0:
+            logger.warning(f"Window size invalid ({widthScreen}x{heightScreen}), window may be minimized. Attempting refresh...")
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            widthScreen, heightScreen = self.screenshot_size
+            if widthScreen <= 0 or heightScreen <= 0:
+                # 兜底返回 1280x720 全黑帧，避免 GDI 创建 0 尺寸位图引发致命崩溃
+                return np.zeros((720, 1280, 3), dtype=np.uint8)
 
-        # 保存图像
-        signedIntsArray = saveBitMap.GetBitmapBits(True)
-        imgSrceen = frombuffer(signedIntsArray, dtype='uint8')
-        imgSrceen.shape = (heightScreen, widthScreen, 4)
-        # 这点很重要 在alas中图片以np.ndarray（RGB）的顺序存储。但是opencv是以BGR
-        imgSrceen = cv2.cvtColor(imgSrceen, cv2.COLOR_BGR2RGB)
-        # imgSrceen = cv2.resize(imgSrceen, (win_size[0], win_size[1]))
-        # 很奇怪的
+        is_windows_client = (self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT)
+        hwndDc = None
+        mfcDc = None
+        saveDc = None
+        saveBitMap = None
 
-        # # 测试显示截图图片
-        # cv2.namedWindow('imgSrceen')  # 命名窗口
-        # cv2.imshow("imgSrceen", imgSrceen)  # 显示
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        try:
+            if is_windows_client:
+                hwndDc = GetDC(handle)
+            else:
+                # 返回句柄窗口的设备环境，覆盖整个窗口，包括非客户区，标题栏，菜单，边框
+                hwndDc = GetWindowDC(handle)
 
-        # 内存释放
-        DeleteObject(saveBitMap.GetHandle())
-        saveDc.DeleteDC()
-        mfcDc.DeleteDC()
-        return imgSrceen
+            if not hwndDc:
+                raise ScriptError(f"Failed to obtain window DC for handle {handle}")
+
+            # 创建设备描述表与内存设备描述表
+            mfcDc = CreateDCFromHandle(hwndDc)
+            saveDc = mfcDc.CreateCompatibleDC()
+            saveBitMap = CreateBitmap()
+            saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
+            saveDc.SelectObject(saveBitMap)
+            saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
+
+            # 解析图像缓冲区为 RGB 矩阵
+            signedIntsArray = saveBitMap.GetBitmapBits(True)
+            imgSrceen = frombuffer(signedIntsArray, dtype='uint8')
+            imgSrceen.shape = (heightScreen, widthScreen, 4)
+            imgSrceen = cv2.cvtColor(imgSrceen, cv2.COLOR_BGR2RGB)
+
+            # 针对 Windows 桌面版保障标准 1280x720 资产对齐
+            if is_windows_client and (widthScreen != 1280 or heightScreen != 720):
+                imgSrceen = cv2.resize(imgSrceen, (1280, 720), interpolation=cv2.INTER_AREA)
+
+            return imgSrceen
+        finally:
+            # 严格确保所有 GDI 对象成对释放，杜绝长时间运行下的 GDI 句柄泄漏
+            if saveBitMap is not None:
+                try:
+                    DeleteObject(saveBitMap.GetHandle())
+                except Exception:
+                    pass
+            if saveDc is not None:
+                try:
+                    saveDc.DeleteDC()
+                except Exception:
+                    pass
+            if mfcDc is not None:
+                try:
+                    mfcDc.DeleteDC()
+                except Exception:
+                    pass
+            if hwndDc is not None:
+                try:
+                    ReleaseDC(handle, hwndDc)
+                except Exception:
+                    pass
 
     @cached_property
     def control_handle_list(self) -> list:
@@ -90,7 +133,10 @@ class Window(Handle):
         :return:
         """
         result = []
-        if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            result.append(self.root_node.num)
+            return result
+        elif self.emulator_family == EmulatorFamily.FAMILY_MUMU:
             result.append(self.root_node.num)
             result.append(self.root_node.children[0].num)
             return result
@@ -133,6 +179,94 @@ class Window(Handle):
         logger.info(f"Mumu emulator head height: {height}")
         return height
 
+    def bring_to_front(self) -> bool:
+        """
+        激活并将游戏主窗口置于桌面最前台（穿透 Windows ASFW 限制）
+        """
+        hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            logger.warning("bring_to_front: Window handle is invalid")
+            return False
+
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
+
+            # 1. 恢复最小化窗口或确保可见
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            else:
+                user32.ShowWindow(hwnd, 5)  # SW_SHOW
+
+            # 2. 调用 Windows 系统级强制前台切换
+            user32.SwitchToThisWindow(hwnd, True)
+
+            # 3. 模拟按下/释放 Alt 键以穿透 Windows SetForegroundWindow 跨进程焦点限制
+            user32.keybd_event(0x12, 0, 0, 0)  # VK_MENU down
+            user32.SetForegroundWindow(hwnd)
+            user32.BringWindowToTop(hwnd)
+            user32.keybd_event(0x12, 0, 2, 0)  # VK_MENU up
+
+            # 4. 若当前前台仍未切换，使用 AttachThreadInput 补足绑定
+            fg_hwnd = user32.GetForegroundWindow()
+            if fg_hwnd != hwnd:
+                fg_tid = user32.GetWindowThreadProcessId(fg_hwnd, None)
+                cur_tid = kernel32.GetCurrentThreadId()
+                if fg_tid and fg_tid != cur_tid:
+                    user32.AttachThreadInput(cur_tid, fg_tid, True)
+                    user32.SetForegroundWindow(hwnd)
+                    user32.BringWindowToTop(hwnd)
+                    user32.AttachThreadInput(cur_tid, fg_tid, False)
+
+            logger.info(f"Window [{hwnd}] brought to foreground.")
+            return True
+        except Exception as e:
+            logger.warning(f"bring_to_front failed: {e}")
+            return False
+
+    def click_window_foreground(self, x: int, y: int, fast: bool = False) -> None:
+        """
+        前台物理模拟点击（基于真实屏幕绝对坐标与硬件级鼠标事件驱动，用于穿透 CEF/Webview 等模态控件）
+        :param x: 1280x720 资产 X 坐标
+        :param y: 1280x720 资产 Y 坐标
+        :param fast: 是否极速点击
+        """
+        hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            logger.warning("click_window_foreground: Window handle is invalid")
+            return
+
+        self.bring_to_front()
+
+        size = self.screenshot_size
+        cw, ch = size if size else (1280, 720)
+        target_x = x
+        target_y = y
+        if cw != 1280 and cw > 0:
+            target_x = int(x * (cw / 1280.0))
+        if ch != 720 and ch > 0:
+            target_y = int(y * (ch / 720.0))
+
+        try:
+            screen_x, screen_y = ClientToScreen(hwnd, (target_x, target_y))
+            SetCursorPos((screen_x, screen_y))
+            time.sleep(0.04)
+            press_time = random.uniform(0.05, 0.10) if not fast else random.uniform(0.02, 0.04)
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+            time.sleep(press_time)
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        except Exception as e:
+            logger.warning(f"click_window_foreground error: {e}")
+
     def click_window_message(self, x: int, y: int, fast: bool = False):
         """
 
@@ -141,6 +275,30 @@ class Window(Handle):
         :param fast:
         :return:
         """
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+            if not hwnd or not IsWindow(hwnd):
+                if hasattr(self, 'init_handle'):
+                    self.init_handle()
+                hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+
+            size = self.screenshot_size
+            cw, ch = size if size else (1280, 720)
+            target_x = x
+            target_y = y
+            if cw != 1280 and cw > 0:
+                target_x = int(x * (cw / 1280.0))
+            if ch != 720 and ch > 0:
+                target_y = int(y * (ch / 720.0))
+
+            press_time = random.uniform(0.045, 0.120) if not fast else random.uniform(0.020, 0.045)
+            clickPos = MAKELONG(target_x, target_y)
+
+            SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, clickPos)
+            time.sleep(press_time)
+            SendMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
+            return
+
         # 我不知道为什么的使用的pywin32==306的版本会导致获取的图片的是(1024, 576)
         # 所有我在点击的时候会除以这个缩放比例
         # 但是后面发现又不是影响的很奇怪
@@ -181,6 +339,31 @@ class Window(Handle):
         :param duration: 持续时间 单位秒
         :return:
         """
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+            if not hwnd or not IsWindow(hwnd):
+                if hasattr(self, 'init_handle'):
+                    self.init_handle()
+                hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+
+            size = self.screenshot_size
+            cw, ch = size if size else (1280, 720)
+            target_x = x
+            target_y = y
+            if cw != 1280 and cw > 0:
+                target_x = int(x * (cw / 1280.0))
+            if ch != 720 and ch > 0:
+                target_y = int(y * (ch / 720.0))
+            clickPos = MAKELONG(target_x, target_y)
+            try:
+                PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)
+            except Exception:
+                pass
+            PostMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, clickPos)
+            time.sleep(duration)
+            PostMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
+            return
+
         # 我不知道为什么的使用的pywin32==306的版本会导致获取的图片的是(1024, 576)
         # 所有我在点击的时候会除以这个缩放比例
         x = int(x / self.window_scale_rate)
@@ -232,7 +415,13 @@ class Window(Handle):
 
         # 使用生成的点列表进行拖拽
         handleNum = None
-        if self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            handleNum = self.control_handle_list[0]
+            size = self.screenshot_size
+            cw, ch = size if size else (1280, 720)
+            if cw != 1280 or ch != 720:
+                trace = [[int(pt[0] * (cw / 1280.0)), int(pt[1] * (ch / 720.0))] for pt in trace]
+        elif self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
             handleNum = self.control_handle_list[1]
         elif self.emulator_family == EmulatorFamily.FAMILY_NOX:  # 夜神模拟器
             handleNum = self.control_handle_list[3]

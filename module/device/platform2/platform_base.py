@@ -130,6 +130,8 @@ class PlatformBase(EmulatorManagerBase):
         Returns:
             EmulatorInstanceBase: Emulator instance or None
         """
+        if getattr(self, 'is_windows_client', False):
+            return None
         data = self.emulator_info
         old_info = dict(
             emulator=data.emulator,

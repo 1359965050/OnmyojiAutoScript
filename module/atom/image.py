@@ -1,10 +1,10 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-import cv2
+import cv2  # type: ignore
 import numpy as np
 
-from numpy import float32, int32, uint8, fromfile
+from numpy import uint8, fromfile
 from pathlib import Path
 
 from module.base.decorator import cached_property
@@ -130,7 +130,7 @@ class RuleImage:
             self.load_kp_des()
         return self._des
 
-    def corp(self, image: np.array, roi: list = None) -> np.array:
+    def corp(self, image: np.ndarray, roi: list | tuple | None = None) -> np.ndarray:
         """
         截取图片
         :param image:
@@ -144,7 +144,7 @@ class RuleImage:
         x, y, w, h = int(x), int(y), int(w), int(h)
         return image[y:y + h, x:x + w]
 
-    def _template_image_invalid(self, mat: np.array) -> bool:
+    def _template_image_invalid(self, mat: np.ndarray | None) -> bool:
         if mat is None or mat.shape[0] == 0 or mat.shape[1] == 0:
             mat_shape = None if mat is None else mat.shape
             logger.error(f"Template image is invalid: {mat_shape}")  # 检测模板尺寸，避免非法模板参与匹配
@@ -168,11 +168,11 @@ class RuleImage:
             "name": self.name,
             "file": file_path,
             "method": self.method,
-            "threshold": float(self.threshold),
+            "threshold": self.threshold,
             "roi_front": list(self.roi_front),
             "roi_back": list(self.roi_back),
             "scale_range": scale_range,
-            "scale_step": float(self.scale_step),
+            "scale_step": self.scale_step,
         }
 
     def _apply_match_result(self, result: dict) -> bool:
@@ -183,13 +183,13 @@ class RuleImage:
             return True
         return False
 
-    def template_match(self, image: np.array, threshold: float = None) -> bool:
+    def template_match(self, image: np.ndarray, threshold: float | None = None) -> bool:
         if threshold is None:
             threshold = self.threshold
         source = self.corp(image)
         mat = self.image
 
-        if self._template_image_invalid(mat):
+        if mat is None or self._template_image_invalid(mat):
             return True  # 如果模板图像无效，直接返回 True
 
         res = cv2.matchTemplate(source, mat, cv2.TM_CCOEFF_NORMED)
@@ -218,7 +218,7 @@ class RuleImage:
             step = self.DEFAULT_MULTI_SCALE_STEP
         return min_scale, max_scale, step
 
-    def match_multi_scale(self, image: np.array, threshold: float = None, scale_range=None) -> bool:
+    def match_multi_scale(self, image: np.ndarray, threshold: float | None = None, scale_range=None) -> bool:
         old_scale_range = self.scale_range
         if scale_range is not None:
             self.scale_range = scale_range
@@ -226,13 +226,13 @@ class RuleImage:
         self.scale_range = old_scale_range
         return res
 
-    def multi_scale_template_match(self, image: np.array, threshold: float = None) -> bool:
+    def multi_scale_template_match(self, image: np.ndarray, threshold: float | None = None) -> bool:
         if threshold is None:
             threshold = self.threshold
         source = self.corp(image)
         mat = self.image
 
-        if self._template_image_invalid(mat):
+        if mat is None or self._template_image_invalid(mat):
             return True  # 如果模板图像无效，直接返回 True
 
         min_scale, max_scale, step = self._get_multi_scale_range()
@@ -261,7 +261,7 @@ class RuleImage:
             return True
         return False
 
-    def match(self, image: np.array, threshold: float = None, frame_id: str = None) -> bool:
+    def match(self, image: np.ndarray, threshold: float | None = None, frame_id: str | None = None) -> bool:
         """
         :param threshold:
         :param image:
@@ -276,7 +276,7 @@ class RuleImage:
         )
         return self._apply_match_result(result)
 
-    def match_all(self, image: np.array, threshold: float = None, roi: list = None, frame_id: str = None) -> list[tuple]:
+    def match_all(self, image: np.ndarray, threshold: float | None = None, roi: list | tuple | None = None, frame_id: str | None = None) -> list[tuple]:
         """
         区别于match，这个是返回所有的匹配结果
         :param roi:
@@ -285,18 +285,19 @@ class RuleImage:
         :return:
         """
         if roi is not None:
-            self.roi_back = roi
+            self.roi_back = tuple(roi)
         client = get_image_client()
+        roi_list = list(self.roi_back) if self.roi_back is not None else None
         result = client.match_all(
             rule_data=self.to_service_payload(),
             image=image,
             frame_id=frame_id,
             threshold=threshold,
-            roi=self.roi_back,
+            roi=roi_list,
         )
         return [tuple(item) for item in result.get("matches", [])]
 
-    def match_all_any(self, image: np.array, threshold: float = None, roi: list = None, nms_threshold: float = 0.3, frame_id: str = None) -> list[tuple]:
+    def match_all_any(self, image: np.ndarray, threshold: float | None = None, roi: list | tuple | None = None, nms_threshold: float = 0.3, frame_id: str | None = None) -> list[tuple]:
         """
         区别于match，这个是返回所有的匹配结果，去除冗余匹配项（例如：多个框选区域重叠的情况）时使用。
         :param roi:
@@ -305,14 +306,15 @@ class RuleImage:
         :return:
         """
         if roi is not None:
-            self.roi_back = roi
+            self.roi_back = tuple(roi)
         client = get_image_client()
+        roi_list = list(self.roi_back) if self.roi_back is not None else None
         result = client.match_all_any(
             rule_data=self.to_service_payload(),
             image=image,
             frame_id=frame_id,
             threshold=threshold,
-            roi=self.roi_back,
+            roi=roi_list,
             nms_threshold=nms_threshold,
         )
         return [tuple(item) for item in result.get("matches", [])]
@@ -341,7 +343,7 @@ class RuleImage:
         x, y, w, h = self.roi_front
         return int(x + w//2), int(y + h//2)
 
-    def test_match(self, image: np.array):
+    def test_match(self, image: np.ndarray):
         self.debug_mode = True
         if self.is_template_match:
             return self.match(image)
@@ -350,7 +352,7 @@ class RuleImage:
         if self.is_sift_flann:
             return self.sift_match(image, show=True)
 
-    def sift_match(self, image: np.array, show=False) -> bool:
+    def sift_match(self, image: np.ndarray, show=False) -> bool:
         """
         特征匹配，同样会修改 roi_front
         :param image: 是游戏的截图，就是转通道后的截图
@@ -370,7 +372,10 @@ class RuleImage:
         # 利用创建好的特征匹配器利用k近邻算法来用模板的特征描述符去匹配图像的特征描述符，k指的是返回前k个最匹配的特征区域
         # 返回的是最匹配的两个特征点的信息，返回的类型是一个列表，列表元素的类型是Dmatch数据类型，具体是什么我也不知道
         # 第一个参数是小图的des, 第二个参数是大图的des
-        matches = flann.knnMatch(self.des, des, k=2)
+        kp_self, des_self = self.kp, self.des
+        if kp_self is None or des_self is None:
+            return False
+        matches = flann.knnMatch(des_self, des, k=2)
 
         good = []
         result = True
@@ -379,20 +384,20 @@ class RuleImage:
             if m.distance < 0.6 * n.distance:
                 good.append(m)
         if len(good) >= 10:
-            src_pts = float32([self.kp[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
-            dst_pts = float32([kp[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+            src_pts = np.array([kp_self[m.queryIdx].pt for m in good], dtype=np.float32).reshape(-1, 1, 2)
+            dst_pts = np.array([kp[m.trainIdx].pt for m in good], dtype=np.float32).reshape(-1, 1, 2)
 
             # 计算透视变换矩阵m， 要求点的数量>=4
             m, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
             # 创建一个包含模板图像四个角坐标的数组
             w, h = self.roi_front[2], self.roi_front[3]
-            pts = float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
+            pts = np.array([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]], dtype=np.float32).reshape(-1, 1, 2)
             if m is None:
                 result = False
             else:
-                dst = int32(cv2.perspectiveTransform(pts, m))
-                self.roi_front[0] = dst[0, 0, 0] + self.roi_back[0]
-                self.roi_front[1] = dst[0, 0, 1] + self.roi_back[1]
+                dst = np.array(cv2.perspectiveTransform(pts, m), dtype=np.int32)
+                self.roi_front[0] = int(dst[0, 0, 0]) + self.roi_back[0]
+                self.roi_front[1] = int(dst[0, 0, 1]) + self.roi_back[1]
                 if show:
                     cv2.polylines(source, [dst], isClosed=True, color=(0, 0, 255), thickness=2)
                 if not is_approx_rectangle(np.array([pos[0] for pos in dst])):

@@ -16,7 +16,7 @@ onepush.core.log = logger
 
 
 class Notifier:
-    def __init__(self, _config: str, enable: bool=False) -> None:
+    def __init__(self, _config: str = "", enable: bool = False) -> None:
         self.config_name: str = ""
         self.enable: bool = enable
 

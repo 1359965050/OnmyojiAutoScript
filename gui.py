@@ -2,6 +2,9 @@
 # @author runhey
 # github https://github.com/runhey
 
+from module.base.dpi import enable_dpi_awareness
+enable_dpi_awareness()
+
 from module.gui.utils import check_admin
 from module.gui.context.add import Add
 from module.gui.context.settings import Setting

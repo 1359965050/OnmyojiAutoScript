@@ -19,6 +19,7 @@ class PackageName(str, Enum):
     NETEASE_M4399 = 'com.netease.onmyoji.m4399'  # 4399渠道服
     NETEASE_NEARME = 'com.netease.onmyoji.nearme.gamecenter'  # OPPO渠道服
     TENCENT_YYS = 'com.tencent.tmgp.yys.zqb'  # 应用宝渠道
+    WINDOWS_ONMYOJI = 'onmyoji.exe'  # Windows桌面版
 
 
 
@@ -44,6 +45,7 @@ class ControlMethod(str, Enum):
 class EmulatorInfoType(str, Enum):
     # module.device.platform2.emulator_base.EmulatorBase
     AUTO = 'auto'
+    WindowsClient = 'WindowsClient'
     NoxPlayer = 'NoxPlayer'
     NoxPlayer64 = 'NoxPlayer64'
     BlueStacks4 = 'BlueStacks4'
@@ -69,6 +71,7 @@ class Device(BaseModel):
     emulatorinfo_type: EmulatorInfoType = Field(default=EmulatorInfoType.AUTO, description='emulatorinfo_type_help')
     emulatorinfo_name: str = Field(default='', description='emulatorinfo_name_help')
     emulatorinfo_path: str = Field(default='', description='emulatorinfo_path_help')
+    client_path: str = Field(default='', description='client_path_help')
     # 举例, E:\ProgramFiles\MuMuPlayer-12.0\shell\MuMuPlayer.exe
     # 模拟器启动时最小化
     emulator_window_minimize: bool = Field(default=False, description='模拟器静默启动并最小化')
