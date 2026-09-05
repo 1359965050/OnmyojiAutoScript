@@ -6,25 +6,20 @@ from module.device.platform2.handlers.base import EmulatorHandler
 
 
 class LDPlayerHandler(EmulatorHandler):
-    LDPlayer3 = 'LDPlayer3'
-    LDPlayer4 = 'LDPlayer4'
     LDPlayer9 = 'LDPlayer9'
 
     @staticmethod
     def type_names() -> list[str]:
-        return ['LDPlayer3', 'LDPlayer4', 'LDPlayer9']
+        return ['LDPlayer9']
 
     @staticmethod
     def path_to_type(path: str, exe: str, dir1: str, dir2: str) -> str:
         if exe == 'dnplayer.exe':
-            if dir1 == 'ldplayer':
-                return 'LDPlayer3'
-            elif dir1 == 'ldplayer4':
-                return 'LDPlayer4'
-            elif dir1 == 'ldplayer9':
+            if dir1 == 'ldplayer9':
                 return 'LDPlayer9'
             else:
-                return 'LDPlayer3'
+                # 默认识别为LDPlayer9，旧版已不再支持
+                return 'LDPlayer9'
         return ''
 
     @staticmethod

@@ -222,6 +222,42 @@
       "title": "ActivityShikigami",
       "type": "object"
     },
+    "AntiBan": {
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "antiban_enable_help",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "sleep_start": {
+          "default": "02:00:00",
+          "description": "sleep_start_help",
+          "title": "Sleep Start",
+          "type": "time"
+        },
+        "sleep_end": {
+          "default": "08:00:00",
+          "description": "sleep_end_help",
+          "title": "Sleep End",
+          "type": "time"
+        },
+        "daily_active_limit": {
+          "default": "PT0S",
+          "description": "daily_active_limit_help",
+          "title": "Daily Active Limit",
+          "type": "time_delta"
+        },
+        "long_rest_duration": {
+          "default": "PT2H",
+          "description": "long_rest_duration_help",
+          "title": "Long Rest Duration",
+          "type": "time_delta"
+        }
+      },
+      "title": "AntiBan",
+      "type": "object"
+    },
     "AreaBoss": {
       "properties": {
         "scheduler": {
@@ -242,9 +278,11 @@
     },
     "AreaBossFloor": {
       "enum": [
+        "不更改",
         "一星",
         "十星",
-        "不更改"
+        "普通-1级",
+        "普通-60级"
       ],
       "title": "AreaBossFloor",
       "type": "string"
@@ -825,14 +863,6 @@
     },
     "Boss": {
       "properties": {
-        "boss_number": {
-          "default": 3,
-          "description": "默认为3 可选[1-3], 当你设置为三时默认你拥有全部的挑战资格，会挑战热门的前三个，\n如果不是请将你可以挑战的boss进行收藏",
-          "maximum": 3,
-          "minimum": 1,
-          "title": "Boss Number",
-          "type": "integer"
-        },
         "boss_reward": {
           "default": false,
           "description": "boss_reward_help",
@@ -841,19 +871,13 @@
         },
         "reward_floor": {
           "$ref": "#/$defs/AreaBossFloor",
-          "default": "一星",
+          "default": "不更改",
           "description": "reward_floor_help"
         },
         "use_collect": {
           "default": false,
           "description": "use_collect_help",
           "title": "Use Collect",
-          "type": "boolean"
-        },
-        "Attack_60": {
-          "default": false,
-          "description": "没有开启极是否拉到60级进行攻打",
-          "title": "Attack 60",
           "type": "boolean"
         }
       },
@@ -887,6 +911,12 @@
           "description": "checkin_big_god_usage_help",
           "title": "Usage",
           "type": "multi_line"
+        },
+        "manual_claim": {
+          "default": false,
+          "description": "checkin_big_god_manual_claim_help",
+          "title": "手动领取",
+          "type": "boolean"
         }
       },
       "title": "CheckinBigGodConfig",
@@ -1386,7 +1416,7 @@
         },
         "package_name": {
           "$ref": "#/$defs/PackageName",
-          "default": "auto",
+          "default": "com.netease.onmyoji.wyzymnqsd_cps",
           "description": "package_name_help",
           "title": "Package Name"
         },
@@ -1421,6 +1451,12 @@
           "default": "",
           "description": "emulatorinfo_path_help",
           "title": "Emulatorinfo Path",
+          "type": "string"
+        },
+        "client_path": {
+          "default": "",
+          "description": "client_path_help",
+          "title": "Client Path",
           "type": "string"
         },
         "emulator_window_minimize": {
@@ -1763,6 +1799,7 @@
     "EmulatorInfoType": {
       "enum": [
         "auto",
+        "WindowsClient",
         "NoxPlayer",
         "NoxPlayer64",
         "BlueStacks4",
@@ -1779,6 +1816,18 @@
       ],
       "title": "EmulatorInfoType",
       "type": "string"
+    },
+    "EmulatorRestartConfig": {
+      "properties": {
+        "restart_emulator": {
+          "default": false,
+          "description": "restart_emulator_help",
+          "title": "Restart Emulator",
+          "type": "boolean"
+        }
+      },
+      "title": "EmulatorRestartConfig",
+      "type": "object"
     },
     "Error": {
       "properties": {
@@ -2651,6 +2700,12 @@
           "description": "运行日期，1-7 对应周一到周日；例如 5,6,7",
           "title": "Run Days",
           "type": "string"
+        },
+        "use_ocr": {
+          "default": false,
+          "description": "use_ocr_help",
+          "title": "Use Ocr",
+          "type": "boolean"
         }
       },
       "title": "GuildActivityMonitorCombatTime",
@@ -3252,6 +3307,79 @@
       ],
       "title": "MarkMainConfig",
       "type": "string"
+    },
+    "MartialTournament": {
+      "properties": {
+        "scheduler": {
+          "$ref": "#/$defs/tasks__Component__config_scheduler__Scheduler"
+        },
+        "general_climb": {
+          "$ref": "#/$defs/MartialTournamentConfig"
+        },
+        "switch_soul_config": {
+          "$ref": "#/$defs/tasks__MartialTournament__config__SwitchSoulConfig"
+        },
+        "group_battle_conf": {
+          "$ref": "#/$defs/GeneralBattleConfig"
+        },
+        "single_battle_conf": {
+          "$ref": "#/$defs/GeneralBattleConfig"
+        },
+        "mt_ap_battle_conf": {
+          "$ref": "#/$defs/GeneralBattleConfig"
+        }
+      },
+      "title": "MartialTournament",
+      "type": "object"
+    },
+    "MartialTournamentConfig": {
+      "description": "Martial Tournament activity config",
+      "properties": {
+        "limit_time": {
+          "default": "01:30:00",
+          "description": "limit_time_help",
+          "title": "Limit Time",
+          "type": "time"
+        },
+        "run_sequence": {
+          "default": "pass,ap",
+          "description": "mt_run_sequence_help",
+          "title": "Run Sequence",
+          "type": "string"
+        },
+        "pass_limit": {
+          "default": 50,
+          "description": "mt_pass_limit_help",
+          "title": "Pass Limit",
+          "type": "integer"
+        },
+        "ap_limit": {
+          "default": 300,
+          "description": "ap_limit",
+          "title": "Ap Limit",
+          "type": "integer"
+        },
+        "use_pass_2": {
+          "default": false,
+          "description": "mt_use_pass_2_help",
+          "title": "Use Pass 2",
+          "type": "boolean"
+        },
+        "active_souls_clean": {
+          "default": false,
+          "description": "active_souls_clean_help",
+          "title": "Active Souls Clean",
+          "type": "boolean"
+        },
+        "random_sleep": {
+          "default": false,
+          "description": "random_sleep_help",
+          "title": "Random Sleep",
+          "type": "boolean"
+        }
+      },
+      "title": "MartialTournamentConfig",
+      "type": "object"
     },
     "MedalRoom": {
       "properties": {
@@ -3977,16 +4105,8 @@
     },
     "PackageName": {
       "enum": [
-        "auto",
         "com.netease.onmyoji.wyzymnqsd_cps",
-        "com.netease.onmyoji.mi",
-        "com.netease.onmyoji",
-        "com.netease.onmyoji.huawei",
-        "com.netease.onmyoji.bili",
-        "com.netease.onmyoji.vivo",
-        "com.netease.onmyoji.m4399",
-        "com.netease.onmyoji.nearme.gamecenter",
-        "com.tencent.tmgp.yys.zqb"
+        "onmyoji.exe"
       ],
       "title": "PackageName",
       "type": "string"
@@ -4171,6 +4291,9 @@
         },
         "restart_config": {
           "$ref": "#/$defs/RestartConfig"
+        },
+        "emulator_restart_config": {
+          "$ref": "#/$defs/EmulatorRestartConfig"
         },
         "tasks_config_reset": {
           "$ref": "#/$defs/TasksReset"
@@ -4391,6 +4514,12 @@
           "title": "Picture Book Scrap",
           "type": "integer"
         },
+        "enable_book_auto": {
+          "default": false,
+          "description": "enable_book_auto_help",
+          "title": "Enable Book Auto",
+          "type": "boolean"
+        },
         "picture_book_rule": {
           "default": "auto",
           "description": "picture_book_rule_help",
@@ -4420,6 +4549,9 @@
         },
         "optimization": {
           "$ref": "#/$defs/Optimization"
+        },
+        "anti_ban": {
+          "$ref": "#/$defs/AntiBan"
         }
       },
       "title": "Script",
@@ -4541,7 +4673,8 @@
         "costume_shikigami_7",
         "costume_shikigami_8",
         "costume_shikigami_9",
-        "costume_shikigami_10"
+        "costume_shikigami_10",
+        "costume_shikigami_11"
       ],
       "title": "ShikigamiType",
       "type": "string"
@@ -5102,6 +5235,12 @@
           "description": "shikigami_order_help",
           "title": "Shikigami Order",
           "type": "integer"
+        },
+        "min_run_interval": {
+          "default": "PT0S",
+          "description": "min_run_interval_help",
+          "title": "Min Run Interval",
+          "type": "time_delta"
         },
         "harvest_guild_max_times": {
           "default": 3,
@@ -5725,6 +5864,75 @@
       "title": "UtilizeScheduler",
       "type": "object"
     },
+    "tasks__MartialTournament__config__SwitchSoulConfig": {
+      "properties": {
+        "enable_switch_group": {
+          "default": false,
+          "title": "Enable Switch Group",
+          "type": "boolean"
+        },
+        "group_boss_team": {
+          "default": "-1,-1",
+          "description": "group_boss_team_help",
+          "title": "Group Boss Team",
+          "type": "string"
+        },
+        "enable_switch_group_by_name": {
+          "default": false,
+          "title": "Enable Switch Group By Name",
+          "type": "boolean"
+        },
+        "group_boss_team_name": {
+          "default": "",
+          "title": "Group Boss Team Name",
+          "type": "string"
+        },
+        "enable_switch_single": {
+          "default": false,
+          "title": "Enable Switch Single",
+          "type": "boolean"
+        },
+        "single_group_team": {
+          "default": "-1,-1",
+          "description": "single_group_team_help",
+          "title": "Single Group Team",
+          "type": "string"
+        },
+        "enable_switch_single_by_name": {
+          "default": false,
+          "title": "Enable Switch Single By Name",
+          "type": "boolean"
+        },
+        "single_group_team_name": {
+          "default": "",
+          "title": "Single Group Team Name",
+          "type": "string"
+        },
+        "enable_switch_mt_ap": {
+          "default": false,
+          "title": "Enable Switch Mt Ap",
+          "type": "boolean"
+        },
+        "mt_ap_team": {
+          "default": "-1,-1",
+          "description": "mt_ap_team_help",
+          "title": "Mt Ap Team",
+          "type": "string"
+        },
+        "enable_switch_mt_ap_by_name": {
+          "default": false,
+          "title": "Enable Switch Mt Ap By Name",
+          "type": "boolean"
+        },
+        "mt_ap_team_name": {
+          "default": "",
+          "title": "Mt Ap Team Name",
+          "type": "string"
+        }
+      },
+      "title": "SwitchSoulConfig",
+      "type": "object"
+    },
     "tasks__Orochi__config__Layer": {
       "enum": [
         "壹层",
@@ -6191,6 +6399,9 @@
     },
     "activity_shikigami": {
       "$ref": "#/$defs/ActivityShikigami"
+    },
+    "martial_tournament": {
+      "$ref": "#/$defs/MartialTournament"
     },
     "meta_demon": {
       "$ref": "#/$defs/MetaDemon"

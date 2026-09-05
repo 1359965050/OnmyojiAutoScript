@@ -66,24 +66,45 @@ class Updater(DeployConfig, GitManager, PipManager):
     def get_commit(self, revision="", n=1, short_sha1=False) -> Tuple:
         """
         Return:
-            (sha1, author, isotime, message,)
+            (sha1, author, isotime, message, body)
         """
         ph = "h" if short_sha1 else "H"
 
         log = self.execute_output(
-            f'"{self.git}" --no-pager log {revision} --pretty=format:"%{ph}---%an---%ad---%s" --date=iso -{n}'
+            f'"{self.git}" --no-pager log {revision} --pretty=format:"%{ph}%x1f%an%x1f%ad%x1f%B%x1e" --date=format:"%Y-%m-%d %H:%M:%S" -{n}'
         )
 
         if not log:
-            return None, None, None, None
+            return (None, None, None, None, "") if n == 1 else []
 
-        logs = log.split("\n")
-        logs = list(map(lambda log: tuple(log.split("---")), logs))
+        entries = []
+        for block in log.split("\x1e"):
+            block = block.strip("\r\n")
+            if not block:
+                continue
+            parts = block.split("\x1f")
+            if len(parts) >= 4:
+                sha, author, date, raw_msg = parts[0], parts[1], parts[2], parts[3]
+                lines = [l.strip("\r") for l in raw_msg.strip().split("\n")]
+                subject = ""
+                body_lines = []
+                for l in lines:
+                    if not subject and l.strip():
+                        subject = l.strip()
+                    elif subject:
+                        body_lines.append(l)
+                body = "\n".join(body_lines).strip()
+                entries.append((sha, author, date, subject, body))
+            elif len(parts) == 3:
+                entries.append((parts[0], parts[1], parts[2], "", ""))
+            elif len(parts) > 0:
+                padded = list(parts) + [""] * (5 - len(parts))
+                entries.append(tuple(padded[:5]))
 
         if n == 1:
-            return logs[0]
+            return entries[0] if entries else (None, None, None, None, "")
         else:
-            return logs
+            return entries
 
     def current_branch(self) -> str:
         return self.Branch

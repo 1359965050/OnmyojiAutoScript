@@ -6,19 +6,11 @@ from typing import Union
 from pydantic import BaseModel, ValidationError, Field
 
 from module.logger import logger
+from tasks.Component.config_base import dynamic_hide
 
 
 class PackageName(str, Enum):
-    AUTO = 'auto'
     NETEASE_ONMYOJI = 'com.netease.onmyoji.wyzymnqsd_cps'  # 网易官方扫码版
-    NETEASE_MI = 'com.netease.onmyoji.mi'  # 小米
-    NETEASE = 'com.netease.onmyoji'  # 网易官方非扫码版
-    NETEASE_HUAWEI = 'com.netease.onmyoji.huawei'  # 华为渠道版
-    NETEASE_BILIBILI = 'com.netease.onmyoji.bili'  #哔哩哔哩渠道服
-    NETEASE_VIVO = 'com.netease.onmyoji.vivo'  # vivo渠道服
-    NETEASE_M4399 = 'com.netease.onmyoji.m4399'  # 4399渠道服
-    NETEASE_NEARME = 'com.netease.onmyoji.nearme.gamecenter'  # OPPO渠道服
-    TENCENT_YYS = 'com.tencent.tmgp.yys.zqb'  # 应用宝渠道
     WINDOWS_ONMYOJI = 'onmyoji.exe'  # Windows桌面版
 
 
@@ -46,17 +38,10 @@ class EmulatorInfoType(str, Enum):
     # module.device.platform2.emulator_base.EmulatorBase
     AUTO = 'auto'
     WindowsClient = 'WindowsClient'
-    NoxPlayer = 'NoxPlayer'
     NoxPlayer64 = 'NoxPlayer64'
-    BlueStacks4 = 'BlueStacks4'
     BlueStacks5 = 'BlueStacks5'
-    BlueStacks4HyperV = 'BlueStacks4HyperV'
     BlueStacks5HyperV = 'BlueStacks5HyperV'
-    LDPlayer3 = 'LDPlayer3'
-    LDPlayer4 = 'LDPlayer4'
     LDPlayer9 = 'LDPlayer9'
-    MuMuPlayer = 'MuMuPlayer'
-    MuMuPlayerX = 'MuMuPlayerX'
     MuMuPlayer12 = 'MuMuPlayer12'
     MEmuPlayer = 'MEmuPlayer'
 
@@ -64,7 +49,7 @@ class EmulatorInfoType(str, Enum):
 class Device(BaseModel):
     serial: str = Field(default="auto", description='serial_help')
     handle: str = Field(default='', description='handle_help')
-    package_name: PackageName = Field(title='Package Name', default=PackageName.AUTO, description='package_name_help')
+    package_name: PackageName = Field(title='Package Name', default=PackageName.NETEASE_ONMYOJI, description='package_name_help')
     screenshot_method: ScreenshotMethod = Field(default=ScreenshotMethod.AUTO, description='screenshot_method_help')
     control_method: ControlMethod = Field(default=ControlMethod.MINITOUCH, description='control_method_help')
     adb_restart: bool = Field(default=False, description='adb_restart_help')
@@ -77,6 +62,8 @@ class Device(BaseModel):
     emulator_window_minimize: bool = Field(default=False, description='模拟器静默启动并最小化')
     # 启动时纯后台运行模拟器，不显示窗口和任务栏
     run_background_only: bool = Field(default=False, description='模拟器无UI后台运行，关掉后重启脚本会重新显示（无需重启OAS）')
+
+    hide_fields = dynamic_hide('emulatorinfo_name')
 
 
 if __name__ == '__main__':

@@ -5,22 +5,20 @@ from module.device.platform2.handlers.base import EmulatorHandler
 
 
 class NoxHandler(EmulatorHandler):
-    NoxPlayer = 'NoxPlayer'
     NoxPlayer64 = 'NoxPlayer64'
 
     @staticmethod
     def type_names() -> list[str]:
-        return ['NoxPlayer', 'NoxPlayer64']
+        return ['NoxPlayer64']
 
     @staticmethod
     def path_to_type(path: str, exe: str, dir1: str, dir2: str) -> str:
         if exe == 'nox.exe':
-            if dir2 == 'nox':
-                return 'NoxPlayer'
-            elif dir2 == 'nox64':
+            if dir2 == 'nox64':
                 return 'NoxPlayer64'
             else:
-                return 'NoxPlayer'
+                # 默认识别为64位，32位已不再支持
+                return 'NoxPlayer64'
         return ''
 
     @staticmethod

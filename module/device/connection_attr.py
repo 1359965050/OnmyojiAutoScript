@@ -87,8 +87,6 @@ class ConnectionAttr:
             self.serial = self.serial.replace('：', ':')
             logger.warning(f'Serial {old_serial} 包含中文冒号，已自动更正为 {self.serial}')
             self.config.script.device.serial = self.serial
-        if self.is_bluestacks4_hyperv:
-            self.serial = self.find_bluestacks4_hyperv(self.serial)
         if self.is_bluestacks5_hyperv:
             self.serial = self.find_bluestacks5_hyperv(self.serial)
         if "127.0.0.1:58526" in self.serial:
@@ -135,16 +133,12 @@ class ConnectionAttr:
         return False
 
     @cached_property
-    def is_bluestacks4_hyperv(self):
-        return "bluestacks4-hyperv" in self.serial
-
-    @cached_property
     def is_bluestacks5_hyperv(self):
         return "bluestacks5-hyperv" in self.serial
 
     @cached_property
     def is_bluestacks_hyperv(self):
-        return self.is_bluestacks4_hyperv or self.is_bluestacks5_hyperv
+        return self.is_bluestacks5_hyperv
 
     @cached_property
     def is_wsa(self):
@@ -172,39 +166,6 @@ class ConnectionAttr:
         # Serial like xxx.xxx.xxx.xxx:301
         return bool(re.search(r":30[0-9]$", self.serial))
 
-    @staticmethod
-    def find_bluestacks4_hyperv(serial):
-        """
-        Find dynamic serial of BlueStacks4 Hyper-V Beta.
-
-        Args:
-            serial (str): 'bluestacks4-hyperv', 'bluestacks4-hyperv-2' for multi instance, and so on.
-
-        Returns:
-            str: 127.0.0.1:{port}
-        """
-        from winreg import HKEY_LOCAL_MACHINE, OpenKey, QueryValueEx
-
-        logger.info("Use BlueStacks4 Hyper-V Beta")
-        logger.info("Reading Realtime adb port")
-
-        if serial == "bluestacks4-hyperv":
-            folder_name = "Android"
-        else:
-            folder_name = f"Android_{serial[19:]}"
-
-        try:
-            with OpenKey(HKEY_LOCAL_MACHINE,
-                         rf"SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config") as key:
-                port = QueryValueEx(key, "BstAdbPort")[0]
-        except FileNotFoundError:
-            logger.error(rf'Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config')
-            logger.error('Please confirm that your are using BlueStack 4 hyper-v and not regular BlueStacks 4')
-            logger.error(r'Please check if there is any other emulator instances under '
-                         r'registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests')
-            raise RequestHumanTakeover
-        logger.info(f"New adb port: {port}")
-        return f"127.0.0.1:{port}"
 
     @staticmethod
     def find_bluestacks5_hyperv(serial):

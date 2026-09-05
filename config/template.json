@@ -5,7 +5,7 @@
     "device": {
       "serial": "auto",
       "handle": "",
-      "package_name": "auto",
+      "package_name": "com.netease.onmyoji.wyzymnqsd_cps",
       "screenshot_method": "auto",
       "control_method": "minitouch",
       "adb_restart": false,

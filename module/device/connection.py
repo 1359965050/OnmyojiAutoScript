@@ -110,14 +110,9 @@ class Connection(ConnectionAttr):
         logger.attr('AdbDevice', self.adb)
 
         # Package
-        # self.package = self.config.Emulator_PackageName
-        self.package = self.config.script.device.package_name.value
-        if self.package == 'auto':
-            self.detect_package()
-        else:
-            pass
-            # 因为用不到就注释掉了
-            # set_server(self.package)
+        self.package = getattr(self.config.script.device.package_name, 'value', self.config.script.device.package_name)
+        if not self.package or self.package == 'auto':
+            self.package = 'com.netease.onmyoji.wyzymnqsd_cps'
         logger.attr('PackageName', self.package)
         # logger.attr('Server', self.config.SERVER)
 

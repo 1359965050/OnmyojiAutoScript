@@ -40,10 +40,6 @@ class VirtualBoxEmulator:
         Raises:
             FileNotFoundError: If emulator not installed.
         """
-        if self.name == 'LDPlayer4':
-            root = self.get_install_dir_from_reg('SOFTWARE\\leidian\\ldplayer', 'InstallDir')
-            if root is not None:
-                return root
         if self.name == 'LDPlayer9':
             root = self.get_install_dir_from_reg('SOFTWARE\\leidian\\ldplayer9', 'InstallDir')
             if root is not None:
@@ -163,14 +159,7 @@ class VirtualBoxEmulator:
                 logger.info(f'Not exists {bak}, skip')
 
 
-# NoxPlayer 夜神模拟器
-nox_player = VirtualBoxEmulator(
-    name="Nox",
-    root_path=".",
-    adb_path=["./adb.exe", "./nox_adb.exe"],
-    vbox_path="./BignoxVMS",
-    vbox_name='.*.vbox$'
-)
+# NoxPlayer 夜神模拟器 (仅64位)
 nox_player_64 = VirtualBoxEmulator(
     name="Nox64",
     root_path=".",
@@ -178,21 +167,7 @@ nox_player_64 = VirtualBoxEmulator(
     vbox_path="./BignoxVMS",
     vbox_name='.*.vbox$'
 )
-# LDPlayer 雷电模拟器
-ld_player = VirtualBoxEmulator(
-    name="LDPlayer",
-    root_path=".",
-    adb_path="./adb.exe",
-    vbox_path="./vms",
-    vbox_name='.*.vbox$'
-)
-ld_player_4 = VirtualBoxEmulator(
-    name="LDPlayer4",
-    root_path=".",
-    adb_path="./adb.exe",
-    vbox_path="./vms",
-    vbox_name='.*.vbox$'
-)
+# LDPlayer 雷电模拟器 (仅LDPlayer9)
 ld_player_9 = VirtualBoxEmulator(
     name="LDPlayer9",
     root_path=".",
@@ -208,14 +183,7 @@ memu_player = VirtualBoxEmulator(
     vbox_path="./MemuHyperv VMs",
     vbox_name='.*.memu$'
 )
-# MumuPlayer MuMu模拟器
-mumu_player = VirtualBoxEmulator(
-    name="Nemu",
-    root_path=".",
-    adb_path="./vmonitor/bin/adb_server.exe",
-    vbox_path="./vms",
-    vbox_name='.*.nemu$'
-)
+# MumuPlayer MuMu模拟器12
 mumu12_player = VirtualBoxEmulator(
     name="Nemu12",
     root_path=".",
@@ -226,13 +194,9 @@ mumu12_player = VirtualBoxEmulator(
 
 class EmulatorConnect:
     SUPPORTED_EMULATORS = [
-        nox_player,
         nox_player_64,
-        ld_player,
-        ld_player_4,
         ld_player_9,
         memu_player,
-        mumu_player,
         mumu12_player
     ]
 

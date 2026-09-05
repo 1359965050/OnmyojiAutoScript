@@ -4,7 +4,6 @@ from module.device.platform2.handlers.base import EmulatorHandler
 from module.device.platform2.handlers.nox import NoxHandler
 from module.device.platform2.handlers.bluestacks import BlueStacksHandler
 from module.device.platform2.handlers.ldplayer import LDPlayerHandler
-from module.device.platform2.handlers.mumu import MuMuHandler
 from module.device.platform2.handlers.mumu12 import MuMu12Handler
 from module.device.platform2.handlers.memu import MEmuHandler
 
@@ -12,7 +11,6 @@ _ALL_HANDLERS: list[EmulatorHandler] = [
     NoxHandler(),
     BlueStacksHandler(),
     LDPlayerHandler(),
-    MuMuHandler(),
     MuMu12Handler(),
     MEmuHandler(),
 ]

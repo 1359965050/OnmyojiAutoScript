@@ -125,29 +125,22 @@ class EmulatorInstanceBase:
         Returns:
             int: Instance ID, or None if this is not a LDPlayer instance
         """
-        if self.type in ('LDPlayer3', 'LDPlayer4', 'LDPlayer9'):
+        if self.type == 'LDPlayer9':
             return self.instance_id
         return None
 
 
 class EmulatorBase:
     # Values here must match those in argument.yaml EmulatorInfo.Emulator.option
-    NoxPlayer = 'NoxPlayer'
     NoxPlayer64 = 'NoxPlayer64'
-    NoxPlayerFamily = [NoxPlayer, NoxPlayer64]
-    BlueStacks4 = 'BlueStacks4'
+    NoxPlayerFamily = [NoxPlayer64]
     BlueStacks5 = 'BlueStacks5'
-    BlueStacks4HyperV = 'BlueStacks4HyperV'
     BlueStacks5HyperV = 'BlueStacks5HyperV'
-    BlueStacksFamily = [BlueStacks4, BlueStacks5]
-    LDPlayer3 = 'LDPlayer3'
-    LDPlayer4 = 'LDPlayer4'
+    BlueStacksFamily = [BlueStacks5]
     LDPlayer9 = 'LDPlayer9'
-    LDPlayerFamily = [LDPlayer3, LDPlayer4, LDPlayer9]
-    MuMuPlayer = 'MuMuPlayer'
-    MuMuPlayerX = 'MuMuPlayerX'
+    LDPlayerFamily = [LDPlayer9]
     MuMuPlayer12 = 'MuMuPlayer12'
-    MuMuPlayerFamily = [MuMuPlayer, MuMuPlayerX, MuMuPlayer12]
+    MuMuPlayerFamily = [MuMuPlayer12]
     MEmuPlayer = 'MEmuPlayer'
 
     @classmethod

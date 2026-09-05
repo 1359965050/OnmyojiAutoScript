@@ -7,26 +7,22 @@ from module.logger import logger
 
 
 class BlueStacksHandler(EmulatorHandler):
-    BlueStacks4 = 'BlueStacks4'
     BlueStacks5 = 'BlueStacks5'
 
     @staticmethod
     def type_names() -> list[str]:
-        return ['BlueStacks4', 'BlueStacks5']
+        return ['BlueStacks5']
 
     @staticmethod
     def path_to_type(path: str, exe: str, dir1: str, dir2: str) -> str:
         if exe == 'bluestacks.exe':
-            if dir1 in ['bluestacks', 'bluestacks_cn']:
-                return 'BlueStacks4'
-            elif dir1 in ['bluestacks_nxt', 'bluestacks_nxt_cn']:
+            if dir1 in ['bluestacks_nxt', 'bluestacks_nxt_cn']:
                 return 'BlueStacks5'
             else:
-                return 'BlueStacks4'
+                # 默认识别为BS5，BS4已停更
+                return 'BlueStacks5'
         if exe == 'hd-player.exe':
-            if dir1 in ['bluestacks', 'bluestacks_cn']:
-                return 'BlueStacks4'
-            elif dir1 in ['bluestacks_nxt', 'bluestacks_nxt_cn']:
+            if dir1 in ['bluestacks_nxt', 'bluestacks_nxt_cn']:
                 return 'BlueStacks5'
             else:
                 return 'BlueStacks5'
@@ -50,12 +46,7 @@ class BlueStacksHandler(EmulatorHandler):
     def iter_instances(self, emulator) -> t.Iterable:
         from module.device.platform2.emulator_windows import EmulatorInstance
 
-        if emulator.type == self.BlueStacks5:
-            self._iter_bluestacks5(emulator)
-            # Use a generator delegation
-            yield from self._iter_bluestacks5(emulator)
-        elif emulator.type == self.BlueStacks4:
-            yield from self._iter_bluestacks4(emulator)
+        yield from self._iter_bluestacks5(emulator)
 
     @staticmethod
     def _iter_bluestacks5(emulator) -> t.Iterable:
@@ -91,40 +82,14 @@ class BlueStacksHandler(EmulatorHandler):
                 path=emulator.path,
             )
 
-    @staticmethod
-    def _iter_bluestacks4(emulator) -> t.Iterable:
-        from module.device.platform2.emulator_windows import EmulatorInstance
-
-        regex = re.compile(r'^Android')
-        for folder in emulator.list_folder('../Engine', is_dir=True):
-            folder_name = os.path.basename(folder)
-            if not regex.match(folder_name):
-                continue
-            yield EmulatorInstance(
-                serial='127.0.0.1:5555',
-                name=folder_name,
-                path=emulator.path,
-            )
 
     def iter_adb_binaries(self, emulator) -> t.Iterable[str]:
         yield from self._iter_common_adb(emulator)
 
     def build_start_command(self, instance) -> t.Optional[str]:
         exe = instance.emulator.path
-        if instance.type == self.BlueStacks5:
-            # HD-Player.exe --instance Pie64
-            return f'"{exe}" --instance {instance.name}'
-        else:
-            # Bluestacks.exe -vmname Android_1
-            return f'"{exe}" -vmname {instance.name}'
-
-    def build_stop_command(self, instance) -> t.Optional[str]:
-        if instance.type == self.BlueStacks4:
-            exe = instance.emulator.path
-            console = self.single_to_console(exe)
-            if console:
-                return f'"{console}" quit --name {instance.name}'
-        return None
+        # HD-Player.exe --instance Pie64
+        return f'"{exe}" --instance {instance.name}'
 
     def stop_by_kill(self, instance) -> t.Optional[str]:
         if instance.type == self.BlueStacks5:
