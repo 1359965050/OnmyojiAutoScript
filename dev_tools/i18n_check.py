@@ -198,8 +198,8 @@ def main() -> int:
     parser.add_argument(
         "--schema",
         type=Path,
-        default=SCHEMA_DEFAULT,
-        help="Path to Pydantic JSON schema (default: schema_debug.json).",
+        default=None,
+        help="Path to Pydantic JSON schema (default: generate in memory from ConfigModel).",
     )
     parser.add_argument(
         "--check-redundant",
@@ -227,11 +227,20 @@ def main() -> int:
 
     schema: dict = {}
     schema_keys: Set[str] = set()
-    if args.schema.exists():
+    if args.schema and args.schema.exists():
         schema = json.loads(args.schema.read_text(encoding="utf-8"))
         schema_keys = parse_schema_keys(schema, menu_keys=menu_keys)
     else:
-        print(f"Schema file not found: {args.schema}", file=sys.stderr)
+        # 优先在内存中生成 schema，彻底杜绝磁盘冗余文件
+        try:
+            from module.config.config_model import ConfigModel
+            schema = ConfigModel().model_json_schema()
+            schema_keys = parse_schema_keys(schema, menu_keys=menu_keys)
+        except Exception as e:
+            if args.schema:
+                print(f"Schema file not found: {args.schema}", file=sys.stderr)
+            else:
+                print(f"Failed to generate in-memory schema: {e}", file=sys.stderr)
 
     constant_keys = parse_i18n_content_keys(I18N_CONTENT_DART)
 

@@ -2,12 +2,12 @@ import numpy as np
 
 from rich.table import Table
 from rich.text import Text
-from cached_property import cached_property
+from functools import cached_property
 
 from module.logger import logger
 
-from oashya.labels import id2label, id2name
-from oashya.labels import CLASSINDEX as CI
+from tasks.Hyakkiyakou.labels import id2label, id2name
+from tasks.Hyakkiyakou.labels import CLASSINDEX as CI
 
 # get buff status
 from tasks.Hyakkiyakou.slave.hya_slave import HyaBuff
@@ -18,11 +18,11 @@ class Focus:
         self._id: int = inputs[0]
         self._class: int = inputs[1]
         self._conf: int = inputs[2]
-        self._cx: int = inputs[3]
-        self._cy: int = inputs[4]
-        self._w: int = inputs[5]
-        self._h: int = inputs[6]
-        self._v: float = inputs[7]
+        self._cx: int = int(round(inputs[3]))
+        self._cy: int = int(round(inputs[4]))
+        self._w: int = int(round(inputs[5]))
+        self._h: int = int(round(inputs[6]))
+        self._v: float = float(inputs[7])
         # -----------------------
         self._omega: float = 0.
         self._omega_buff: float = 0.
@@ -92,10 +92,15 @@ velocity: {self._v}"""
             is_rare_ssr_sp = True
         elif CI.MIN_SP <= target_class <= CI.MAX_SP and self._omega > buff_omega:
             is_rare_ssr_sp = True
+        elif CI.MIN_UR <= target_class <= CI.MAX_UR and self._omega > buff_omega:
+            is_rare_ssr_sp = True
         _r = self.r(vector=state, omega=self._omega, omega_buff=self._omega_buff, is_rare_ssr_sp=is_rare_ssr_sp, freeze=freeze, is_buff=buffed)
         throw = True if _r > 0 else False
+        # 屏幕有效边界限幅保护 (游戏画幅 1280x720)，防止前瞻计算异常越界产生负数坐标
+        target_x = max(40.0, min(1240.0, float(target_x)))
+        target_y = max(80.0, min(660.0, float(target_y)))
         # x, y, throw, number
-        return [target_x, target_y, throw, 10]
+        return [int(round(target_x)), int(round(target_y)), throw, 10]
 
     def omega_buff(self, tracks, invite_friend: bool, has_prob_up: bool) -> float:
         max_omega = 0.
@@ -104,7 +109,9 @@ velocity: {self._v}"""
         max_v = 0
         max_class = 0
 
-        focus_is_ssr_sp = (CI.MIN_SSR <= self._class <= CI.MAX_SSR or CI.MIN_SP <= self._class <= CI.MAX_SP)
+        focus_is_ssr_sp = (CI.MIN_SSR <= self._class <= CI.MAX_SSR or
+                           CI.MIN_SP <= self._class <= CI.MAX_SP or
+                           CI.MIN_UR <= self._class <= CI.MAX_UR)
 
         for _id, _class, _conf, _cx, _cy, _w, _h, _v in tracks:
             _current_omega = 0.

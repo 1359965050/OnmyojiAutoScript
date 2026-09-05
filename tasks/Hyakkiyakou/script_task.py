@@ -2,15 +2,15 @@
 # @author runhey
 # github https://github.com/runhey
 import time
-
+import cv2
+from pathlib import Path
 from datetime import datetime, timedelta
 from random import choice
-from cached_property import cached_property
-# Use cmd to install: ./toolkit/python.exe -m pip install -i https://pypi.org/simple/ oashya --trusted-host pypi.org
-# update oashya:  ./toolkit/python.exe -m pip install --upgrade oashya
-from oashya.tracker import Tracker
-from oashya.labels import label2id, CLASSINDEX as CI, id2name
-from oashya.utils import draw_tracks
+from functools import cached_property
+from module.base.timer import Timer
+from tasks.Hyakkiyakou.tracker import Tracker
+from tasks.Hyakkiyakou.labels import label2id, CLASSINDEX as CI, id2name
+from tasks.Hyakkiyakou.utils import draw_tracks
 
 from module.exception import TaskEnd
 from module.logger import logger
@@ -154,6 +154,9 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         # SP
         if CI.MIN_SP <= class_id <= CI.MAX_SP:
             return 5
+        # UR
+        if CI.MIN_UR <= class_id <= CI.MAX_UR:
+            return 6
         # 其他（buff/未收录 等）不参与排序
         return -1
 
@@ -241,6 +244,16 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         init_bean_flag: bool = False
         last_action = [0, 0, False, 10]
         self.hya_fs_check_timer.reset()
+        collect_folder = None
+        collect_timer = None
+        if self._config.debug_config.hya_collect_all:
+            save_time = datetime.now().strftime('%Y%m%dT%H%M%S')
+            collect_folder = Path(f'./log/baigui/{save_time}')
+            collect_folder.mkdir(parents=True, exist_ok=True)
+            collect_timer = Timer(0.35)
+            collect_timer.start()
+            logger.info(f'Hyakkiyakou Auto Collect Images Enabled -> {collect_folder}')
+
         if self._config.debug_config.hya_show:
             self.debugger.show_start()
         while 1:
@@ -249,6 +262,15 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 break
             if not self.appear(self.I_CHECK_RUN):
                 continue
+
+            # 途径1：自动采集全量训练原图 (节流 0.35s 保存一帧)
+            if collect_folder and collect_timer and collect_timer.reached():
+                collect_timer.reset()
+                time_now = int(datetime.now().timestamp() * 1000)
+                # self.device.image 为 RGB，cv2.imwrite 期待 BGR
+                bgr_img = cv2.cvtColor(self.device.image, cv2.COLOR_RGB2BGR)
+                cv2.imwrite(str(collect_folder / f'hya_{time_now}.png'), bgr_img)
+
             #修改：在这里不再区分freeze，而是将状态传到decision用于执行冻结策略
             #目前被禁用了 因为冰冻状态下检测正确率约等于0 全是蝉冰雪女 =.=
             if not self.appear(self.I_HFREEZE):
@@ -272,6 +294,8 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 self.debugger.show_info(tracker=self.tracker, f=self.agent.focus)
 
         logger.info('Hyakkiyakou End')
+        if collect_folder:
+            logger.info(f'Auto Collect Done: Dataset images saved to {collect_folder}')
         if self._config.debug_config.hya_show:
             self.debugger.show_stop()
         if self._config.debug_config.hya_save_result:
@@ -295,18 +319,20 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 self.bean_10to05()
             elif state[2] == 5 and bean == 10:
                 self.bean_05to10()
-        self.fast_click(x=x, y=y, control_method=self._config.debug_config.hya_control_method)
+        self.fast_click(x=int(round(x)), y=int(round(y)), control_method=self._config.debug_config.hya_control_method)
 
 
 if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
+    from module.utils.power_manager import PowerManager
 
     c = Config('oas1')
     d = Device(c)
 
     t = ScriptTask(c, d)
-    t.run()
+    with PowerManager.keep_awake():
+        t.run()
 
     # from tasks.Hyakkiyakou.agent.tagent import test_observe, test_state
     # test_state()

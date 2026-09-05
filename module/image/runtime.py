@@ -552,8 +552,9 @@ class ImageRuntime:
         `frame_id` 与 `image_bytes` 二选一：优先复用已注册截图，只有在没有 `frame_id`
         时才会反序列化请求中直接上传的图像数据。
         """
-        if frame_id:
-            return self._get_frame_entry(frame_id).image
+        actual_frame_id = frame_id.strip() if isinstance(frame_id, str) and frame_id.strip() else None
+        if actual_frame_id:
+            return self._get_frame_entry(actual_frame_id).image
         if image_bytes is None:
             raise ValueError("Either frame_id or image_bytes must be provided")
         image = pickle.loads(image_bytes)

@@ -18,7 +18,7 @@ class GenerateImages(GameUi, HyakkiyakouAssets):
     @cached_property
     def save_folder(self) -> Path:
         save_time = datetime.now().strftime('%Y%m%dT%H%M%S')
-        save_folder = Path(f'./tasks/Hyakkiyakou/temp/{save_time}')
+        save_folder = Path(f'./log/baigui/{save_time}')
         save_folder.mkdir(parents=True, exist_ok=True)
         return save_folder
 

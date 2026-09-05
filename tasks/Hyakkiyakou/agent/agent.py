@@ -1,11 +1,11 @@
 import numpy as np
 
 from datetime import datetime
-from cached_property import cached_property
+from functools import cached_property
 
-from oashya.tracker import Tracker
-from oashya.labels import CLASSINDEX as CI
-from oashya.labels import id2label, id2name
+from tasks.Hyakkiyakou.tracker import Tracker
+from tasks.Hyakkiyakou.labels import CLASSINDEX as CI
+from tasks.Hyakkiyakou.labels import id2label, id2name
 from module.logger import logger
 from module.hyakkiyakou import Debugger
 from tasks.Hyakkiyakou.agent.focus import Focus
@@ -22,9 +22,9 @@ def generate_gaussian_patch(size=(300, 300), mean=0, std_dev=60):
 def embed_patch_in_canvas(canvas, patch, position=(0, 0), patch_size=(300, 300)):
     canvas_height, canvas_width = 720, 1280
     patch_height, patch_width = patch_size
-    pos_x, pos_y = position
+    pos_x, pos_y = int(round(position[0])), int(round(position[1]))
     pos_x = max(0, min(pos_x, canvas_width))
-    pos_y = max(0, min(pos_y, canvas_width))
+    pos_y = max(0, min(pos_y, canvas_height))
 
     x1 = pos_x - patch_width // 2
     y1 = pos_y - patch_height // 2
@@ -95,6 +95,7 @@ class Agent:
                 case _ if CI.MIN_SR <= _class <= CI.MAX_SR: weight = weights[2]
                 case _ if CI.MIN_SSR <= _class <= CI.MAX_SSR: weight = 1.5 * weights[1]
                 case _ if CI.MIN_SP <= _class <= CI.MAX_SP: weight = 1.5 * weights[0]
+                case _ if CI.MIN_UR <= _class <= CI.MAX_UR: weight = 2.0 * weights[0]
                 # case CI.BUFF_005:  # freeze
                 #     weight = -1.
                 #     _cy += 100

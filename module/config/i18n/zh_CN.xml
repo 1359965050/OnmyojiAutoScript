@@ -5300,6 +5300,14 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <source>hya_control_method</source>
             <translation>撒豆过程的控制方式</translation>
         </message>
+        <message>
+            <source>hya_collect_all</source>
+            <translation>自动采集全量训练图</translation>
+        </message>
+        <message>
+            <source>hya_collect_all_help</source>
+            <translation>开启后正常运行百鬼夜行，系统将在背景中以约0.35秒间隔自动保存连续画面至./log/baigui/，用于模型训练</translation>
+        </message>
     </context>
     <context>
         <name>_cn_kokan_config</name>

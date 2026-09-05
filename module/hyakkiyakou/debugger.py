@@ -5,14 +5,14 @@ import time
 import numpy as np
 
 from datetime import datetime
-from cached_property import cached_property
+from functools import cached_property
 from pathlib import Path
 from numpy import uint8, fromfile
 from rich.table import Table
 from threading import Event, Lock, Thread
-from oashya.labels import id2label, CLASSIFY, CLASSINDEX, id2name
-from oashya.utils import draw_tracks
-from oashya.tracker import Tracker
+from tasks.Hyakkiyakou.labels import id2label, CLASSIFY, CLASSINDEX, id2name
+from tasks.Hyakkiyakou.utils import draw_tracks
+from tasks.Hyakkiyakou.tracker import Tracker
 
 from tasks.base_task import BaseTask
 from module.logger import logger
@@ -108,7 +108,8 @@ class Debugger:
         sp = [i for i in range(CLASSINDEX.MIN_SP, CLASSINDEX.MAX_SP + 1)]
         ssr = [i for i in range(CLASSINDEX.MIN_SSR, CLASSINDEX.MAX_SSR + 1)]
         g = [i for i in range(CLASSINDEX.MIN_G, CLASSINDEX.MAX_G + 1)]
-        return sp + ssr + g
+        ur = [i for i in range(CLASSINDEX.MIN_UR, CLASSINDEX.MAX_UR + 1)]
+        return sp + ssr + g + ur
 
     def _reset_thread_env(self):
         logger.info('Reset Debugger Thread Environment')

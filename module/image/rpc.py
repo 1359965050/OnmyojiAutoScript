@@ -275,10 +275,10 @@ class ImageClient:
         """
         统一处理“直接上传图片”与“复用已注册 frame_id”两种调用方式。
 
-        当提供 `frame_id` 时，本次请求不再重复上传整张图片；只有在没有 `frame_id`
+        当提供非空 `frame_id` 时，本次请求不再重复上传整张图片；只有在没有 `frame_id`
         且显式传入 `image` 时，才会序列化图片数据。
         """
-        if frame_id is not None or image is None:
+        if bool(frame_id) or image is None:
             return None
         return pickle.dumps(image, protocol=4)
 
@@ -298,8 +298,9 @@ class ImageClient:
             frame_id: 已在服务端注册过的截图引用，优先级高于 `image`。
             threshold: 可选的临时阈值覆盖值；为空时沿用规则自身阈值。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_rule(rule_data, frame_id, payload, threshold)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_rule(rule_data, actual_frame_id, payload, threshold)
 
     def match_rule_with_brightness_window(
         self,
@@ -313,8 +314,9 @@ class ImageClient:
 
         该接口仅适用于普通模板匹配，会在命中后额外校验源区域和模板区域的平均亮度范围。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_rule_with_brightness_window(rule_data, frame_id, payload, threshold)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_rule_with_brightness_window(rule_data, actual_frame_id, payload, threshold)
 
     def match_many(
         self,
@@ -328,8 +330,9 @@ class ImageClient:
 
         适用于 `RuleGif`、`ImageGrid` 这类需要在同帧内判断多个候选模板的场景。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_many(rules_data, frame_id, payload, threshold)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_many(rules_data, actual_frame_id, payload, threshold)
 
     def match_all(
         self,
@@ -345,8 +348,9 @@ class ImageClient:
         Args:
             roi: 可选的搜索区域覆盖值；提供后由服务端在该区域内枚举所有命中。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_all(rule_data, frame_id, payload, threshold, roi)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_all(rule_data, actual_frame_id, payload, threshold, roi)
 
     def match_all_any(
         self,
@@ -363,8 +367,9 @@ class ImageClient:
         Args:
             nms_threshold: NMS 去重阈值，用于移除高度重叠的冗余框。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_all_any(rule_data, frame_id, payload, threshold, roi, nms_threshold)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_all_any(rule_data, actual_frame_id, payload, threshold, roi, nms_threshold)
 
     def match_all_any_many(
         self,
@@ -379,8 +384,9 @@ class ImageClient:
 
         该接口适合一次性拿到多组模板的非冗余命中列表。
         """
-        payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_all_any_many(rules_data, frame_id, payload, threshold, nms_threshold)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_all_any_many(rules_data, actual_frame_id, payload, threshold, nms_threshold)
 
     def match_dynamic_template(
         self,
@@ -403,8 +409,9 @@ class ImageClient:
             name: 用于日志输出的匹配名称。
         """
         template_payload = pickle.dumps(template, protocol=4)
-        image_payload = self._encode_image_payload(image=image, frame_id=frame_id)
-        return self.client.match_dynamic_template(template_payload, frame_id, image_payload, roi_back, threshold, name)
+        actual_frame_id = frame_id if bool(frame_id) else None
+        image_payload = self._encode_image_payload(image=image, frame_id=actual_frame_id)
+        return self.client.match_dynamic_template(template_payload, actual_frame_id, image_payload, roi_back, threshold, name)
 
 
 def get_image_client(address: str | None = None, refresh: bool = False) -> ImageClient:

@@ -284,12 +284,8 @@ class Window(Handle):
 
             size = self.screenshot_size
             cw, ch = size if size else (1280, 720)
-            target_x = x
-            target_y = y
-            if cw != 1280 and cw > 0:
-                target_x = int(x * (cw / 1280.0))
-            if ch != 720 and ch > 0:
-                target_y = int(y * (ch / 720.0))
+            target_x = int(round(x * (cw / 1280.0))) if (cw != 1280 and cw > 0) else int(round(x))
+            target_y = int(round(y * (ch / 720.0))) if (ch != 720 and ch > 0) else int(round(y))
 
             press_time = random.uniform(0.045, 0.120) if not fast else random.uniform(0.020, 0.045)
             clickPos = MAKELONG(target_x, target_y)
@@ -303,8 +299,8 @@ class Window(Handle):
         # 所有我在点击的时候会除以这个缩放比例
         # 但是后面发现又不是影响的很奇怪
 
-        x = int(x / self.window_scale_rate)
-        y = int(y / self.window_scale_rate)
+        x = int(round(x / self.window_scale_rate))
+        y = int(round(y / self.window_scale_rate))
         if fast:
             press_time: float = (random.randint(10, 40)) / 1000.0
         else:
@@ -348,12 +344,8 @@ class Window(Handle):
 
             size = self.screenshot_size
             cw, ch = size if size else (1280, 720)
-            target_x = x
-            target_y = y
-            if cw != 1280 and cw > 0:
-                target_x = int(x * (cw / 1280.0))
-            if ch != 720 and ch > 0:
-                target_y = int(y * (ch / 720.0))
+            target_x = int(round(x * (cw / 1280.0))) if (cw != 1280 and cw > 0) else int(round(x))
+            target_y = int(round(y * (ch / 720.0))) if (ch != 720 and ch > 0) else int(round(y))
             clickPos = MAKELONG(target_x, target_y)
             try:
                 PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)

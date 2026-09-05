@@ -166,6 +166,12 @@ def func(config: str, state_queue: multiprocessing.Queue, log_pipe_in) -> None:
         logger.exception(f'Run script {config} error')
         logger.error(f'Error: {e}')
         raise
+    finally:
+        try:
+            from module.utils.power_manager import PowerManager
+            PowerManager.release_all()
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':

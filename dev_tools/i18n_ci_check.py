@@ -18,26 +18,11 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_DEBUG = PROJECT_ROOT / "schema_debug.json"
 
 
 def run(cmd: list[str]) -> int:
     print(f"$ {' '.join(cmd)}")
     return subprocess.call(cmd, cwd=str(PROJECT_ROOT))
-
-
-def generate_schema() -> None:
-    """Generate schema_debug.json from ConfigModel."""
-    code = (
-        "from module.config.config_model import ConfigModel; "
-        "import json; "
-        "json.dump(ConfigModel().model_json_schema(), "
-        "open('schema_debug.json', 'w', encoding='utf-8'), "
-        "ensure_ascii=False, indent=2)"
-    )
-    result = run([sys.executable, "-c", code])
-    if result != 0:
-        raise SystemExit(f"Failed to generate {SCHEMA_DEBUG}")
 
 
 def main() -> int:
@@ -50,9 +35,6 @@ def main() -> int:
             "Skipping translation CI check."
         )
         return 0
-
-    if not SCHEMA_DEBUG.exists():
-        generate_schema()
 
     # 1. Ensure generated files are up to date.
     result = run([sys.executable, "dev_tools/i18n_sync.py", "--check"])

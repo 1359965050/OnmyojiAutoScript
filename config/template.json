@@ -1446,7 +1446,8 @@
       "hya_save_result": false,
       "hya_interval": 300,
       "hya_screenshot_method": "window_background",
-      "hya_control_method": "window_message"
+      "hya_control_method": "window_message",
+      "hya_collect_all": false
     }
   },
   "hero_test": {

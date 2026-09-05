@@ -68,16 +68,8 @@ class DebugConfig(ConfigBase):
     # 单独的点击
     hya_control_method: ControlMethod = Field(default=ControlMethod.WINDOW_MESSAGE,
                                               description='hya_control_method')
-
-    hide_fields = dynamic_hide('continuous_learning')
-
-
-    @field_validator('continuous_learning', mode='after')
-    @classmethod
-    def false_continuous_learning(cls, v):
-        if v:
-            return False
-        return False
+    # 自动全量采集训练图片 (正常进入百鬼夜行后自动节流抓取所有画面帧)
+    hya_collect_all: bool = Field(default=False, description='hya_collect_all_help')
 
 
 class Hyakkiyakou(ConfigBase):

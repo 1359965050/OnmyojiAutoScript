@@ -233,15 +233,15 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             appear = self.ocr_appear(target, interval)
         elif isinstance(target, RuleImage):
             if threshold is None:
-                cached_result = self.device.get_image_batch_cache(target, frame_id=self.device.image_frame_id or "")
+                cached_result = self.device.get_image_batch_cache(target, frame_id=self.device.image_frame_id or None)
                 if cached_result is not None:
                     appear = target._apply_match_result(cached_result)
                 else:
-                    appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
+                    appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or None)
             else:
-                appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
+                appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or None)
         else:
-            appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or "")
+            appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or None)
 
         if appear and interval:
             self.interval_timer[timer_key].reset()
@@ -364,13 +364,13 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.maybe_screenshot(skip_first_screenshot)
             skip_first_screenshot = False
             # 当前页面能够匹配到target
-            if target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or ""):
+            if target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or None):
                 cur_roi_front = target.roi_front
                 logger.info(f'Current:{cur_roi_front}, pre:{pre_roi_front}')
                 target.roi_back = tuple(pre_roi_front) if pre_roi_front is not None else origin_roi_back
                 # 上一次匹配到的位置还能匹配到target
                 if pre_roi_front is not None and target.match(self.device.image, threshold=threshold,
-                                                              frame_id=self.device.image_frame_id or ""):
+                                                              frame_id=self.device.image_frame_id or None):
                     # 到达稳定时间
                     if stable_timer.reached():
                         logger.info(f'{target.name} position has stabilized')
@@ -409,7 +409,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 self.screenshot()
 
             if target._match_init:
-                if target.match(self.device.image, frame_id=self.device.image_frame_id or ""):
+                if target.match(self.device.image, frame_id=self.device.image_frame_id or None):
                     if timer.reached():
                         break
                 else:
@@ -446,7 +446,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 if not self.interval_timer[rule.name].reached():
                     return False
 
-            stable = rule.stable(self.device.image, frame_id=self.device.image_frame_id or "")
+            stable = rule.stable(self.device.image, frame_id=self.device.image_frame_id or None)
             if stable:
                 if interval:
                     self.interval_timer[rule.name].reset()
