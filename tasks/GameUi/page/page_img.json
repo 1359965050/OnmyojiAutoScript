@@ -215,15 +215,7 @@
     "threshold": 0.8,
     "description": "description"
   },
-  {
-    "itemName": "check_bondling_fairyland",
-    "imageName": "page_check_bondling_fairyland.png",
-    "roiFront": "614,660,56,49",
-    "roiBack": "614,660,56,49",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
+
   {
     "itemName": "six_gates_goto_exploration",
     "imageName": "page_six_gates_goto_exploration.png",

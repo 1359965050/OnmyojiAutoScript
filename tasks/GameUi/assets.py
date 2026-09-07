@@ -90,7 +90,9 @@ class GameUiAssets:
 	# 平安奇谭页面标志 
 	I_CHECK_HEIAN_KITAN = RuleImage(roi_front=(27,48,47,39), roi_back=(27,48,47,39), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_heian_kitan.png")
 	# 契灵页面标志 
-	I_CHECK_BONDLING_FAIRYLAND = RuleImage(roi_front=(614,660,56,49), roi_back=(582,630,130,90), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_fairyland.png")
+	I_CHECK_BONDLING_FAIRYLAND = RuleImage(roi_front=(614,660,56,49), roi_back=(570,620,150,100), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_fairyland.png")
+	# 契灵之境页面标题 
+	I_CHECK_BONDLING_TITLE = RuleImage(roi_front=(150,14,140,38), roi_back=(120,5,200,55), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_title.png")
 	# 寮突切换到个突按钮 
 	I_RYOUTOPPA_GOTO_REALMRAID = RuleImage(roi_front=(1201,234,62,105), roi_back=(1201,234,62,105), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_ryoutoppa_goto_realmraid.png")
 	# 寮突页面标志 
@@ -278,8 +280,6 @@ class GameUiAssets:
 	I_CHECK_SIX_GATES = RuleImage(roi_front=(1174,621,55,44), roi_back=(1174,621,55,44), threshold=0.5, method="Template matching", file="./tasks/GameUi/page/page_check_six_gates.png")
 	# description 
 	I_CHECK_PEACOCK_KINGDOM = RuleImage(roi_front=(348,158,30,106), roi_back=(296,117,165,256), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_peacock_kingdom.png")
-	# description 
-	I_CHECK_BONDLING_FAIRYLAND = RuleImage(roi_front=(614,660,56,49), roi_back=(614,660,56,49), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_fairyland.png")
 	# description 
 	I_SIX_GATES_GOTO_EXPLORATION = RuleImage(roi_front=(18,19,52,55), roi_back=(18,19,52,55), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_six_gates_goto_exploration.png")
 	# description 

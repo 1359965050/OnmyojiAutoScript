@@ -39,7 +39,7 @@
     "itemName": "mall_scales_sure",
     "imageName": "navbar_mall_scales_sure.png",
     "roiFront": "1195,100,62,85",
-    "roiBack": "1195,100,62,85",
+    "roiBack": "1160,70,115,145",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "description"
@@ -48,7 +48,7 @@
     "itemName": "mall_bondlings_sure",
     "imageName": "navbar_mall_bondlings_sure.png",
     "roiFront": "1194,421,69,74",
-    "roiBack": "1194,421,69,74",
+    "roiBack": "1160,370,120,230",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "契灵商店"
@@ -66,7 +66,7 @@
     "itemName": "mall_bondlings_check",
     "imageName": "navbar_mall_bondlings_check.png",
     "roiFront": "355,186,34,104",
-    "roiBack": "355,186,34,104",
+    "roiBack": "330,160,90,150",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "契灵商店"

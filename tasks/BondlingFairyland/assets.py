@@ -168,14 +168,14 @@ class BondlingFairylandAssets:
 	# Image Rule Assets
 	# description 
 	I_STONE_ENTER = RuleImage(roi_front=(1172,444,38,41), roi_back=(1172,444,38,41), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/stone_stone_enter.png")
-	# description 
-	I_STONE_SURE = RuleImage(roi_front=(644,621,56,39), roi_back=(618,614,120,52), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/stone_stone_sure.png")
-	# description 
-	I_BUY_PLUS = RuleImage(roi_front=(765,543,43,40), roi_back=(765,543,43,40), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_plus.png")
-	# description 
-	I_BUY_ADD = RuleImage(roi_front=(678,540,43,40), roi_back=(678,540,43,40), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_add.png")
-	# description 
-	I_BUY_SUB = RuleImage(roi_front=(468,540,43,40), roi_back=(468,540,43,40), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_sub.png")
+	# 鸣契确认按钮 
+	I_STONE_SURE = RuleImage(roi_front=(644,621,56,39), roi_back=(600,600,160,80), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/stone_stone_sure.png")
+	# 鸣契数量最大按钮 
+	I_BUY_PLUS = RuleImage(roi_front=(765,543,43,40), roi_back=(740,520,80,80), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_plus.png")
+	# 鸣契数量增加按钮 
+	I_BUY_ADD = RuleImage(roi_front=(678,540,43,40), roi_back=(650,520,80,80), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_add.png")
+	# 鸣契数量减少按钮 
+	I_BUY_SUB = RuleImage(roi_front=(468,540,43,40), roi_back=(440,520,80,80), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/buy_sub.png")
 	# 关闭购买契灵页面 
 	I_STONE_CLOSE = RuleImage(roi_front=(911,56,42,38), roi_back=(888,49,100,100), threshold=0.8, method="Template matching", file="./tasks/BondlingFairyland/stone/stone_stone_close.png")
 

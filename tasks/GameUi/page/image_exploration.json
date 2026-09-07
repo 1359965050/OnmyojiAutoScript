@@ -183,10 +183,19 @@
     "itemName": "check_bondling_fairyland",
     "imageName": "page_check_bondling_fairyland.png",
     "roiFront": "614,660,56,49",
-    "roiBack": "582,630,130,90",
+    "roiBack": "570,620,150,100",
+    "method": "Template matching",
+    "threshold": 0.75,
+    "description": "契灵页面标志"
+  },
+  {
+    "itemName": "check_bondling_title",
+    "imageName": "page_check_bondling_title.png",
+    "roiFront": "150,14,140,38",
+    "roiBack": "120,5,200,55",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "契灵页面标志"
+    "description": "契灵之境页面标题"
   },
   {
     "itemName": "ryoutoppa_goto_realmraid",

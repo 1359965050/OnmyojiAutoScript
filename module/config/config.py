@@ -245,10 +245,12 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         获取调度器的数据， 但是你必须使用update_scheduler来更新信息
         :return:
         """
+        if getattr(self, 'pending_task', None) is None or getattr(self, 'waiting_task', None) is None or getattr(self, 'scheduler_update_dt', None) is None:
+            self.update_scheduler()
         # 根据调度器更新时间来判断是否有可运行的任务,保证逻辑一致性
         scheduler_update_dt = getattr(self, 'scheduler_update_dt', datetime.now())
         running = {}
-        if self.task is not None and self.task.next_run < scheduler_update_dt:
+        if self.task is not None and getattr(self.task, 'next_run', None) is not None and self.task.next_run < scheduler_update_dt:
             running = {"name": self.task.command, "next_run": str(self.task.next_run)}
 
         pending = []

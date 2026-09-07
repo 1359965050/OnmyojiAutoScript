@@ -33,7 +33,7 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
     """ 契灵 """
 
     def _exit_matcher(self) -> ExitMatcher | None:
-        return any_of(self.I_BALL_FIRE, self.I_CHECK_BONDLING_FAIRYLAND, self.I_GI_EMOJI_1, self.I_GI_EMOJI_2)
+        return any_of(self.I_BALL_FIRE, self.I_CHECK_BONDLING_FAIRYLAND, self.I_CHECK_BONDLING_TITLE, self.I_GI_EMOJI_1, self.I_GI_EMOJI_2)
 
     def _register_custom_pages(self) -> None:
         page_result = self.navigator.resolve_page(page_battle_result)
@@ -91,11 +91,25 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             logger.hr('第一步, 检查契忆数量', 2)
             self.goto_page(page_mall, confirm_wait=2.5)
             self.ui_click(self.I_MALL_SCCALES, self.I_MALL_SCCALES_CHECK)
-            self.ui_click(self.I_MALL_BONDLINGS_SURE, self.I_MALL_BONDLINGS_ON)
+            # 点击契忆商店，双重确认已选中货币图标或限购标志
+            timer = Timer(10).start()
+            while True:
+                self.screenshot()
+                if self.appear(self.I_MALL_BONDLINGS_ON) or self.appear(self.I_MALL_BONDLINGS_CHECK):
+                    break
+                if timer.reached():
+                    logger.warning("进入契忆商店确认超时，尝试直接识别契忆数量")
+                    break
+                if self.appear_then_click(self.I_MALL_BONDLINGS_SURE, interval=1.5):
+                    continue
             MAX_COUNT = cong.bondling_config.limit_num
             cu, re, total = self.O_BL_CHECK_MONEY.ocr_digit_counter(self.device.image)
+            cu = cu or 0
             if cu > 10000:  # 识别出现问题进行补正
-                cu = int(str(cu)[1:])
+                try:
+                    cu = int(str(cu)[1:])
+                except (ValueError, TypeError):
+                    cu = 0
             if cu >= MAX_COUNT:
                 logger.info(f'契忆数量: {cu} 大于 {MAX_COUNT}')
                 self.goto_page(page_main)
@@ -377,19 +391,43 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
         (0) 不开启使用结契石，(探查界面)返回False
         (1) 没有结契石了，(探查界面)返回False
         """
-        # 没有启用使用石头购买契灵或者当前不在购买界面则直接退出
-        if not bondling_stone_enable or not self.appear(self.I_STONE_SURE):
+        self.screenshot()
+        # 等待弹窗淡入稳定
+        timer = Timer(1.5).start()
+        while not timer.reached():
+            if self.appear(self.I_STONE_SURE) or self.appear(self.I_STONE_CLOSE):
+                break
+            sleep(0.1)
+            self.screenshot()
+
+        # 如果未在召唤弹窗中
+        if not self.appear(self.I_STONE_SURE) and not self.appear(self.I_STONE_CLOSE):
+            logger.info('Not in bondling stone summon popup')
+            return False
+
+        # 如果未启用鸣契石召唤
+        if not bondling_stone_enable:
+            logger.warning('检测到鸣契召唤弹窗，但当前任务配置未启用【使用鸣契石召唤 (bondling_stone_enable=False)】，关闭弹窗')
             self.ui_click_until_disappear(self.I_STONE_CLOSE, interval=1.2)
             return False
+
+        # 如果开启了使用石头，但未能识别确认按钮
+        if not self.appear(self.I_STONE_SURE):
+            logger.warning('未识别到鸣契确认按钮，关闭弹窗')
+            self.ui_click_until_disappear(self.I_STONE_CLOSE, interval=1.2)
+            return False
+
         cu, res, total = self.O_B_STONE_NUMBER.ocr(self.device.image)
         # 如果没有石头了
         if cu == 0 and cu + res == total:
             self.ui_click_until_disappear(self.I_STONE_CLOSE, interval=1.2)
-            logger.warning(f'已经没有鸣契石召唤契灵了')
+            logger.warning(f'已经没有鸣契石召唤契灵了: {cu}/{total}')
             return False
+
+        logger.info(f'当前鸣契石数量: {cu}/{total}，执行鸣契召唤')
         while 1:
             self.screenshot()
-            if not self.appear(self.I_STONE_SURE):
+            if not self.appear(self.I_STONE_SURE) and not self.appear(self.I_STONE_CLOSE):
                 sleep(random.uniform(1.5, 2))  # 等待购买后的动画, 否则已经买了但是下次再点击还会出现该界面
                 return True
             for i in range(3):
@@ -531,6 +569,9 @@ class ScriptTask(GeneralBattle, GameUi, GeneralInvite, GeneralRoom, SwitchSoul, 
             self.screenshot()
             if self.appear(self.I_BALL_HELP):
                 return True
+            if self.appear(self.I_STONE_SURE) or self.appear(self.I_STONE_CLOSE):
+                logger.info('Detected summon popup (no existing bondling on field)')
+                return False
             if click_count >= 3:
                 return False
             # 点击

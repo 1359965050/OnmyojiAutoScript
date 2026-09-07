@@ -22,6 +22,7 @@ from module.server.config_manager import (
     ConfigTaskError,
     ConfigValidationError,
 )
+from module.exception import RequestHumanTakeover
 from module.server.main_manager import mm
 from module.server.script_process import ScriptProcess, ScriptState
 
@@ -300,6 +301,18 @@ async def script_task(script_name: str, task: str, group: str, argument: str, ty
     return mm.config_cache(script_name).model.script_set_arg(task, group, argument, value)
 
 
+def _safe_get_schedule_data(config) -> dict[str, dict]:
+    try:
+        config.update_scheduler()
+        if config.pending_task or config.waiting_task:
+            config.get_next()
+    except RequestHumanTakeover:
+        pass
+    except Exception as e:
+        logger.warning(f"Failed to update schedule data: {e}")
+    return config.get_schedule_data()
+
+
 @script_app.put('/{script_name}/{task}/sync_next_run')
 async def sync_next_run(script_name: str, task: str, target_dt: str):
     if script_name not in mm.script_process:
@@ -308,8 +321,8 @@ async def sync_next_run(script_name: str, task: str, target_dt: str):
     target = datetime.strptime(target_dt, '%Y-%m-%d %H:%M:%S') if target_dt else None
     config.task_delay(task=task, success=True, target=target)
     script_process = mm.script_process[script_name]
-    config.get_next()
-    await script_process.broadcast_state({"schedule": config.get_schedule_data()})
+    schedule_data = _safe_get_schedule_data(config)
+    await script_process.broadcast_state({"schedule": schedule_data})
     return True
 
 
@@ -358,8 +371,7 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
         await script_process.send_json(websocket, {"state": script_process.state})
         log_ws_event(f"ws[{script_name}] connect state: {script_process.state}")
         config = mm.config_cache(script_name)
-        config.get_next()
-        schedule_data = config.get_schedule_data()
+        schedule_data = _safe_get_schedule_data(config)
         await script_process.send_json(websocket, {"schedule": schedule_data})
         log_ws_event(f"ws[{script_name}] connect response: {schedule_data}")
         while True:
@@ -371,8 +383,7 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
                 log_ws_event(f"ws[{script_name}] response: {script_process.state}")
             elif data == 'get_schedule':
                 config = mm.config_cache(script_name)
-                config.get_next()
-                schedule_data = config.get_schedule_data()
+                schedule_data = _safe_get_schedule_data(config)
                 await script_process.broadcast_state({"schedule": schedule_data})
                 log_ws_event(f"ws[{script_name}] response: {schedule_data}")
             elif data == 'start':

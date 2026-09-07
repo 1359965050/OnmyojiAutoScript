@@ -255,7 +255,13 @@ page_six_gates = Page(any_of(GameUiAssets.I_CHECK_MOON_SEA, GameUiAssets.I_CHECK
 page_six_gates.connect(page_exploration, GlobalGameAssets.I_UI_BACK_BLUE, key="page_six_gates->page_exploration")
 page_exploration.connect(page_six_gates, action=exploration_to_six_gates, key="page_exploration->page_six_gates")
 
-page_bondling_fairyland = Page(GameUiAssets.I_CHECK_BONDLING_FAIRYLAND, category="global")
+page_bondling_fairyland = Page(
+    any_of(
+        GameUiAssets.I_CHECK_BONDLING_FAIRYLAND,
+        GameUiAssets.I_CHECK_BONDLING_TITLE,
+    ),
+    category="global",
+)
 page_bondling_fairyland.connect(page_exploration, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_bondling_fairyland->page_exploration")
 page_exploration.connect(
     page_bondling_fairyland,

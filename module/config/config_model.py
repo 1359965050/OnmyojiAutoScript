@@ -10,7 +10,7 @@ import re
 import inflection
 
 from pathlib import Path
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import BaseModel, ValidationError, Field, field_validator
 
 from module.config.utils import *
 from module.logger import logger
@@ -84,6 +84,13 @@ from tasks.Duel.config import Duel
 class ConfigModel(ConfigBase):
     config_name: str = "oas"
     running_task: str = ''
+
+    @field_validator('running_task', mode='before')
+    @classmethod
+    def validate_running_task(cls, v: Any) -> str:
+        if not v or isinstance(v, bool):
+            return ''
+        return str(v)
     script: Script = Field(default_factory=Script)
     restart: Restart = Field(default_factory=Restart)
     global_game: GlobalGame = Field(default_factory=GlobalGame)
@@ -175,6 +182,8 @@ class ConfigModel(ConfigBase):
         :param value:
         :return:
         """
+        if key == 'running_task' and (not value or isinstance(value, bool)):
+            value = ''
         super().__setattr__(key, value)
         logger.info("auto save config")
         self.save()
