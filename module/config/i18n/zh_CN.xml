@@ -4880,6 +4880,14 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
             <source>boss_battle_conf</source>
             <translation>Boss战战斗配置</translation>
         </message>
+        <message>
+            <source>special_act_map</source>
+            <translation>特殊活动中转地图</translation>
+        </message>
+        <message>
+            <source>special_act_map_help</source>
+            <translation>活动界面是否需要经过中转地图（如周年庆地图等）。关闭则直接从主界面进入爬塔。</translation>
+        </message>
     </context>
     <context>
         <name>_cn_meta_demon_config</name>
@@ -6040,6 +6048,14 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>琦梦茨庭</translation>
         </message>
         <message>
+            <source>costume_main_17</source>
+            <translation>狐栖归处</translation>
+        </message>
+        <message>
+            <source>costume_shikigami_12</source>
+            <translation>拾光之窗</translation>
+        </message>
+        <message>
             <source>default</source>
             <translation>默认</translation>
         </message>
@@ -6286,6 +6302,22 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>window_message</source>
             <translation>window_message</translation>
+        </message>
+        <message>
+            <source>Martial Tournament activity config</source>
+            <translation>武道大会活动配置</translation>
+        </message>
+        <message>
+            <source>enable_book_auto</source>
+            <translation>自动兑换绘卷</translation>
+        </message>
+        <message>
+            <source>enable_book_auto_help</source>
+            <translation>开启后将自动在密卷屋中兑换绘卷碎片</translation>
+        </message>
+        <message>
+            <source>random_sleep_help</source>
+            <translation>设置随机休眠间隔，降低连续运行风险</translation>
         </message>
     </context>
 </TS>

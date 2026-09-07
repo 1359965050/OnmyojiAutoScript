@@ -250,7 +250,8 @@ class Quantity(BaseCor):
 
         box = boxed_results[0].box
         self.area = box[0, 0] + self.roi[0], box[0, 1] + self.roi[1], box[1, 0] - box[0, 0], box[2, 1] - box[0, 1]
-        return boxed_results[0].ocr_text
+        return self.after_process(boxed_results[0].ocr_text)
+
 
 
 

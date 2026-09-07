@@ -64,10 +64,10 @@ class RestartAssets:
 	C_LOGIN_ENSURE_LOGIN_CHARACTER_IN_SAME_SVR = RuleClick(roi_front=(600,240,500,400), roi_back=(600,240,500,400), name="login_ensure_login_character_in_same_svr")
 	# 卷轴关闭区域点击(用于点击I_LOGIN_SCROOLL_CLOSE的区域而不依赖图片识别) 
 	C_LOGIN_SCROLL_CLOSE_AREA = RuleClick(roi_front=(1181,634,28,39), roi_back=(1162,595,77,112), name="login_scroll_close_area")
-	# 登录动画点击屏幕中央区域 
+	# 登录动画与进入游戏安全点击区域(避开账号输入框) 
 	C_LOGIN_ANIMATION_CENTER = RuleClick(roi_front=(584,430,112,35), roi_back=(584,430,112,35), name="login_animation_center")
 	# PC端网易通行证登录弹窗进入游戏按钮点击区域 
-	C_LOGIN_PC_ENTER_GAME = RuleClick(roi_front=(584,430,112,35), roi_back=(584,426,112,40), name="login_pc_enter_game")
+	C_LOGIN_PC_ENTER_GAME = RuleClick(roi_front=(584,426,112,40), roi_back=(584,426,112,40), name="login_pc_enter_game")
 
 
 	# Image Rule Assets

@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+import re
 import time
 from time import sleep
 
@@ -48,11 +49,32 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonEncounterAssets):
             self.goto_page(page_shikigami_records)
             self.checkout_soul()
         self.goto_page(page_rwt)
+        # 顶部"今日挑战次数:X/1"检测, 0/1表示今日已打过, 直接结束
+        if self.check_challenge_done():
+            logger.info('Challenge count 0/1, already challenged today')
+            self.goto_page(page_main)
+            self.set_next_run(task='DemonEncounter', success=True, finish=False)
+            raise TaskEnd('DemonEncounter')
         self.execute_lantern()
         self.execute_boss()
         self.goto_page(page_main)
         self.set_next_run(task='DemonEncounter', success=True, finish=False)
         raise TaskEnd('DemonEncounter')
+
+    def check_challenge_done(self) -> bool:
+        """
+        OCR识别现世逢魔顶部"今日挑战次数:X/1"
+        :return: True表示0/1今日已打过
+        """
+        self.screenshot()
+        results = self.O_DE_CHALLENGE_COUNT.detect_and_ocr(self.device.image)
+        text = ''.join(r.ocr_text for r in results)
+        m = re.search(r'([01])\s*/\s*1', text)
+        if not m:
+            logger.warning(f'Challenge count not recognized: [{text}], continue by default')
+            return False
+        return m.group(1) == '0'
+
 
     def checkout_soul(self):
         """

@@ -32,6 +32,8 @@ class GeneralClimb(ConfigBase):
     active_souls_clean: bool = Field(default=False, description='是否运行结束后清理御魂')
     # 点击战斗随机休息
     random_sleep: bool = Field(default=False, description='是否启用在点击战斗前随机休息')
+    # 是否存在特殊活动中转地图
+    special_act_map: bool = Field(default=True, description='special_act_map_help')
 
     @property
     def limit_time_v(self) -> timedelta:

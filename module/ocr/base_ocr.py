@@ -256,39 +256,60 @@ class BaseCor:
         :param boxed_results:
         :return:
         """
-        # 首先先将所有的ocr的str顺序拼接起来, 然后再进行匹配
-        result = None
-        strings = [boxed_result.ocr_text for boxed_result in boxed_results]
-        concatenated_string = "".join(strings)
         if keyword is None:
             keyword = self.keyword
-        if keyword in concatenated_string:
-            result = [index for index, word in enumerate(strings) if keyword in word]
-        else:
-            result = None
+        if not keyword:
+            return None
 
-        if result is not None:
-            # logger.info("Filter result: %s" % result)
-            return result
-        # TODO: 有问题,会把ocr_full搞炸,本来不匹配的结果由于单字匹配愣是返回了区域,导致外层永远无法判断到底是否匹配
-        # 如果适用顺序拼接还是没有匹配到，那可能是竖排的，使用单个字节的keyword进行匹配
+        strings = [boxed_result.ocr_text for boxed_result in boxed_results]
+
+        # 1. 优先检查单个文本框是否包含完整 keyword
+        single_box_hits = [index for index, word in enumerate(strings) if keyword in word]
+        if single_box_hits:
+            return single_box_hits
+
+        # 2. 检查跨多个文本框的连续拼接命中（计算重叠字符范围，避免单字误报或返回空列表）
+        concatenated_string = "".join(strings)
+        if keyword in concatenated_string:
+            start_pos = concatenated_string.find(keyword)
+            end_pos = start_pos + len(keyword)
+            cur_pos = 0
+            hits = []
+            for index, word in enumerate(strings):
+                word_start = cur_pos
+                word_end = cur_pos + len(word)
+                cur_pos = word_end
+                if max(start_pos, word_start) < min(end_pos, word_end):
+                    hits.append(index)
+            if hits:
+                return hits
+
+        # 如果顺序拼接未匹配，检查是否为竖排文本（OCR 将每个字单独成框识别）
+        matched_chars_count = 0
         indices = []
-        # 对于keyword中的每一个字符，都要在strings中进行匹配
-        # 如果这个字符在strings中的某一个string中，那么就记录这个string的index
-        max_index = len(strings) - 1
-        for index, char in enumerate(keyword):
+        for char in keyword:
+            found = False
             for i, string in enumerate(strings):
-                if char not in string:
-                    continue
-                if i <= max_index:
+                if char in string:
                     indices.append(i)
+                    found = True
                     break
-        if indices:
-            # 剔除掉重复的index
-            indices = list(set(indices))
-            return indices
+            if found:
+                matched_chars_count += 1
+
+        # 仅当 keyword 中的全部/绝大部分字符都在文字框中被检出，才认定为竖排命中
+        # 杜绝仅凭命中单个汉字就误判为整个词语的重大安全隐患
+        min_required = len(keyword) if len(keyword) <= 3 else int(len(keyword) * 0.8)
+        if matched_chars_count >= min_required and indices:
+            # 保持原顺序并去重
+            unique_indices = []
+            for idx in indices:
+                if idx not in unique_indices:
+                    unique_indices.append(idx)
+            return unique_indices
         else:
             return None
+
 
     def detect_text(self, image) -> str:
         """

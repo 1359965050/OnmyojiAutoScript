@@ -332,14 +332,29 @@ class ScriptTask(KU, KekkaiActivationAssets):
 
     def harvest_card(self):
         """
-        收卡的经验
+        收卡的经验与已到期的结界卡
         :return:
         """
-        self.appear_then_click(self.I_A_HARVEST_EXP)  # 如果到最后没有领的话有下面的一些图片
-        self.appear_then_click(self.I_A_HARVEST_FISH4)  # 斗鱼4/5区别不大 斗鱼的如果一直没有领的话
-        self.appear_then_click(self.I_A_HARVEST_KAIKO_4)  # 太鼓4
-        self.appear_then_click(self.I_A_HARVEST_KAIKO_3)  # 太鼓3
-        self.appear_then_click(self.I_A_HARVEST_KAIKO_6)  # 太鼓6
-        self.appear_then_click(self.I_A_HARVEST_FISH_6)  # 斗鱼6
-        self.appear_then_click(self.I_A_HARVEST_MOON_3)  # 太阴3
-        self.appear_then_click(self.I_A_HARVEST_FISH_3)  # 斗鱼三
+        cards = [
+            self.I_A_HARVEST_EXP,  # 如果到最后没有领的话有下面的一些图片
+            self.I_A_HARVEST_FISH4,  # 斗鱼4/5区别不大 斗鱼的如果一直没有领的话
+            self.I_A_HARVEST_KAIKO_4,  # 太鼓4
+            self.I_A_HARVEST_KAIKO_3,  # 太鼓3
+            self.I_A_HARVEST_KAIKO_6,  # 太鼓6
+            self.I_A_HARVEST_FISH_6,  # 斗鱼6
+            self.I_A_HARVEST_MOON_3,  # 太阴3
+            self.I_A_HARVEST_FISH_3,  # 斗鱼三
+        ]
+        for retry in range(5):
+            self.screenshot()
+            clicked = False
+            for card in cards:
+                if self.appear_then_click(card, threshold=0.7):
+                    logger.info(f'Harvest card/exp clicked: {card.name}')
+                    clicked = True
+                    time.sleep(0.8)
+                    break
+            if clicked:
+                break
+            time.sleep(0.3)
+

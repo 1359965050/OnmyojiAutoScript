@@ -32,22 +32,51 @@ class Guild(Buy, GameUi, RichManAssets):
         self.goto_page(page_guild_store)
         logger.info('Enter guild store success')
         time.sleep(0.5)
-        swipe_cnt, max_swipe = 0, random.randint(3, 5)
-        mystery_ret, scrap_ret, skin_ret, gift_ret = False, False, False, False
-        while swipe_cnt <= max_swipe:
+
+        items = [
+            *([(self.I_GUILD_HONOR_GIFT, self._guild_honor_gift)] if con.honor_gift else []),
+            *([(self.I_GUILD_BLUE, self._guild_mystery_amulet)] if con.mystery_amulet else []),
+            *([(self.I_GUILD_SCRAP, self._guild_black_daruma_scrap)] if con.black_daruma_scrap else []),
+            *([(self.I_GUILD_SKIN, lambda: self._guild_skin_ticket(con.skin_ticket))] if con.skin_ticket else []),
+        ]
+
+        swipe_no_progress = 0
+        while items:
             self.screenshot()
-            if con.honor_gift and self.appear(self.I_GUILD_HONOR_GIFT, interval=1.5) and not gift_ret:  # 功勋礼包
-                gift_ret = self._guild_honor_gift()
-            if con.mystery_amulet and self.appear(self.I_GUILD_BLUE, interval=1.5) and not mystery_ret:  # 蓝票
-                mystery_ret = self._guild_mystery_amulet()
-            if con.black_daruma_scrap and self.appear(self.I_GUILD_SCRAP, interval=1.5) and not scrap_ret:  # 黑碎
-                scrap_ret = self._guild_black_daruma_scrap()
-            if con.skin_ticket and self.appear(self.I_GUILD_SKIN, interval=1.5) and not skin_ret:  # 皮肤券
-                skin_ret = self._guild_skin_ticket()
-            self.swipe(self.S_GUILD_STORE, interval=1.5)
-            time.sleep(2)
-            logger.attr(max_swipe - swipe_cnt, 'remain swipe times')
-            swipe_cnt += 1
+            bought_this_round = False
+            for item in list(items):
+                button, func = item
+                if not self.appear(button):
+                    continue
+                try:
+                    res = func()
+                    items.remove(item)
+                    if res:
+                        bought_this_round = True
+                        swipe_no_progress = 0
+                except Exception as e:
+                    logger.warning(f'Button {button.name} click failed: {e}')
+                break
+
+            if not items:
+                logger.info('All target items have been processed')
+                break
+
+            # 刚购买成功: 先等待界面稳定并重新识别, 视野内还有商品就继续买, 不要急着滑动
+            if bought_this_round:
+                time.sleep(1)
+                continue
+
+            # 连续多次滑动都没有买到东西, 防止无限滑动触发点击保护
+            swipe_no_progress += 1
+            if swipe_no_progress >= 8:
+                logger.warning(f'Swipe {swipe_no_progress} times without buying, stop guild store')
+                break
+
+            if self.swipe(self.S_GUILD_STORE, interval=1.5):
+                time.sleep(2)
+                continue
+
         # 回去
         self.goto_page(page_shirin)
 
@@ -59,7 +88,7 @@ class Guild(Buy, GameUi, RichManAssets):
             return False
         number = self.check_remain(self.I_GUILD_HONOR_GIFT)
         if number == 0:
-            logger.warning('No mystery amulet can buy')
+            logger.warning('No honor gift can buy')
             return False
         self.buy_more(self.I_GUILD_HONOR_GIFT)
         time.sleep(0.5)
@@ -108,7 +137,8 @@ class Guild(Buy, GameUi, RichManAssets):
             logger.warning('No skin ticket can buy')
             return False
         # 购买功勋商店皮肤券
-        self.buy_more(self.I_GUILD_SKIN, number)
+        buy_num = min(num, number) if num > 0 else number
+        self.buy_more(self.I_GUILD_SKIN, buy_num)
         time.sleep(0.5)
         return True
 
