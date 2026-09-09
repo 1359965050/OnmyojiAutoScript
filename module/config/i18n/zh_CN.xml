@@ -2271,7 +2271,8 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>serial_help</source>
             <translation>填 &quot;auto&quot; 自动检测模拟器，
-当多个模拟器正在运行或使用不支持自动检测的模拟器时无法使用 &quot;auto&quot;，必须手动填写
+当多个模拟器正在运行或使用不支持自动检测的模拟器时无法使用 &quot;auto&quot;，必须手动填写。
+支持直接填写端口号简写（如填写 16448 会自动默认补全为 127.0.0.1:16448）；像 emulator-5554 等完整设备名完整填写即可。
 
 模拟器默认 Serial:
 [MuMu模拟器]: 127.0.0.1:16384 或者 127.0.0.1:7555 
@@ -2283,12 +2284,12 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         </message>
         <message>
             <source>handle_help</source>
-            <translation>填 &quot;auto&quot; 自动检测模拟器
-当多个模拟器正在运行或使用不支持自动检测的模拟器时无法使用 &quot;auto&quot;，必须手动填写
+            <translation>填 &quot;auto&quot; 自动检测模拟器窗口
+当多个模拟器正在运行或使用不支持自动检测时无法使用 &quot;auto&quot;，必须手动填写
 
 句柄标题 Handle:
-[MuMu模拟器]: &quot;MuMu安卓设备&quot;
-[雷电模拟器](全系列通用): &quot;雷电模拟器&quot;</translation>
+[MuMu模拟器]: &quot;MuMu安卓设备&quot;（多开为 &quot;MuMu安卓设备-2&quot; 等）
+[Windows 桌面版]: &quot;阴阳师-网易游戏&quot; 或 &quot;Onmyoji&quot;</translation>
         </message>
         <message>
             <source>package_name</source>
@@ -2306,7 +2307,7 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <source>screenshot_method_help</source>
             <translation>一般情况下的速度: 
 nemu_ipc &gt; DroidCast_raw ≈ window_background &gt; ADB_nc &gt; DroidCast &gt; ADB ≈ uiautomator2
-nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模拟器的执行路径</translation>
+nemu_ipc 仅限 MuMu 模拟器（Android 12/15/5.0）且需要设置模拟器的执行路径</translation>
         </message>
         <message>
             <source>control_method</source>
@@ -2322,8 +2323,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>emulatorinfo_type_help</source>
-            <translation>选择你使用的模拟器类型
-            </translation>
+            <translation>选择运行环境类型：Windows 桌面版 或 MuMu 模拟器</translation>
         </message>
         <message>
             <source>emulatorinfo_name</source>
@@ -2347,7 +2347,7 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
         </message>
         <message>
             <source>adb_restart_help</source>
-            <translation/>
+            <translation>在无法连接设备且当前无任何在线设备时，尝试重启后台 ADB 服务（kill-server）。多开模拟器时建议关闭，避免误伤其他正在运行的模拟器连接。</translation>
         </message>
         <message>
             <source>handle_error</source>
@@ -2424,7 +2424,7 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         </message>
         <message>
             <source>client_path_help</source>
-            <translation>Windows 桌面版的安装路径</translation>
+            <translation>Windows 桌面版的安装路径（如 onmyoji.exe）。支持在其他窗口下方后台运行；若误缩小到任务栏，系统将自动还原至底层以恢复后台控制。</translation>
         </message>
         <message>
             <source>WindowsClient</source>
@@ -2440,7 +2440,7 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         </message>
         <message>
             <source>com.netease.onmyoji.wyzymnqsd_cps</source>
-            <translation>网易官方扫码版</translation>
+            <translation>官方可扫码版</translation>
         </message>
         <message>
             <source>ALL</source>
@@ -5801,15 +5801,15 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         </message>
         <message>
             <source>MuMuPlayer</source>
-            <translation>MuMuPlayer</translation>
+            <translation>MuMu模拟器</translation>
         </message>
         <message>
             <source>MuMuPlayer12</source>
-            <translation>MuMuPlayer12</translation>
+            <translation>MuMu模拟器</translation>
         </message>
         <message>
             <source>MuMuPlayerX</source>
-            <translation>MuMuPlayerX</translation>
+            <translation>MuMu模拟器</translation>
         </message>
         <message>
             <source>N</source>
@@ -6296,6 +6296,22 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>是否蹭卡</translation>
         </message>
         <message>
+            <source>lazy_mode</source>
+            <translation>怠惰模式</translation>
+        </message>
+        <message>
+            <source>lazy_mode_help</source>
+            <translation>开启后每次任务按权重随机进入怠惰模式；命中时不比较奖励数值，优先选择当前可见的五星及以上目标卡，否则选择首个符合策略的四星卡。</translation>
+        </message>
+        <message>
+            <source>lazy_mode_weight</source>
+            <translation>怠惰模式权重</translation>
+        </message>
+        <message>
+            <source>lazy_mode_weight_help</source>
+            <translation>取值范围0-1，默认1；0表示永不触发，1表示每次触发。</translation>
+        </message>
+        <message>
             <source>window_background</source>
             <translation>window_background</translation>
         </message>
@@ -6318,6 +6334,262 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>random_sleep_help</source>
             <translation>设置随机休眠间隔，降低连续运行风险</translation>
+        </message>
+        <message>
+            <source>enable_switch_pass</source>
+            <translation>切换门票爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_pass_help</source>
+            <translation>是否切换门票爬塔御魂</translation>
+        </message>
+        <message>
+            <source>pass_group_team</source>
+            <translation>门票爬塔御魂分组</translation>
+        </message>
+        <message>
+            <source>pass_group_team_help</source>
+            <translation>组1-7,队伍1-4 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_pass_by_name</source>
+            <translation>通过OCR切换门票爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_pass_by_name_help</source>
+            <translation>是否通过OCR切换御魂</translation>
+        </message>
+        <message>
+            <source>pass_group_team_name</source>
+            <translation>门票爬塔御魂分组名、队伍名</translation>
+        </message>
+        <message>
+            <source>pass_group_team_name_help</source>
+            <translation>组名,队伍名 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap</source>
+            <translation>切换体力爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap_help</source>
+            <translation>是否切换体力爬塔御魂</translation>
+        </message>
+        <message>
+            <source>ap_group_team</source>
+            <translation>体力爬塔御魂分组</translation>
+        </message>
+        <message>
+            <source>ap_group_team_help</source>
+            <translation>组1-7,队伍1-4 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap_by_name</source>
+            <translation>通过OCR切换体力爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap_by_name_help</source>
+            <translation>是否通过OCR切换御魂</translation>
+        </message>
+        <message>
+            <source>ap_group_team_name</source>
+            <translation>体力爬塔御魂分组名、队伍名</translation>
+        </message>
+        <message>
+            <source>ap_group_team_name_help</source>
+            <translation>组名,队伍名 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_boss</source>
+            <translation>切换Boss爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_boss_help</source>
+            <translation>是否切换boss爬塔御魂</translation>
+        </message>
+        <message>
+            <source>boss_group_team</source>
+            <translation>Boss爬塔御魂分组</translation>
+        </message>
+        <message>
+            <source>boss_group_team_help</source>
+            <translation>组1-7,队伍1-4 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_boss_by_name</source>
+            <translation>通过OCR切换Boss爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_boss_by_name_help</source>
+            <translation>是否通过OCR切换御魂</translation>
+        </message>
+        <message>
+            <source>boss_group_team_name</source>
+            <translation>Boss爬塔御魂分组名、队伍名</translation>
+        </message>
+        <message>
+            <source>boss_group_team_name_help</source>
+            <translation>组名,队伍名 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap100</source>
+            <translation>切换100体爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap100_help</source>
+            <translation>是否切换100体爬塔御魂</translation>
+        </message>
+        <message>
+            <source>ap100_group_team</source>
+            <translation>100体爬塔御魂分组</translation>
+        </message>
+        <message>
+            <source>ap100_group_team_help</source>
+            <translation>组1-7,队伍1-4 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap100_by_name</source>
+            <translation>通过OCR切换100体爬塔御魂</translation>
+        </message>
+        <message>
+            <source>enable_switch_ap100_by_name_help</source>
+            <translation>是否通过OCR切换御魂</translation>
+        </message>
+        <message>
+            <source>ap100_group_team_name</source>
+            <translation>100体爬塔御魂分组名、队伍名</translation>
+        </message>
+        <message>
+            <source>ap100_group_team_name_help</source>
+            <translation>组名,队伍名 中间用英文,分隔</translation>
+        </message>
+        <message>
+            <source>enable_pass_preset</source>
+            <translation>切换门票爬塔预设</translation>
+        </message>
+        <message>
+            <source>enable_pass_preset_help</source>
+            <translation>是否切换门票爬塔预设, 仅数字切换御魂可用</translation>
+        </message>
+        <message>
+            <source>enable_pass_green</source>
+            <translation>开启门票爬塔绿标</translation>
+        </message>
+        <message>
+            <source>enable_pass_green_help</source>
+            <translation>是否开启门票爬塔绿标</translation>
+        </message>
+        <message>
+            <source>pass_green_mark</source>
+            <translation>门票爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>pass_green_mark_help</source>
+            <translation>门票爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>enable_pass_anti_detect</source>
+            <translation>门票爬塔防检测</translation>
+        </message>
+        <message>
+            <source>enable_pass_anti_detect_help</source>
+            <translation>门票爬塔战斗过程是否随机点击或滑动</translation>
+        </message>
+        <message>
+            <source>enable_ap_preset</source>
+            <translation>切换体力爬塔预设</translation>
+        </message>
+        <message>
+            <source>enable_ap_preset_help</source>
+            <translation>是否切换体力爬塔预设, 仅数字切换御魂可用</translation>
+        </message>
+        <message>
+            <source>enable_ap_green</source>
+            <translation>开启体力爬塔绿标</translation>
+        </message>
+        <message>
+            <source>enable_ap_green_help</source>
+            <translation>是否开启体力爬塔绿标</translation>
+        </message>
+        <message>
+            <source>ap_green_mark</source>
+            <translation>体力爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>ap_green_mark_help</source>
+            <translation>体力爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>enable_ap_anti_detect</source>
+            <translation>体力爬塔防检测</translation>
+        </message>
+        <message>
+            <source>enable_ap_anti_detect_help</source>
+            <translation>体力爬塔战斗过程是否随机点击或滑动</translation>
+        </message>
+        <message>
+            <source>enable_boss_preset</source>
+            <translation>切换Boss爬塔预设</translation>
+        </message>
+        <message>
+            <source>enable_boss_preset_help</source>
+            <translation>是否切换boss爬塔预设, 仅数字切换御魂可用</translation>
+        </message>
+        <message>
+            <source>enable_boss_green</source>
+            <translation>开启Boss爬塔绿标</translation>
+        </message>
+        <message>
+            <source>enable_boss_green_help</source>
+            <translation>是否开启boss爬塔绿标</translation>
+        </message>
+        <message>
+            <source>boss_green_mark</source>
+            <translation>Boss爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>boss_green_mark_help</source>
+            <translation>boss爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>enable_boss_anti_detect</source>
+            <translation>Boss爬塔防检测</translation>
+        </message>
+        <message>
+            <source>enable_boss_anti_detect_help</source>
+            <translation>boss爬塔战斗过程是否随机点击或滑动</translation>
+        </message>
+        <message>
+            <source>enable_ap100_preset</source>
+            <translation>切换100体爬塔预设</translation>
+        </message>
+        <message>
+            <source>enable_ap100_preset_help</source>
+            <translation>是否切换100体爬塔预设, 仅数字切换御魂可用</translation>
+        </message>
+        <message>
+            <source>enable_ap100_green</source>
+            <translation>开启100体爬塔绿标</translation>
+        </message>
+        <message>
+            <source>enable_ap100_green_help</source>
+            <translation>是否开启100体爬塔绿标</translation>
+        </message>
+        <message>
+            <source>ap100_green_mark</source>
+            <translation>100体爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>ap100_green_mark_help</source>
+            <translation>100体爬塔绿标位置</translation>
+        </message>
+        <message>
+            <source>enable_ap100_anti_detect</source>
+            <translation>100体爬塔防检测</translation>
+        </message>
+        <message>
+            <source>enable_ap100_anti_detect_help</source>
+            <translation>100体爬塔战斗过程是否随机点击或滑动</translation>
         </message>
     </context>
 </TS>

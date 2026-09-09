@@ -166,7 +166,8 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets):
                     if firvel is None or firvel == '':
                         logger.info('ocr result is Null')
                         continue
-                    if firvel != '古':
+                    if (firvel != '古') and (firvel != '+0'):
+                        # 避免 OCR 把 +0 识别成 古 时误退，同时支持准确识别 +0
                         logger.info('No zero level, bongna done')
                         break
 

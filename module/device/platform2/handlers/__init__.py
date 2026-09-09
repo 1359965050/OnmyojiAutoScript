@@ -1,18 +1,12 @@
 import typing as t
 
 from module.device.platform2.handlers.base import EmulatorHandler
-from module.device.platform2.handlers.nox import NoxHandler
-from module.device.platform2.handlers.bluestacks import BlueStacksHandler
-from module.device.platform2.handlers.ldplayer import LDPlayerHandler
 from module.device.platform2.handlers.mumu12 import MuMu12Handler
-from module.device.platform2.handlers.memu import MEmuHandler
+from module.device.platform2.handlers.mumu import MuMuHandler
 
 _ALL_HANDLERS: list[EmulatorHandler] = [
-    NoxHandler(),
-    BlueStacksHandler(),
-    LDPlayerHandler(),
     MuMu12Handler(),
-    MEmuHandler(),
+    MuMuHandler(),
 ]
 
 _HANDLER_MAP: dict[str, EmulatorHandler] = {}

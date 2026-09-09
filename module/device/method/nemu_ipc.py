@@ -2,6 +2,7 @@ import asyncio
 import ctypes
 import os
 import random
+import re
 import sys
 from functools import partial, wraps
 from pathlib import Path
@@ -452,11 +453,51 @@ def serial_to_id(serial: str):
 
 
 class NemuIpc():
+    _display_id_checked = False
+
+    def detect_display_id(self, package_name: str | None = None) -> int:
+        """
+        Detect virtual display ID where target package is running in MuMu Player.
+        Returns 0 as default if keep-alive is disabled, not running, or detection fails.
+        """
+        pkg = package_name or getattr(self, 'package_name', '')
+        if not pkg and hasattr(self, 'config'):
+            pkg = getattr(self.config.script.device, 'package_name', '')
+        if not pkg or not hasattr(self, 'adb_shell'):
+            return 0
+
+        try:
+            out = self.adb_shell(['dumpsys', 'activity', 'activities'])
+            for m in re.finditer(r'Display #(\d+).*?(?=Display #|\Z)', out, re.DOTALL):
+                disp_id = int(m.group(1))
+                chunk = m.group(0)
+                if pkg in chunk:
+                    if disp_id != 0:
+                        logger.info(f'Detected MuMu keep-alive/multi-display: package {pkg} on Display {disp_id}')
+                    return disp_id
+        except Exception as e:
+            logger.debug(f'detect_display_id failed: {e}')
+
+        return 0
+
+    def sync_display_id(self) -> int:
+        """
+        Synchronize display_id onto existing nemu_ipc instance if connected.
+        """
+        if not has_cached_property(self, 'nemu_ipc'):
+            return 0
+        target_display = self.detect_display_id()
+        if self.nemu_ipc.display_id != target_display:
+            logger.info(f'Switching nemu_ipc display_id from {self.nemu_ipc.display_id} to {target_display}')
+            self.nemu_ipc.display_id = target_display
+        return self.nemu_ipc.display_id
+
     @cached_property
     def nemu_ipc(self) -> NemuIpcImpl:
         """
         Initialize a nemu ipc implementation
         """
+        display_id = self.detect_display_id()
         # Try existing settings first
         if self.config.script.device.emulatorinfo_path:
             folder = str(Path(self.config.script.device.emulatorinfo_path).parent.parent)
@@ -466,7 +507,7 @@ class NemuIpc():
                     return NemuIpcImpl(
                         nemu_folder=folder,
                         instance_id=index,
-                        display_id=0
+                        display_id=display_id
                     ).__enter__()
                 except (NemuIpcIncompatible, NemuIpcError) as e:
                     logger.error(e)
@@ -482,7 +523,7 @@ class NemuIpc():
             return NemuIpcImpl(
                 nemu_folder=self.emulator_instance.emulator.abspath('../'),
                 instance_id=self.emulator_instance.MuMuPlayer12_id,
-                display_id=0
+                display_id=display_id
             ).__enter__()
         except (NemuIpcIncompatible, NemuIpcError) as e:
             logger.error(e)
@@ -501,12 +542,17 @@ class NemuIpc():
         return True
 
     def nemu_ipc_release(self):
+        self._display_id_checked = False
         if has_cached_property(self, 'nemu_ipc'):
             self.nemu_ipc.disconnect()
         del_cached_property(self, 'nemu_ipc')
         logger.info('nemu_ipc released')
 
     def screenshot_nemu_ipc(self):
+        if not self._display_id_checked:
+            self.sync_display_id()
+            self._display_id_checked = True
+
         image = self.nemu_ipc.screenshot()
 
         image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)

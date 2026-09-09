@@ -82,13 +82,19 @@ class ConnectionAttr:
         if self.is_windows_client:
             self.serial = 'windows-0'
             return
-        if '：' in self.serial:
-            old_serial = self.serial
-            self.serial = self.serial.replace('：', ':')
-            logger.warning(f'Serial {old_serial} 包含中文冒号，已自动更正为 {self.serial}')
+        old_serial = self.serial
+        s = str(self.serial).strip().replace('：', ':')
+        if s.isdigit():
+            s = f'127.0.0.1:{s}'
+        elif s.startswith(':') and s[1:].isdigit():
+            s = f'127.0.0.1{s}'
+        elif s.lower().startswith('localhost:'):
+            s = f'127.0.0.1:{s[10:]}'
+
+        if s != old_serial:
+            self.serial = s
+            logger.info(f'Serial {old_serial} 已自动标准化为 {self.serial}')
             self.config.script.device.serial = self.serial
-        if self.is_bluestacks5_hyperv:
-            self.serial = self.find_bluestacks5_hyperv(self.serial)
         if "127.0.0.1:58526" in self.serial:
             logger.warning('Serial 127.0.0.1:58526 seems to be WSA, '
                            'please use "wsa-0" or others instead')
@@ -133,14 +139,6 @@ class ConnectionAttr:
         return False
 
     @cached_property
-    def is_bluestacks5_hyperv(self):
-        return "bluestacks5-hyperv" in self.serial
-
-    @cached_property
-    def is_bluestacks_hyperv(self):
-        return self.is_bluestacks5_hyperv
-
-    @cached_property
     def is_wsa(self):
         return bool(re.match(r'^wsa', self.serial))
 
@@ -165,52 +163,6 @@ class ConnectionAttr:
         # Phone cloud with public ADB connection
         # Serial like xxx.xxx.xxx.xxx:301
         return bool(re.search(r":30[0-9]$", self.serial))
-
-
-    @staticmethod
-    def find_bluestacks5_hyperv(serial):
-        """
-        Find dynamic serial of BlueStacks5 Hyper-V.
-
-        Args:
-            serial (str): 'bluestacks5-hyperv', 'bluestacks5-hyperv-1' for multi instance, and so on.
-
-        Returns:
-            str: 127.0.0.1:{port}
-        """
-        from winreg import HKEY_LOCAL_MACHINE, OpenKey, QueryValueEx
-
-        logger.info("Use BlueStacks5 Hyper-V")
-        logger.info("Reading Realtime adb port")
-
-        if serial == "bluestacks5-hyperv":
-            parameter_name = r"bst\.instance\.(Nougat64|Pie64)\.status\.adb_port"
-        else:
-            parameter_name = rf"bst\.instance\.(Nougat64|Pie64)_{serial[19:]}\.status.adb_port"
-
-        try:
-            with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt") as key:
-                directory = QueryValueEx(key, 'UserDefinedDir')[0]
-        except FileNotFoundError:
-            try:
-                with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt_cn") as key:
-                    directory = QueryValueEx(key, 'UserDefinedDir')[0]
-            except FileNotFoundError:
-                logger.error('Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt '
-                             'or HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt_cn')
-                logger.error('Please confirm that you are using BlueStacks 5 hyper-v and not regular BlueStacks 5')
-                raise RequestHumanTakeover
-        logger.info(f"Configuration file directory: {directory}")
-
-        with open(os.path.join(directory, 'bluestacks.conf'), encoding='utf-8') as f:
-            content = f.read()
-        port = re.search(rf'{parameter_name}="(\d+)"', content)
-        if port is None:
-            logger.warning(f"Did not match the result: {serial}.")
-            raise RequestHumanTakeover
-        port = port.group(2)
-        logger.info(f"Match to dynamic port: {port}")
-        return f"127.0.0.1:{port}"
 
     @cached_property
     def adb_binary(self):

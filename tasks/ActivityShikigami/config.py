@@ -109,25 +109,25 @@ def check_soul_by_ocr(enable_switch: bool, group_team: str, label: str):
 
 
 class SwitchSoulConfig(BaseModel):
-    enable_switch_pass: bool = Field(default=False)
+    enable_switch_pass: bool = Field(default=False, description='enable_switch_pass_help')
     pass_group_team: str = Field(default='-1,-1', description='pass_group_team_help')
-    enable_switch_pass_by_name: bool = Field(default=False)
-    pass_group_team_name: str = Field(default='')
+    enable_switch_pass_by_name: bool = Field(default=False, description='enable_switch_pass_by_name_help')
+    pass_group_team_name: str = Field(default='', description='pass_group_team_name_help')
 
-    enable_switch_ap: bool = Field(default=False)
-    ap_group_team: str = Field(default='-1,-1')
-    enable_switch_ap_by_name: bool = Field(default=False)
-    ap_group_team_name: str = Field(default='')
+    enable_switch_ap: bool = Field(default=False, description='enable_switch_ap_help')
+    ap_group_team: str = Field(default='-1,-1', description='ap_group_team_help')
+    enable_switch_ap_by_name: bool = Field(default=False, description='enable_switch_ap_by_name_help')
+    ap_group_team_name: str = Field(default='', description='ap_group_team_name_help')
 
-    enable_switch_boss: bool = Field(default=False)
-    boss_group_team: str = Field(default='-1,-1')
-    enable_switch_boss_by_name: bool = Field(default=False)
-    boss_group_team_name: str = Field(default='')
+    enable_switch_boss: bool = Field(default=False, description='enable_switch_boss_help')
+    boss_group_team: str = Field(default='-1,-1', description='boss_group_team_help')
+    enable_switch_boss_by_name: bool = Field(default=False, description='enable_switch_boss_by_name_help')
+    boss_group_team_name: str = Field(default='', description='boss_group_team_name_help')
 
-    enable_switch_ap100: bool = Field(default=False)
-    ap100_group_team: str = Field(default='-1,-1')
-    enable_switch_ap100_by_name: bool = Field(default=False)
-    ap100_group_team_name: str = Field(default='')
+    enable_switch_ap100: bool = Field(default=False, description='enable_switch_ap100_help')
+    ap100_group_team: str = Field(default='-1,-1', description='ap100_group_team_help')
+    enable_switch_ap100_by_name: bool = Field(default=False, description='enable_switch_ap100_by_name_help')
+    ap100_group_team_name: str = Field(default='', description='ap100_group_team_name_help')
 
     # @model_validator(mode='after')
     def validate_switch_soul(self):

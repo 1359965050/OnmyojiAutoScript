@@ -118,30 +118,9 @@ class EmulatorInstanceBase:
             return self.instance_id
         return None
 
-    @cached_property
-    def LDPlayer_id(self):
-        """
-        兼容属性：LDPlayer 实例 ID。
-        Returns:
-            int: Instance ID, or None if this is not a LDPlayer instance
-        """
-        if self.type == 'LDPlayer9':
-            return self.instance_id
-        return None
-
-
 class EmulatorBase:
-    # Values here must match those in argument.yaml EmulatorInfo.Emulator.option
-    NoxPlayer64 = 'NoxPlayer64'
-    NoxPlayerFamily = [NoxPlayer64]
-    BlueStacks5 = 'BlueStacks5'
-    BlueStacks5HyperV = 'BlueStacks5HyperV'
-    BlueStacksFamily = [BlueStacks5]
-    LDPlayer9 = 'LDPlayer9'
-    LDPlayerFamily = [LDPlayer9]
     MuMuPlayer12 = 'MuMuPlayer12'
     MuMuPlayerFamily = [MuMuPlayer12]
-    MEmuPlayer = 'MEmuPlayer'
 
     @classmethod
     def path_to_type(cls, path: str) -> str:

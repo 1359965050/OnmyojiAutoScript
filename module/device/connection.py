@@ -847,34 +847,6 @@ class Connection(ConnectionAttr):
                 logger.critical('检测到多个可用设备，自动检测无法判断应连接哪一台。请从上方列出的设备中复制一个序列号填入 [设置 -> 模拟器设置 -> 模拟器 Serial]。')
                 raise RequestHumanTakeover
 
-        # Handle LDPlayer
-        # LDPlayer serial jumps between `127.0.0.1:5555+{X}` and `emulator-5554+{X}`
-        port_serial, emu_serial = get_serial_pair(self.serial)
-        if port_serial and emu_serial:
-            # Might be LDPlayer, check connected devices
-            port_device = devices.select(serial=port_serial).first_or_none()
-            emu_device = devices.select(serial=emu_serial).first_or_none()
-            if port_device and emu_device:
-                # Paired devices found, check status to get the correct one
-                if port_device.status == 'device' and emu_device.status == 'offline':
-                    self.serial = port_serial
-                    logger.info(f'LDPlayer device pair found: {port_device}, {emu_device}. '
-                                f'Using serial: {self.serial}')
-                elif port_device.status == 'offline' and emu_device.status == 'device':
-                    self.serial = emu_serial
-                    logger.info(f'LDPlayer device pair found: {port_device}, {emu_device}. '
-                                f'Using serial: {self.serial}')
-            elif not devices.select(serial=self.serial):
-                # Current serial not found
-                if port_device and not emu_device:
-                    logger.info(f'Current serial {self.serial} not found but paired device {port_serial} found. '
-                                f'Using serial: {port_serial}')
-                    self.serial = port_serial
-                if not port_device and emu_device:
-                    logger.info(f'Current serial {self.serial} not found but paired device {emu_serial} found. '
-                                f'Using serial: {emu_serial}')
-                    self.serial = emu_serial
-
     @retry
     def list_package(self, show_log=True):
         """

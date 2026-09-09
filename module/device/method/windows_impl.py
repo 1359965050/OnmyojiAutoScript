@@ -12,20 +12,20 @@ from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
                       SetForegroundWindow, IsWindowVisible, GetDC, ReleaseDC, GetParent,
                       EnumChildWindows, ClientToScreen, ScreenToClient, WindowFromPoint, GetAncestor,
-                      ShowWindow, IsIconic)
+                      ShowWindow, IsIconic, SetWindowPos, GetForegroundWindow)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
                       WM_PARENTNOTIFY, WM_MOUSEACTIVATE, WM_MOUSEWHEEL,
                       WM_SETFOCUS, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, GA_ROOT,
-                      SW_RESTORE, SW_SHOW)
+                      SW_RESTORE, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, HWND_BOTTOM)
 from win32ui import CreateDCFromHandle, CreateBitmap
 from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage, SetCursorPos, mouse_event
 
 
 from module.base.cBezier import BezierTrajectory
 from module.exception import RequestHumanTakeover, ScriptError
-from module.base.decorator import Config
+from module.base.decorator import Config, del_cached_property
 from module.base.timer import timer
 from module.logger import logger
 from module.device.handle import Handle, window_scale_rate, EmulatorFamily
@@ -54,11 +54,17 @@ class Window(Handle):
             if not handle or not IsWindow(handle):
                 raise ScriptError(f"Cannot capture screen: window handle {handle} is invalid")
 
+        # 检查是否处于最小化（缩小到任务栏）
+        if IsIconic(handle):
+            self.ensure_window_restored(handle)
+
         widthScreen, heightScreen = self.screenshot_size
         # 窗口尺寸异常/最小化检测与保护
         if widthScreen <= 0 or heightScreen <= 0:
             logger.warning(f"Window size invalid ({widthScreen}x{heightScreen}), window may be minimized. Attempting refresh...")
-            if hasattr(self, 'init_handle'):
+            if IsIconic(handle):
+                self.ensure_window_restored(handle)
+            elif hasattr(self, 'init_handle'):
                 self.init_handle()
             widthScreen, heightScreen = self.screenshot_size
             if widthScreen <= 0 or heightScreen <= 0:
@@ -138,26 +144,10 @@ class Window(Handle):
             return result
         elif self.emulator_family == EmulatorFamily.FAMILY_MUMU:
             result.append(self.root_node.num)
-            result.append(self.root_node.children[0].num)
+            if getattr(self.root_node, 'children', None):
+                result.append(self.root_node.children[0].num)
             return result
-        elif self.emulator_family == EmulatorFamily.FAMILY_NOX:
-            result.append(self.root_node.num)
-            try:
-                result.append(self.root_node.children[1].num)
-                result.append(self.root_node.children[1].children[1].num)
-                result.append(self.root_node.children[1].children[1].children[0].num)
-            except:
-                result.append(self.root_node.children[2].num)
-                result.append(self.root_node.children[2].children[1].num)
-                result.append(self.root_node.children[2].children[1].children[0].num)
-            return result
-        elif self.emulator_family == EmulatorFamily.FAMILY_LD:
-            result.append(self.root_node.children[0].num)
-            return result
-        elif self.emulator_family == EmulatorFamily.FAMILY_MEMU:
-            pass
-        elif self.emulator_family == EmulatorFamily.FAMILY_BLUESTACKS:
-            pass
+        return result
 
     @cached_property
     def mumu_head_height(self):
@@ -165,11 +155,16 @@ class Window(Handle):
         不同mumu模拟器的头部高度不同
         :return:
         """
+        if not getattr(self, 'control_handle_list', None):
+            return 0
         father_win_Rect = GetWindowRect(self.control_handle_list[0])
         father_height: int = father_win_Rect[3] - father_win_Rect[1]  # 下y - 上y 计算高度
-        children_win_Rect = GetWindowRect(self.control_handle_list[1])
-        children_height: int = children_win_Rect[3] - children_win_Rect[1]  # 下y - 上y 计算高度
-        height = father_height - children_height
+        if len(self.control_handle_list) > 1:
+            children_win_Rect = GetWindowRect(self.control_handle_list[1])
+            children_height: int = children_win_Rect[3] - children_win_Rect[1]  # 下y - 上y 计算高度
+            height = father_height - children_height
+        else:
+            height = 0
         if int(height * self.window_scale_rate) == 37:
             # 说明是mumu模拟器 不做处理
             pass
@@ -178,6 +173,40 @@ class Window(Handle):
             pass
         logger.info(f"Mumu emulator head height: {height}")
         return height
+
+    def ensure_window_restored(self, hwnd: int = None) -> bool:
+        """
+        检查窗口是否处于最小化状态（缩小到任务栏）。
+        若处于最小化状态，DirectX 渲染管线与 Win32 客户区消息路由会被操作系统挂起，
+        此时必须恢复窗口才能继续进行后台截图与控制。
+        自动执行 SW_RESTORE 唤醒窗口，并将游戏窗口放置在其他活动窗口底层（HWND_BOTTOM），
+        避免抢占用户当前工作焦点。
+        """
+        hwnd = hwnd or getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            return False
+
+        if not IsIconic(hwnd):
+            return True
+
+        logger.warning(f"Window [{hwnd}] is minimized (缩小到任务栏). Auto-restoring window to resume background rendering and input...")
+        try:
+            fg_hwnd = GetForegroundWindow()
+            ShowWindow(hwnd, SW_RESTORE)
+            time.sleep(0.08)
+
+            if fg_hwnd and fg_hwnd != hwnd and IsWindow(fg_hwnd):
+                try:
+                    SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+                    SetForegroundWindow(fg_hwnd)
+                except Exception:
+                    pass
+
+            del_cached_property(self, 'screenshot_size')
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to restore minimized window {hwnd}: {e}")
+            return False
 
     def bring_to_front(self) -> bool:
         """
@@ -282,6 +311,9 @@ class Window(Handle):
                     self.init_handle()
                 hwnd = self.control_handle_list[0] if self.control_handle_list else 0
 
+            if IsIconic(hwnd):
+                self.ensure_window_restored(hwnd)
+
             size = self.screenshot_size
             cw, ch = size if size else (1280, 720)
             target_x = int(round(x * (cw / 1280.0))) if (cw != 1280 and cw > 0) else int(round(x))
@@ -341,6 +373,9 @@ class Window(Handle):
                 if hasattr(self, 'init_handle'):
                     self.init_handle()
                 hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+
+            if IsIconic(hwnd):
+                self.ensure_window_restored(hwnd)
 
             size = self.screenshot_size
             cw, ch = size if size else (1280, 720)
@@ -409,6 +444,8 @@ class Window(Handle):
         handleNum = None
         if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
             handleNum = self.control_handle_list[0]
+            if IsIconic(handleNum):
+                self.ensure_window_restored(handleNum)
             size = self.screenshot_size
             cw, ch = size if size else (1280, 720)
             if cw != 1280 or ch != 720:
@@ -477,7 +514,11 @@ class Window(Handle):
 
         # 使用生成的点列表进行拖拽
         emulator_type = len(self.control_handle_list)
-        if emulator_type == 1:  # 雷电模拟器
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            handleNum = self.control_handle_list[0]
+            if IsIconic(handleNum):
+                self.ensure_window_restored(handleNum)
+        elif emulator_type == 1:  # 雷电模拟器
             handleNum = self.control_handle_list[0]
         elif emulator_type == 2:  # mumu模拟器
             handleNum = self.control_handle_list[1]

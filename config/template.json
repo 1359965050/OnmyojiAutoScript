@@ -9,7 +9,7 @@
       "screenshot_method": "auto",
       "control_method": "minitouch",
       "adb_restart": false,
-      "emulatorinfo_type": "auto",
+      "emulatorinfo_type": "MuMuPlayer12",
       "emulatorinfo_name": "",
       "emulatorinfo_path": "",
       "client_path": "",

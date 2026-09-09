@@ -16,7 +16,7 @@ from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetClientRect, SetWindowPos,
                       GetWindowDC, DeleteObject,
                       SetForegroundWindow, IsWindowVisible, GetDC, GetParent,
-                      EnumChildWindows)
+                      EnumChildWindows, IsIconic)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
@@ -112,10 +112,6 @@ class WindowNode(NodeMixin):
 
 class EmulatorFamily(Enum):
     FAMILY_MUMU = 10  # mumu模拟器
-    FAMILY_NOX = 20  # 夜神模拟器
-    FAMILY_LD = 30  # 雷电模拟器
-    FAMILY_MEMU = 40  # 逍遥模拟器
-    FAMILY_BLUESTACKS = 50  # 蓝叠模拟器
     FAMILY_OTHER = 60  # 其他模拟器 待定
     FAMILY_WINDOWS_CLIENT = 70  # 阴阳师桌面版
 
@@ -126,61 +122,20 @@ class EmulatorFamily(Enum):
 模拟器的窗口名字
 ----MuMuPlayer      (!如果是mumu12是MuMuPlayer, 否则是NemuPlayer)
 --------nemudisplay
-
-<雷电模拟器系列>
-雷电模拟器的窗口名字
-----TheRender
---------sub
-
-<夜神模拟器系列>  =====> 这个模拟器窗口很复杂，而且有的时候还会变化
-夜神模拟器的窗口名字
-----Nox
-----Nox
---------toolbar_nox
---------Nox
-------------Nox
-----------------sub
----Nox
---------Nox
---------Nox    ==> 妈的太多了自己用spy++看吧
-
-<蓝叠模拟器>
-蓝叠模拟器的窗口名字
-----HD-Player
---------_ctl.W
 """""
 # **********************************************************************************************************************
 
 class Handle:
     emulator_list = ['MuMu12',
                      'MuMu',
-                     '雷电',
-                     '夜神',
-                     '蓝叠',
-                     '逍遥',
                      '阴阳师',
                      'Onmyoji',
-                     '模拟器']  # 最后一个我又不知道还有哪些模拟器
+                     '模拟器']
     emulator_handle = {
-        # 夜神
-        'nox_player': ['root_handle_title', 'Nox'],
-        'nox_player_64': ['root_handle_title', 'Nox'],
-        'nox_player_family': ['root_handle_title', 'Nox'],
-        # 雷电
-        'ld_player': ['TheRender'],
-        'ld_player_4': ['TheRender'],
-        'ld_player_9': ['TheRender'],
-        'ld_player_family': ['TheRender'],
-        # 逍遥
-        'memu_player': ['root_handle_title'],
-        'memu_player_family': ['root_handle_title'],
         # mumu
         'mumu_player': ['root_handle_title', 'NemuPlayer'],
         'mumu_player_12': ['root_handle_title', 'MuMuPlayer'],
         'mumu_player_family': ['root_handle_title', 'MuMuPlayer'],
-        # 蓝叠
-        'bluestacks_5': ['root_handle_title'],
-        'bluestacks_family': ['root_handle_title']
     }
     config: Config = None
 
@@ -227,7 +182,10 @@ class Handle:
         if self.root_handle == "auto":
             logger.info('Handle is auto. oas will find window emulator')
             window_list = Handle.all_windows()
-            self.root_handle_title = self.auto_handle_title(window_list, is_windows_client=is_win_client)
+            serial = getattr(self, 'serial', None)
+            if not serial and hasattr(self, 'config') and hasattr(self.config, 'script'):
+                serial = getattr(self.config.script.device, 'serial', None)
+            self.root_handle_title = self.auto_handle_title(window_list, is_windows_client=is_win_client, serial=serial)
             if self.root_handle_title:
                 self.root_handle_num = handle_title2num(self.root_handle_title)
             else:
@@ -294,19 +252,23 @@ class Handle:
         return windows
 
     @classmethod
-    def auto_handle_title(cls, windows: list, is_windows_client: bool = False) -> str:
+    def auto_handle_title(cls, windows: list, is_windows_client: bool = False, serial: str = None) -> str:
         """
         返回第一个找到的有模拟器的标题
         :param windows:
         :param is_windows_client: 是否为 Windows 桌面版渠道
+        :param serial: 设备串口号或连接地址（如 127.0.0.1:16448）
         :return:
         """
         if windows is None:
             logger.error("handle_auto not get all wnidow")
+            return None
 
-        # 优先检测阴阳师桌面版窗口
+        # 优先检测阴阳师桌面版窗口（忽略 IDE 或编辑器窗口）
         for window_title in windows:
             if '阴阳师' in window_title or 'Onmyoji' in window_title:
+                if any(ide in window_title.lower() for ide in ['ide', 'antigravity', 'visual studio', 'code', 'pycharm', 'cursor']):
+                    continue
                 logger.info(f'Found Onmyoji Windows client title: {window_title}')
                 return window_title
 
@@ -314,33 +276,85 @@ class Handle:
             logger.info('Onmyoji PC client window is not present yet.')
             return None
 
+        # 排除内部子窗口、渲染表面，避免被误选为根窗口
+        exclude_internal = {'MuMuNxDevice', 'nemudisplay', 'TheRender', 'sub', 'toolbar_nox', 'HD-Player'}
+
+        # 尝试根据 serial 推导多开实例索引
+        target_index = None
+        if serial:
+            s = str(serial).strip().lower()
+            s = s.replace('：', ':')
+            if s.isdigit():
+                s = f'127.0.0.1:{s}'
+            elif s.startswith(':') and s[1:].isdigit():
+                s = f'127.0.0.1{s}'
+            m_port = re.search(r':(\d+)$', s)
+            if m_port:
+                port = int(m_port.group(1))
+                # MuMu 12 / 5.0 端口规律: 基础 16384，步长 32 (16384->0, 16416->1, 16448->2)
+                if 16384 <= port <= 20000 and (port - 16384) % 32 == 0:
+                    target_index = (port - 16384) // 32
+
+        # 若已知目标实例索引，优先精准匹配对应实例窗口
+        if target_index is not None:
+            if target_index == 0:
+                target_candidates = [
+                    'MuMu安卓设备', 'MuMu安卓设备-0', 'MuMu安卓设备-1',
+                    'MuMu模拟器12', 'MuMu模拟器12-0', 'MuMu模拟器12-1',
+                    'MuMuPlayer', 'MuMuPlayer-0',
+                ]
+            else:
+                target_candidates = [
+                    f'MuMu安卓设备-{target_index}',
+                    f'MuMu模拟器12-{target_index}',
+                    f'MuMuPlayer-{target_index}',
+                ]
+            for cand in target_candidates:
+                if cand in windows:
+                    logger.info(f'Found matched emulator window for instance {target_index}: {cand}')
+                    return cand
+
         emu_list = []
         for window_title in windows:
+            if window_title in exclude_internal or window_title.startswith('MuMuNxDevice'):
+                continue
             for item in Handle.emulator_list:
                 if window_title.find(item) != -1:
-                    emu_list.append(window_title)
+                    if window_title not in emu_list:
+                        emu_list.append(window_title)
 
         if not len(emu_list):
             logger.error('Can not find emulator handle, please check your emulator is running')
             return None
+
+        # 优先匹配具体模拟器主运行实例正则（支持多开后缀 -1, -2 等）
+        instance_patterns = [
+            r'^MuMu安卓设备(-\d+)?$',
+            r'^MuMu模拟器12(-\d+)?$',
+            r'^MuMuPlayer(-\d+)?$',
+        ]
+        for pattern in instance_patterns:
+            for title in emu_list:
+                if re.match(pattern, title):
+                    logger.info(f'Handle auto select to find {title} by pattern and use it as root_title')
+                    return title
 
         emulator_title = ''
         # 测试mumu12的时候发现 获取的全部的窗体标题有这样的: 'MuMuPlayer', 'MuMuPlayer', 'MuMuPlayer', 'MuMu模拟器12'
         # 事实上 我们只需要最后一个 'MuMu模拟器12'，其他的不重要
         if 'MuMu模拟器12' in emu_list and 'MuMuPlayer' in emu_list:
             emulator_title = 'MuMu模拟器12'
-        
-        # MuMu5.0更新，窗体标题改动: 'MuMu模拟器','MuMuNxDevice','MuMu安卓设备'
-        # 如果没有匹配上旧版本，尝试匹配MuMu5.0窗口名                                                                  
-        if emulator_title == '' and 'MuMu安卓设备' in emu_list:
-            emulator_title = 'MuMu安卓设备'
 
-        if len(emu_list) > 1 and emulator_title == '':
-            logger.warning(f'Find more than one emulator handle, oas will use the first one {emu_list[0]}')
-            emulator_title = emu_list[0]
+        # 过滤掉多开管理器/外层主控窗口（如 雷电多开器、夜神多开器、逍遥多开器）
+        if emulator_title == '':
+            clean_list = [w for w in emu_list if '多开' not in w]
+            if clean_list:
+                emulator_title = clean_list[0]
+            else:
+                emulator_title = emu_list[0]
 
-        if len(emu_list) == 1:
-            emulator_title = emu_list[0]
+        if len(emu_list) > 1:
+            logger.warning(f'Find more than one emulator handle, oas will use {emulator_title}')
 
         logger.info(f'Handle auto seclect to find {emulator_title} and use it as root_title')
         return emulator_title
@@ -379,22 +393,10 @@ class Handle:
             return EmulatorFamily.FAMILY_WINDOWS_CLIENT
 
         children_num = len(self.root_node.children)
-        if children_num == 1:  #
+        if children_num == 1:
             name = self.root_node.children[0].name
-            if name == 'MuMuPlayer':
+            if name in ('MuMuPlayer', 'MuMuNxDevice', 'NemuPlayer'):
                 return EmulatorFamily.FAMILY_MUMU
-            elif name == 'MuMuNxDevice':
-                return EmulatorFamily.FAMILY_MUMU
-            elif name == 'NemuPlayer':
-                return EmulatorFamily.FAMILY_MUMU
-            elif name == 'TheRender':
-                return EmulatorFamily.FAMILY_LD
-            elif name == 'HD-Player':
-                return EmulatorFamily.FAMILY_BLUESTACKS
-        elif children_num >= 3:
-            name = self.root_node.children[0].name
-            if name == 'Nox':
-                return EmulatorFamily.FAMILY_NOX
 
         # 基于句柄标题的判定
         for emu in Handle.emulator_list:
@@ -403,14 +405,6 @@ class Handle:
                     return EmulatorFamily.FAMILY_WINDOWS_CLIENT
                 elif emu == 'MuMu':
                     return EmulatorFamily.FAMILY_MUMU
-                elif emu == '雷电':
-                    return EmulatorFamily.FAMILY_LD
-                elif emu == '夜神':
-                    return EmulatorFamily.FAMILY_NOX
-                elif emu == '蓝叠':
-                    return EmulatorFamily.FAMILY_BLUESTACKS
-                elif emu == '逍遥':
-                    return EmulatorFamily.FAMILY_MEMU
         return EmulatorFamily.FAMILY_OTHER
 
     @cached_property
@@ -426,39 +420,27 @@ class Handle:
             return self.root_node.num
 
         if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
-            # 使用正则匹配12 来判定是不是mumu12这并不是一个好的方法
-            name = self.root_node.children[0].name
-            num = self.root_node.children[0].num
-            if name == 'MuMuPlayer':
-                logger.info('The emulator is MuMu模拟器12')
-                return num
-            elif name == 'NemuPlayer':
-                logger.info('The emulator is MuMu模拟器')
-                return num
-            elif name == 'MuMuNxDevice':
-                logger.info('The emulator is MuMu模拟器5.0')
-                return num
-        # 夜神
-        elif self.emulator_family == EmulatorFamily.FAMILY_NOX:
-            try:
-                return self.root_node.children[1].children[1].num
-            except:
-                return self.root_node.children[2].children[1].num
-
-        elif self.emulator_family == EmulatorFamily.FAMILY_LD:
+            # 遍历句柄树，匹配 MuMu 相关内部渲染窗口或子窗口
             for node in PreOrderIter(self.root_node):
-                if node.name == Handle.emulator_handle['ld_player_family'][0]:
+                if node.num == self.root_node.num:
+                    continue
+                if node.name == 'MuMuPlayer':
+                    logger.info('The emulator is MuMu模拟器12')
+                    return node.num
+                elif node.name == 'MuMuNxDevice':
+                    logger.info('The emulator is MuMu模拟器5.0')
+                    return node.num
+                elif node.name == 'NemuPlayer':
+                    logger.info('The emulator is MuMu模拟器')
+                    return node.num
+                elif node.name == 'nemudisplay':
+                    logger.info('The emulator display handle found: nemudisplay')
                     return node.num
 
-        elif self.emulator_family == EmulatorFamily.FAMILY_MEMU:
-            for node in PreOrderIter(self.root_node):
-                if node.name == Handle.emulator_handle['memu_player_family']:
-                    return node.num
+            if getattr(self.root_node, 'children', None):
+                return self.root_node.children[0].num
+            return self.root_node.num
 
-        elif self.emulator_family == EmulatorFamily.FAMILY_BLUESTACKS:
-            for node in PreOrderIter(self.root_node):
-                if node.name == Handle.emulator_handle['bluestacks_family']:
-                    return node.num
         return self.root_node.num
 
     @cached_property
@@ -473,16 +455,23 @@ class Handle:
             return None
 
         if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            if IsIconic(hwnd):
+                if hasattr(self, 'ensure_window_restored'):
+                    self.ensure_window_restored(hwnd)
             crect = GetClientRect(hwnd)
             scale_rate = window_scale_rate()
             width_raw = crect[2] - crect[0]
             height_raw = crect[3] - crect[1]
-            width = int(round(width_raw * scale_rate))
-            height = int(round(height_raw * scale_rate))
-            if abs(width - 1280) < 15:
+            if width_raw <= 0 or height_raw <= 0:
                 width = 1280
-            if abs(height - 720) < 15:
                 height = 720
+            else:
+                width = int(round(width_raw * scale_rate))
+                height = int(round(height_raw * scale_rate))
+                if abs(width - 1280) < 15:
+                    width = 1280
+                if abs(height - 720) < 15:
+                    height = 720
             logger.info(f'Windows client screenshot size: raw=({width_raw}, {height_raw}), scale={scale_rate}, final=({width}, {height})')
             return width, height
 

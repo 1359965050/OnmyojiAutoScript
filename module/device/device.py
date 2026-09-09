@@ -143,8 +143,8 @@ class Device(Platform, Screenshot, Control, AppControl):
                     )
                     raise RequestHumanTakeover
 
-        # Auto-fill emulator info
-        if IS_WINDOWS and self.config.script.device.emulatorinfo_type == 'auto':
+        # Auto-fill emulator info if path not set
+        if IS_WINDOWS and not getattr(self.config.script.device, 'emulatorinfo_path', ''):
             _ = self.emulator_instance
 
         self.screenshot_interval_set()
@@ -257,7 +257,7 @@ class Device(Platform, Screenshot, Control, AppControl):
         # self.config.script.device.screenshot_method = 'scrcpy'
         if self.config.script.device.screenshot_method == 'scrcpy':
             self._scrcpy_server_stop()
-        if self.config.Emulator_ScreenshotMethod == 'nemu_ipc':
+        if self.config.script.device.screenshot_method == 'nemu_ipc':
             self.nemu_ipc_release()
 
     def stuck_record_add(self, button):
@@ -369,6 +369,8 @@ class Device(Platform, Screenshot, Control, AppControl):
             logger.critical('Please enable script.error.handle_error or manually login to Onmyoji')
             raise RequestHumanTakeover
         super().app_start()
+        if hasattr(self, '_display_id_checked'):
+            self._display_id_checked = False
         self.stuck_record_clear()
         self.click_record_clear()
 
@@ -401,6 +403,9 @@ class Device(Platform, Screenshot, Control, AppControl):
             if not self.app_is_running():
                 time.sleep(interval)
                 continue
+
+            if hasattr(self, 'sync_display_id'):
+                self.sync_display_id()
 
             try:
                 image = screenshot_method()

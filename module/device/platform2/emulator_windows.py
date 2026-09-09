@@ -275,24 +275,11 @@ class EmulatorManager(EmulatorManagerBase):
             r'Software\Microsoft\Windows\CurrentVersion\Uninstall'
         ]
         known_emulator_registry_name = [
-            'Nox',
-            'Nox64',
-            'BlueStacks',
-            'BlueStacks_nxt',
-            'BlueStacks_cn',
-            'BlueStacks_nxt_cn',
-            'LDPlayer',
-            'LDPlayer4',
-            'LDPlayer9',
-            'leidian',
-            'leidian4',
-            'leidian9',
             'Nemu',
             'Nemu9',
             'MuMuPlayer',
             'MuMuPlayer-12.0',
             'MuMu Player 12.0',
-            'MEmu',
         ]
         for path in known_uninstall_registry_path:
             try:
@@ -310,9 +297,6 @@ class EmulatorManager(EmulatorManagerBase):
                     continue
                 if not uninstall:
                     continue
-                # UninstallString is like:
-                # C:\Program Files\BlueStacks_nxt\BlueStacksUninstaller.exe -tmp
-                # "E:\ProgramFiles\Microvirt\MEmu\uninstall\uninstall.exe" -u
                 # Extract path in ""
                 res = re.search('"(.*?)"', uninstall)
                 uninstall = res.group(1) if res else uninstall
@@ -337,9 +321,6 @@ class EmulatorManager(EmulatorManagerBase):
                 exe = proc.cmdline()
                 exe = exe[0].replace(r'\\', '/').replace('\\', '/')
             except (psutil.AccessDenied, psutil.NoSuchProcess, IndexError, OSError):
-                # psutil.AccessDenied
-                # NoSuchProcess: process no longer exists (pid=xxx)
-                # OSError: [WinError 87] 参数错误。: '(originated from ReadProcessMemory)'
                 continue
 
             if Emulator.is_emulator(exe):
@@ -361,15 +342,6 @@ class EmulatorManager(EmulatorManagerBase):
         for file in EmulatorManager.iter_user_assist():
             if Emulator.is_emulator(file) and os.path.exists(file):
                 exe.add(file)
-
-        # LDPlayer install path
-        for path in [r'SOFTWARE\leidian\ldplayer',
-                     r'SOFTWARE\leidian\ldplayer9']:
-            ld = self.get_install_dir_from_reg(path, 'InstallDir')
-            if ld:
-                ld = abspath(os.path.join(ld, './dnplayer.exe'))
-                if Emulator.is_emulator(ld) and os.path.exists(ld):
-                    exe.add(ld)
 
         # Uninstall registry
         for uninstall in EmulatorManager.iter_uninstall_registry():
