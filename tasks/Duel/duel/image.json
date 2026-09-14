@@ -39,9 +39,9 @@
     "itemName": "d_auto_entry",
     "imageName": "duel_d_auto_entry.png",
     "roiFront": "23,118,53,54",
-    "roiBack": "2,97,93,96",
+    "roiBack": "0,95,110,105",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "自动上阵"
   },
   {
@@ -57,9 +57,9 @@
     "itemName": "d_prepare",
     "imageName": "duel_d_prepare.png",
     "roiFront": "1127,541,100,100",
-    "roiBack": "1127,541,100,100",
+    "roiBack": "1110,520,140,150",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "准备"
   },
   {

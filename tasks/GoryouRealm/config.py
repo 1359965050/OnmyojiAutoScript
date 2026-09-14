@@ -11,10 +11,10 @@ from tasks.Component.SwitchSoul.switch_soul_config import SwitchSoulConfig
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 
 class GoryouClass(str, Enum):
-    RANDOM = '随机',
-    Dark_Divine_Dragon = '暗神龙',
-    Dark_Hakuzousu = '暗白蔵主',
-    Dark_Black_Panther = '暗黑豹',
+    RANDOM = '随机'
+    Dark_Divine_Dragon = '暗神龙'
+    Dark_Hakuzousu = '暗白蔵主'
+    Dark_Black_Panther = '暗黑豹'
     Dark_Peacock = '暗孔雀'
 
 class GoryouConfig(ConfigBase):

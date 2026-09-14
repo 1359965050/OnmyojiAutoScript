@@ -84,9 +84,9 @@
     "itemName": "check_onmyodo",
     "imageName": "page_check_onmyodo.png",
     "roiFront": "1166,117,84,547",
-    "roiBack": "1166,117,84,547",
+    "roiBack": "1150,105,120,570",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "description"
   },
   {

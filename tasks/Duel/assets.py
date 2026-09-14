@@ -13,6 +13,12 @@ class DuelAssets:
 	# Click Rule Assets
 	# 战斗数据 
 	C_D_BATTLE_DATA = RuleClick(roi_front=(584,279,100,100), roi_back=(584,279,100,100), name="d_battle_data")
+	# 自动上阵齿轮按钮 
+	C_D_AUTO_ENTRY = RuleClick(roi_front=(15,110,70,70), roi_back=(15,110,70,70), name="d_auto_entry")
+	# 准备鼓按钮 
+	C_D_PREPARE = RuleClick(roi_front=(1130,550,120,120), roi_back=(1130,550,120,120), name="d_prepare")
+	# 战斗左下角自动/手动切换点击位 
+	C_D_BATTLE_SWITCH_AUTO = RuleClick(roi_front=(25,635,70,55), roi_back=(25,635,70,55), name="d_battle_switch_auto")
 
 
 	# Image Rule Assets
@@ -25,11 +31,11 @@ class DuelAssets:
 	# 战斗带保护的 
 	I_D_BATTLE_PROTECT = RuleImage(roi_front=(1153,578,100,100), roi_back=(1118,553,155,149), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_d_battle_protect.png")
 	# 自动上阵 
-	I_D_AUTO_ENTRY = RuleImage(roi_front=(23,118,53,54), roi_back=(2,97,93,96), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_d_auto_entry.png")
+	I_D_AUTO_ENTRY = RuleImage(roi_front=(23,118,53,54), roi_back=(0,95,110,105), threshold=0.75, method="Template matching", file="./tasks/Duel/duel/duel_d_auto_entry.png")
 	# 主界面的感叹号 
 	I_D_HELP = RuleImage(roi_front=(783,500,29,30), roi_back=(778,476,49,78), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_d_help.png")
 	# 准备 
-	I_D_PREPARE = RuleImage(roi_front=(1127,541,100,100), roi_back=(1127,541,100,100), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_d_prepare.png")
+	I_D_PREPARE = RuleImage(roi_front=(1127,541,100,100), roi_back=(1110,520,140,150), threshold=0.75, method="Template matching", file="./tasks/Duel/duel/duel_d_prepare.png")
 	# 胜利 
 	I_D_VICTORY = RuleImage(roi_front=(433,76,100,100), roi_back=(433,76,100,100), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_d_victory.png")
 	# 失败 
@@ -65,5 +71,17 @@ class DuelAssets:
 	O_D_SCORE = RuleOcr(roi=(604,484,108,28), area=(604,484,108,28), mode="DigitCounter", method="Default", keyword="", name="d_score")
 	# 名士星数 
 	O_D_CELEB_STAR_COUNT = RuleOcr(roi=(640,445,80,40), area=(640,445,80,40), mode="Digit", method="Default", keyword="", name="d_celeb_star_count")
+	# 自动上阵按钮 
+	O_D_AUTO_ENTRY = RuleOcr(roi=(10,105,80,80), area=(10,105,80,80), mode="Full", method="Default", keyword="上阵", name="d_auto_entry")
+	# 取消自动上阵按钮（已开启状态） 
+	O_D_AUTO_ENTRY_CANCEL = RuleOcr(roi=(10,105,80,80), area=(10,105,80,80), mode="Full", method="Default", keyword="取消", name="d_auto_entry_cancel")
+	# 准备鼓按钮 
+	O_D_PREPARE = RuleOcr(roi=(1120,530,150,180), area=(1120,530,150,180), mode="Full", method="Default", keyword="准备", name="d_prepare")
+	# 已确定鼓按钮（已就绪状态） 
+	O_D_PREPARE_DONE = RuleOcr(roi=(1120,530,150,180), area=(1120,530,150,180), mode="Full", method="Default", keyword="确定", name="d_prepare_done")
+	# 战斗手动模式标志 
+	O_D_BATTLE_HAND = RuleOcr(roi=(20,630,80,65), area=(20,630,80,65), mode="Full", method="Default", keyword="手动", name="d_battle_hand")
+	# 战斗自动模式标志 
+	O_D_BATTLE_AUTO = RuleOcr(roi=(20,630,80,65), area=(20,630,80,65), mode="Full", method="Default", keyword="自动", name="d_battle_auto")
 
 

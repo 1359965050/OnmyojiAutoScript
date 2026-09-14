@@ -4,5 +4,23 @@
     "roiFront": "584,279,100,100",
     "roiBack": "584,279,100,100",
     "description": "战斗数据"
+  },
+  {
+    "itemName": "d_auto_entry",
+    "roiFront": "15,110,70,70",
+    "roiBack": "15,110,70,70",
+    "description": "自动上阵齿轮按钮"
+  },
+  {
+    "itemName": "d_prepare",
+    "roiFront": "1130,550,120,120",
+    "roiBack": "1130,550,120,120",
+    "description": "准备鼓按钮"
+  },
+  {
+    "itemName": "d_battle_switch_auto",
+    "roiFront": "25,635,70,55",
+    "roiBack": "25,635,70,55",
+    "description": "战斗左下角自动/手动切换点击位"
   }
 ]

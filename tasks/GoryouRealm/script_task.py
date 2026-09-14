@@ -45,12 +45,19 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, GoryouRealmAssets):
                 3: GoryouClass.Dark_Black_Panther,
                 4: GoryouClass.Dark_Peacock,
             }[randint(1, 4)]
+        click_count = 0
         while 1:
             self.screenshot()
             if self.appear(self.I_GR_FIRE):
                 logger.info('Enter GoryouRealm')
                 break
-            if self.click(match_click[goryou_class], interval=1):
+            if click_count >= 8:
+                logger.warning('Failed to enter GoryouRealm, maybe the chosen realm is not open today or UI unresponsive')
+                self.goto_page(page_exploration)
+                self.set_next_run(task='GoryouRealm', success=False, finish=True)
+                raise TaskEnd
+            if self.click(match_click[goryou_class], interval=1.2):
+                click_count += 1
                 continue
         self.check_lock(con.general_battle_config.lock_team_enable, self.I_GR_LOCK, self.I_GR_UNLOCK)
         # 开始循环

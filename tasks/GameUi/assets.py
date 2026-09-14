@@ -80,7 +80,9 @@ class GameUiAssets:
 	# 英杰试炼页面标志 
 	I_CHECK_HERO_TEST = RuleImage(roi_front=(148,10,133,48), roi_back=(137,0,157,71), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_hero_test.png")
 	# 御灵页面标志 
-	I_CHECK_GORYOU = RuleImage(roi_front=(880,8,30,39), roi_back=(880,8,30,39), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_goryou.png")
+	I_CHECK_GORYOU = RuleImage(roi_front=(880,8,35,42), roi_back=(850,0,90,65), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_goryou.png")
+	# 御灵之境页面标题 
+	I_CHECK_GORYOU_TITLE = RuleImage(roi_front=(154,16,132,40), roi_back=(120,5,200,65), threshold=0.85, method="Template matching", file="./tasks/GameUi/page/page_check_goryou_title.png")
 	# 委派页面标志 
 	I_CHECK_DELEGATION = RuleImage(roi_front=(839,132,49,45), roi_back=(839,132,49,45), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_delegation.png")
 	# 秘闻页面标志 
@@ -92,7 +94,7 @@ class GameUiAssets:
 	# 契灵页面标志 
 	I_CHECK_BONDLING_FAIRYLAND = RuleImage(roi_front=(614,660,56,49), roi_back=(570,620,150,100), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_fairyland.png")
 	# 契灵之境页面标题 
-	I_CHECK_BONDLING_TITLE = RuleImage(roi_front=(150,14,140,38), roi_back=(120,5,200,55), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_title.png")
+	I_CHECK_BONDLING_TITLE = RuleImage(roi_front=(150,14,140,38), roi_back=(120,5,200,55), threshold=0.85, method="Template matching", file="./tasks/GameUi/page/page_check_bondling_title.png")
 	# 寮突切换到个突按钮 
 	I_RYOUTOPPA_GOTO_REALMRAID = RuleImage(roi_front=(1201,234,62,105), roi_back=(1201,234,62,105), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_ryoutoppa_goto_realmraid.png")
 	# 寮突页面标志 
@@ -157,7 +159,7 @@ class GameUiAssets:
 	# 式神录页面标志 
 	I_CHECK_RECORDS = RuleImage(roi_front=(269,71,55,50), roi_back=(269,71,55,50), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_records.png")
 	# 阴阳术页面标志 
-	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1166,117,84,547), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
+	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1150,105,120,570), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
 	# 好友页面标志 
 	I_CHECK_FRIENDS = RuleImage(roi_front=(74,628,58,66), roi_back=(74,628,58,66), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
 	# 花合战页面标志 
@@ -266,8 +268,8 @@ class GameUiAssets:
 	I_CHECK_SOUL_ZONES = RuleImage(roi_front=(1193,636,40,40), roi_back=(1131,591,149,128), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_soul_zones.png")
 	# description 
 	I_CHECK_REALM_RAID = RuleImage(roi_front=(129,632,52,48), roi_back=(66,526,233,188), threshold=0.7, method="Template matching", file="./tasks/GameUi/page/page_check_realm_raid.png")
-	# description 
-	I_CHECK_GORYOU = RuleImage(roi_front=(881,17,30,39), roi_back=(881,17,30,39), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_goryou.png")
+	# 御灵页面标志 
+	I_CHECK_GORYOU = RuleImage(roi_front=(880,8,35,42), roi_back=(850,0,90,65), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_goryou.png")
 	# description 
 	I_CHECK_DELEGATION = RuleImage(roi_front=(839,132,49,45), roi_back=(839,132,49,45), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_delegation.png")
 	# description 
@@ -345,13 +347,13 @@ class GameUiAssets:
 	# description 
 	I_CHECK_RECORDS = RuleImage(roi_front=(269,71,55,50), roi_back=(269,71,55,50), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_records.png")
 	# description 
-	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1166,117,84,547), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
+	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1150,105,120,570), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
 	# description 
 	I_CHECK_FRIENDS = RuleImage(roi_front=(74,628,58,66), roi_back=(74,628,58,66), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
 	# description 
 	I_CHECK_DAILY = RuleImage(roi_front=(28,515,58,62), roi_back=(1,487,154,145), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_daily.png")
 	# description 
-	I_CHECK_MALL = RuleImage(roi_front=(231,455,131,78), roi_back=(201,432,185,121), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_mall.png")
+	I_CHECK_MALL = RuleImage(roi_front=(147,527,82,82), roi_back=(147,527,82,82), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_mall.png")
 	# description 
 	I_CHECK_GUILD = RuleImage(roi_front=(1072,630,49,46), roi_back=(1072,630,49,46), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_guild.png")
 	# description 

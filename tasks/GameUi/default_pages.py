@@ -3,6 +3,7 @@ from __future__ import annotations
 from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.Component.GeneralInvite.assets import GeneralInviteAssets
 from tasks.Component.SwitchAccount.assets import SwitchAccountAssets
+from tasks.Component.SwitchOnmyoji.assets import SwitchOnmyojiAssets
 from tasks.Exploration.assets import ExplorationAssets
 from tasks.GameUi.action import conditional_action, sequence
 from typing import Union
@@ -72,7 +73,15 @@ page_shikigami_records.add_enter_success_hooks(GlobalGameAssets.I_UI_CANCEL_SAML
 page_shikigami_records.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_shikigami_records->page_main")
 page_main.connect(page_shikigami_records, GameUiAssets.I_MAIN_GOTO_SHIKIGAMI_RECORDS, key="page_main->page_shikigami_records")
 
-page_onmyodo = Page(GameUiAssets.I_CHECK_ONMYODO, category="global")
+page_onmyodo = Page(
+    any_of(
+        SwitchOnmyojiAssets.I_ONMYOJI_SWITCH,
+        SwitchOnmyojiAssets.I_HERO_CHECK,
+        SwitchOnmyojiAssets.I_ONMYOJI_CHECK,
+        GameUiAssets.I_CHECK_ONMYODO,
+    ),
+    category="global",
+)
 page_onmyodo.add_enter_failure_hooks(conditional_action(condition=GameUiAssets.I_CHECK_MAIN,
                                                         action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_onmyodo.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_onmyodo->page_main")
@@ -216,7 +225,13 @@ page_kekkai_toppa.connect(page_shikigami_records, GameUiAssets.I_REALM_RAID_GOTO
 page_realm_raid.connect(page_kekkai_toppa, RyouToppaAssets.I_RYOU_TOPPA, key="page_realm_raid->page_kekkai_toppa")
 page_kekkai_toppa.connect(page_realm_raid, GameUiAssets.I_RYOUTOPPA_GOTO_REALMRAID, key="page_kekkai_toppa->page_realm_raid")
 
-page_goryou_realm = Page(GameUiAssets.I_CHECK_GORYOU, category="global")
+page_goryou_realm = Page(
+    any_of(
+        GameUiAssets.I_CHECK_GORYOU,
+        GameUiAssets.I_CHECK_GORYOU_TITLE,
+    ),
+    category="global",
+)
 page_goryou_realm.connect(page_exploration, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_goryou_realm->page_exploration")
 page_exploration.connect(page_goryou_realm, GameUiAssets.I_EXPLORATION_GOTO_GORYOU_REALM, key="page_exploration->page_goryou_realm")
 

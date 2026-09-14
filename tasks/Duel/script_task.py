@@ -116,27 +116,68 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
         """选式神准备斗技阶段"""
         logger.hr('duel battle preparing')
         not_in_prepare_cnt, max_retry = 0, 3
+        prepare_timeout = Timer(90).start()
+        auto_entry_ready = False
+        lineup_ready = False
+        ocr_scan_timer = Timer(2.0)
+
         while True:
-            if not_in_prepare_cnt >= max_retry:  # max_retry次识别不到任何阶段元素(准备,战斗,结算), 退出
+            if prepare_timeout.reached():
+                logger.warning('Duel battle prepare timeout (>90s), breaking to wait battle')
                 break
+            if not_in_prepare_cnt >= max_retry:  # max_retry次识别不到准备阶段元素, 退出
+                logger.info('Left prepare screen, breaking to wait battle')
+                break
+
             self.screenshot()
-            if self.is_battle_end() or self.is_in_real_battle():  # 战斗已经结束或已经开始战斗
+            if self.is_battle_end() or self.is_in_real_battle(is_screenshot=False):  # 战斗已经结束或已经开始战斗
                 break
-            if not self.is_in_battle_prepare():  # 一般不会出现这种情况(不在准备,战斗,结束界面), 但是处理一下
+            if not self.is_in_battle_prepare():  # 不在准备界面（可能转场黑屏或加载）
                 not_in_prepare_cnt += 1
-                sleep(random.uniform(1.2, 2.4))
+                sleep(1.0)
                 continue
             not_in_prepare_cnt = 0
-            # 点击自动上阵或准备
-            if self.appear_then_click(self.I_D_AUTO_ENTRY, interval=1.2) or \
-                    self.appear_then_click(self.I_D_PREPARE, interval=1.2):
-                self.reset_device('PREPARE_BEFORE_BATTLE')
+
+            # 核心防卡死：处于准备阶段时向设备驱动维护 PREPARE_BEFORE_BATTLE 长等待标记，防止 GameStuckError
+            self.reset_device('PREPARE_BEFORE_BATTLE')
+
+            # 状态锁定：若自动上阵与阵容确认均已就绪，完全进入静默等待，绝不进行任何 OCR 轮询
+            if auto_entry_ready and lineup_ready:
+                sleep(1.2)
+                continue
+
+            # 仅在未全部就绪且冷却计时器达到时执行低频 OCR 检测（最多每 2 秒一次，彻底杜绝高频刷屏与连点）
+            if ocr_scan_timer.reached_and_reset():
+                # 1. 自动上阵处理：已激活（取消自动）则置位锁定；未激活则只点击一次并等待冷却
+                if not auto_entry_ready:
+                    if self.appear(self.O_D_AUTO_ENTRY_CANCEL):
+                        logger.info('Auto entry is active (取消自动)')
+                        auto_entry_ready = True
+                    elif self.appear(self.O_D_AUTO_ENTRY) or self.appear(self.I_D_AUTO_ENTRY):
+                        logger.info('Clicking auto entry button (自动上阵)')
+                        self.click(self.C_D_AUTO_ENTRY, interval=2.5)
+                        sleep(0.5)
+
+                # 2. 准备按钮处理：已确认（已确定）则置位锁定；未确认则只点击一次并等待冷却
+                if not lineup_ready:
+                    if self.appear(self.O_D_PREPARE_DONE):
+                        logger.info('Lineup is confirmed (已确定)')
+                        lineup_ready = True
+                    elif self.appear(self.O_D_PREPARE) or self.appear(self.I_D_PREPARE):
+                        logger.info('Clicking prepare drum button (准备)')
+                        self.click(self.C_D_PREPARE, interval=2.5)
+                        sleep(0.5)
+
+            sleep(0.5)
 
     def wait_battle(self) -> bool:
         """等待战斗结束, 返回战斗结果, 最后会退出到斗技主界面"""
         logger.hr('duel battle waiting')
         battle_operated = False
         battle_timeout_timer = Timer(270).start()
+        stuck_refresh_timer = Timer(15).start()
+        auto_inspect_timer = Timer(5.0).start()
+        combat_check_timer = Timer(1.5).start()
         ret_timer = Timer(5)
         battle_timeout_cnt, max_timeout_cnt = 0, 3
         ret = None
@@ -145,7 +186,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
             self.check_and_get_reward()
             if self.appear(self.I_CHECK_DUEL) and self.appear(self.I_D_HELP):  # 斗技主界面
                 break
-            if self.appear(self.I_D_WIN_SHARE,interval= 1.2): #拔得头筹
+            if self.appear(self.I_D_WIN_SHARE, interval=1.2):  # 拔得头筹
                 self.click(random_click(ltrb=(True, True, False, True)), interval=1.2)
                 continue
             if self.appear_then_click(self.I_UI_BACK_RED, interval=1.2):  # 关闭段位上升页面
@@ -168,16 +209,46 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
                 logger.warning('Duel battle timeout[>15 minutes], exit')
                 self.duel_exit_battle()
                 continue
-            if ret is None and not battle_operated:  # 进行战斗前的操作
-                self.ui_click(self.O_BATTLE_HAND, self.O_BATTLE_AUTO, interval=2.0)
-                self.green_mark(self.conf.duel_config.green_enable, self.conf.duel_config.green_mark)
-                battle_operated = True
+
+            # 周期性刷新战斗长等待标记，防止回合缓慢导致卡死熔断
+            if stuck_refresh_timer.reached_and_reset():
                 self.reset_device('BATTLE_STATUS_S')
-                continue
+
+            # 战斗启动与自动模式切换
+            if ret is None:
+                # 阶段 1: 战斗初次就绪判定（带 1.5s 冷却，避免黑屏加载期高频空扫）
+                if not battle_operated:
+                    if combat_check_timer.reached_and_reset():
+                        is_in_combat = (
+                            self.is_in_real_battle(is_screenshot=False)
+                            or self.appear(self.O_D_BATTLE_AUTO)
+                            or self.appear(self.O_D_BATTLE_HAND)
+                        )
+                        if is_in_combat:
+                            # 1. 检测到手动模式时切换为自动模式
+                            if self.appear(self.O_D_BATTLE_HAND):
+                                logger.info('Detected manual battle mode (手动), switching to auto (自动)...')
+                                self.click(self.C_D_BATTLE_SWITCH_AUTO, interval=1.5)
+                                self.reset_device('BATTLE_STATUS_S')
+
+                            # 2. 战斗就绪后执行一次性绿标
+                            self.green_mark(self.conf.duel_config.green_enable, self.conf.duel_config.green_mark)
+                            battle_operated = True
+                            self.reset_device('BATTLE_STATUS_S')
+                            continue
+                else:
+                    # 阶段 2: 战斗进行中低频巡检（每 5 秒仅检测手动标志，不刷屏）
+                    if auto_inspect_timer.reached_and_reset():
+                        if self.appear(self.O_D_BATTLE_HAND):
+                            logger.info('Detected manual battle mode during combat, switching to auto...')
+                            self.click(self.C_D_BATTLE_SWITCH_AUTO, interval=1.5)
+                            self.reset_device('BATTLE_STATUS_S')
+
             if not ret_timer.started() and battle_timeout_timer.reached_and_reset():
                 battle_timeout_cnt += 1
                 self.reset_device('BATTLE_STATUS_S')
                 logger.warning("battle' time is too long, increase wait time")
+            sleep(0.4)
         return ret
 
     def duel_exit_battle(self):
@@ -266,11 +337,14 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
                 logger.info('get reward')
 
     def is_in_battle_prepare(self, skip_screenshot=True) -> bool:
-        """是否在战斗准备界面"""
+        """是否在战斗准备界面（纯图像特征检测，毫秒级开销，无OCR消耗）"""
         self.maybe_screenshot(skip_screenshot)
-        return self.appear(self.I_D_PREPARE) or \
-            self.appear(self.I_D_AUTO_ENTRY) or \
+        return (
             self.appear(self.I_D_WORD_BATTLE)
+            or self.appear(self.I_DUEL_EXIT)
+            or self.appear(self.I_D_PREPARE)
+            or self.appear(self.I_D_AUTO_ENTRY)
+        )
 
     def is_battle_win(self) -> bool:
         return self.appear(self.I_WIN) or self.appear(self.I_D_VICTORY)

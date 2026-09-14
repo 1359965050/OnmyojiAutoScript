@@ -33,6 +33,8 @@ class UtilizeConfig(BaseModel):
     shikigami_class: ShikigamiClass = Field(default=ShikigamiClass.N, description='shikigami_class_help')
     shikigami_order: int = Field(default=4, description='shikigami_order_help')
     min_run_interval: TimeDelta = Field(default=timedelta(0), description='min_run_interval_help')
+    min_taiko_value: int = Field(default=0, ge=0, le=200, description='min_taiko_value_help')
+    min_fish_value: int = Field(default=0, ge=0, le=200, description='min_fish_value_help')
     harvest_guild_max_times: int = Field(default=3, description='收取寮资金或体力失败的最大尝试次数')
     utilize_harvest: bool = Field(default=True, description='是否领取寄养的收获')
     utilize_enable: bool = Field(default=True, description='是否蹭卡，小号可以选择不蹭卡')

@@ -10,6 +10,13 @@ from module.atom.list import RuleList
 class SwitchOnmyojiAssets: 
 
 
+	# Click Rule Assets
+	# 阴阳师切换标签 
+	C_SWITCH_TAB_ONMYOJI = RuleClick(roi_front=(25,210,45,100), roi_back=(25,210,45,100), name="switch_tab_onmyoji")
+	# 英杰切换标签 
+	C_SWITCH_TAB_HERO = RuleClick(roi_front=(25,445,45,90), roi_back=(25,445,45,90), name="switch_tab_hero")
+
+
 	# Image Rule Assets
 	# 晴明战标志 
 	I_SEIMI_BATTLE = RuleImage(roi_front=(253,429,79,78), roi_back=(147,388,222,153), threshold=0.8, method="Template matching", file="./tasks/Component/SwitchOnmyoji/so/so_seimi_battle.png")
@@ -29,5 +36,14 @@ class SwitchOnmyojiAssets:
 	I_YORIMITSU_BATTLE = RuleImage(roi_front=(511,424,100,100), roi_back=(448,401,181,142), threshold=0.8, method="Template matching", file="./tasks/Component/SwitchOnmyoji/so/so_yorimitsu_battle.png")
 	# 藤原道长战标志 
 	I_MICHINAGA_BATTLE = RuleImage(roi_front=(741,421,100,100), roi_back=(689,399,171,133), threshold=0.8, method="Template matching", file="./tasks/Component/SwitchOnmyoji/so/so_michinaga_battle.png")
+
+
+	# Ocr Rule Assets
+	# 阴阳术界面标题 
+	O_ONMYODO_TITLE = RuleOcr(roi=(70,0,160,60), area=(70,0,160,60), mode="Single", method="Default", keyword="阴阳", name="onmyodo_title")
+	# 英杰交换界面标题 
+	O_EXCHANGE_HERO_TITLE = RuleOcr(roi=(70,0,220,65), area=(70,0,220,65), mode="Single", method="Default", keyword="英杰", name="exchange_hero_title")
+	# 阴阳师交换界面标题 
+	O_EXCHANGE_ONMYOJI_TITLE = RuleOcr(roi=(70,0,220,65), area=(70,0,220,65), mode="Single", method="Default", keyword="阴阳师", name="exchange_onmyoji_title")
 
 

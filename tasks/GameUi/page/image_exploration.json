@@ -137,11 +137,20 @@
   {
     "itemName": "check_goryou",
     "imageName": "page_check_goryou.png",
-    "roiFront": "880,8,30,39",
-    "roiBack": "880,8,30,39",
+    "roiFront": "880,8,35,42",
+    "roiBack": "850,0,90,65",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "御灵页面标志"
+  },
+  {
+    "itemName": "check_goryou_title",
+    "imageName": "page_check_goryou_title.png",
+    "roiFront": "154,16,132,40",
+    "roiBack": "120,5,200,65",
+    "method": "Template matching",
+    "threshold": 0.85,
+    "description": "御灵之境页面标题"
   },
   {
     "itemName": "check_delegation",
@@ -194,7 +203,7 @@
     "roiFront": "150,14,140,38",
     "roiBack": "120,5,200,55",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.85,
     "description": "契灵之境页面标题"
   },
   {

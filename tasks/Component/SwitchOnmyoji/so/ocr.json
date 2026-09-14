@@ -1,0 +1,29 @@
+[
+  {
+    "itemName": "onmyodo_title",
+    "roiFront": "70,0,160,60",
+    "roiBack": "70,0,160,60",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "阴阳",
+    "description": "阴阳术界面标题"
+  },
+  {
+    "itemName": "exchange_hero_title",
+    "roiFront": "70,0,220,65",
+    "roiBack": "70,0,220,65",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "英杰",
+    "description": "英杰交换界面标题"
+  },
+  {
+    "itemName": "exchange_onmyoji_title",
+    "roiFront": "70,0,220,65",
+    "roiBack": "70,0,220,65",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "阴阳师",
+    "description": "阴阳师交换界面标题"
+  }
+]

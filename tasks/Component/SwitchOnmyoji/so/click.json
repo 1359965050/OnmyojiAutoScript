@@ -1,0 +1,14 @@
+[
+  {
+    "itemName": "switch_tab_onmyoji",
+    "roiFront": "25,210,45,100",
+    "roiBack": "25,210,45,100",
+    "description": "阴阳师切换标签"
+  },
+  {
+    "itemName": "switch_tab_hero",
+    "roiFront": "25,445,45,90",
+    "roiBack": "25,445,45,90",
+    "description": "英杰切换标签"
+  }
+]

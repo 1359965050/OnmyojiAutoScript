@@ -25,5 +25,59 @@
     "method": "Default",
     "keyword": "",
     "description": "名士星数"
+  },
+  {
+    "itemName": "d_auto_entry",
+    "roiFront": "10,105,80,80",
+    "roiBack": "10,105,80,80",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "上阵",
+    "description": "自动上阵按钮"
+  },
+  {
+    "itemName": "d_auto_entry_cancel",
+    "roiFront": "10,105,80,80",
+    "roiBack": "10,105,80,80",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "取消",
+    "description": "取消自动上阵按钮（已开启状态）"
+  },
+  {
+    "itemName": "d_prepare",
+    "roiFront": "1120,530,150,180",
+    "roiBack": "1120,530,150,180",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "准备",
+    "description": "准备鼓按钮"
+  },
+  {
+    "itemName": "d_prepare_done",
+    "roiFront": "1120,530,150,180",
+    "roiBack": "1120,530,150,180",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "确定",
+    "description": "已确定鼓按钮（已就绪状态）"
+  },
+  {
+    "itemName": "d_battle_hand",
+    "roiFront": "20,630,80,65",
+    "roiBack": "20,630,80,65",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "手动",
+    "description": "战斗手动模式标志"
+  },
+  {
+    "itemName": "d_battle_auto",
+    "roiFront": "20,630,80,65",
+    "roiBack": "20,630,80,65",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "自动",
+    "description": "战斗自动模式标志"
   }
 ]
