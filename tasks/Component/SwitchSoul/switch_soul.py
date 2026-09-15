@@ -189,7 +189,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         保证在式神录的界面
         :return:
         """
-        logger.hr('Switch soul by name')
+        logger.hr('按名称切换御魂', 2)
         # 滑动至分组最上层
         last_group_text = ''
         while 1:

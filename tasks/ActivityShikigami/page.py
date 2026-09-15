@@ -1,6 +1,6 @@
 from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.Component.GeneralBattle.assets import GeneralBattleAssets
-from tasks.Component.RightActivity.assets import RightActivityAssets
+from tasks.Component.RightActivity import RightActivity, RightActivityAssets
 from tasks.GameUi.action import conditional_action
 from tasks.GameUi.default_pages import random_click
 from tasks.GameUi.page import (Page, page_main, sequence, page_battle, page_battle_prepare, page_reward,
@@ -9,7 +9,7 @@ from tasks.GlobalGame.assets import GlobalGameAssets
 
 # 爬塔活动主界面
 page_act = Page(ActivityShikigamiAssets.I_TO_BATTLE_MAIN)
-page_act.add_enter_failure_hooks(RightActivityAssets.I_TOGGLE_BUTTON,
+page_act.add_enter_failure_hooks(RightActivity.sidebar_switch_hook,
                                  conditional_action(GlobalGameAssets.I_UI_REWARD, random_click),
                                  GlobalGameAssets.I_UI_BACK_RED, ActivityShikigamiAssets.I_SKIP_BUTTON)
 page_act.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_act->page_main")

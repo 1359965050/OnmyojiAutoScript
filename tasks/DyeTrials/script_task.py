@@ -7,6 +7,7 @@ from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
+from tasks.Component.RightActivity import RightActivity
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.DyeTrials.assets import DyeTrialsAssets
 from tasks.GameUi.game_ui import GameUi
@@ -16,7 +17,7 @@ from tasks.Restart.assets import RestartAssets
 """ 灵染 试炼 """
 
 
-class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DyeTrialsAssets):
+class ScriptTask(GeneralBattle, RightActivity, SwitchSoul, DyeTrialsAssets):
 
     def run(self):
 
@@ -40,16 +41,20 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DyeTrialsAssets):
         raise TaskEnd('DyeTrials')
 
     def get_all(self):
-        while 1:
+        logger.hr("进入灵染试炼", 2)
+        # 优先使用通用侧边栏组件智能寻点并进入
+        self.find_and_click_right_activity([self.I_FP_ACCESS, self.I_FP_ACCESS_1], max_toggles=5)
+        # 等待到达挑战界面
+        wait_timer = Timer(15.0).start()
+        while not wait_timer.reached():
             self.screenshot()
             if self.appear(self.I_FP_CHALLENGE):
                 break
-            if self.appear_then_click(self.I_FP_ACCESS, interval=0.8):
-                continue
             if self.appear_then_click(self.I_FP_ACCESS_1, interval=1.5):
                 continue
-            if self.appear_then_click(self.I_TOGGLE_BUTTON, interval=3):
+            if self.appear_then_click(self.I_FP_ACCESS, interval=1.0):
                 continue
+            time.sleep(0.4)
         logger.info('Enter DyeTrials')
         boss_timer = Timer(60)
         boss_timer.start()

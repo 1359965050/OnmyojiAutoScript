@@ -146,7 +146,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssSha
         三轮战斗 战斗过程中检测挑战
         """
         # TODO 战斗过程中切换预设
-        logger.hr("General battle start", 2)
+        logger.hr("战斗开始", 2)
         self.current_count += 1
         logger.info(f"Current count: {self.current_count}")
         if config is None:

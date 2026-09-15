@@ -1,0 +1,8 @@
+[
+  {
+    "itemName": "ticket_buy_close_safe",
+    "roiFront": "50,300,80,150",
+    "roiBack": "50,300,80,150",
+    "description": "点击弹窗外部半透明安全区域关闭购买弹窗"
+  }
+]

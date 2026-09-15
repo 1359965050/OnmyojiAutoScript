@@ -21,9 +21,9 @@
     "itemName": "toggle_button",
     "imageName": "as_toggle_button.png",
     "roiFront": "1193,527,27,25",
-    "roiBack": "1169,146,73,453",
+    "roiBack": "1155,120,100,500",
     "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
+    "threshold": 0.75,
+    "description": "庭院右侧活动侧边栏切换翻页按钮"
   }
 ]

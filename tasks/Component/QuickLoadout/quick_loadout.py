@@ -379,7 +379,7 @@ class QuickLoadout(BaseTask, SwitchSoulAssets):
             else:
                 config = self._resolve_named_quick_loadout(config, name_ocr)
         config.validate_target()
-        logger.hr('Quick loadout', 2)
+        logger.hr('一键配置阵容', 2)
         if not self._open_quick_loadout(entry, fight_anchor):
             return False
         try:

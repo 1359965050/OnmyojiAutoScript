@@ -1,0 +1,20 @@
+[
+  {
+    "itemName": "ticket_buy_rmb",
+    "imageName": "bw_ticket_buy_rmb.png",
+    "roiFront": "372,606,35,32",
+    "roiBack": "300,560,200,120",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "活动门票购买弹窗-左侧魂玉购买图标"
+  },
+  {
+    "itemName": "ticket_buy_jade",
+    "imageName": "bw_ticket_buy_jade.png",
+    "roiFront": "832,598,36,42",
+    "roiBack": "760,560,200,120",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "活动门票购买弹窗-右侧勾玉购买图标"
+  }
+]

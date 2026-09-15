@@ -81,15 +81,6 @@
     "description": "红色关闭"
   },
   {
-    "itemName": "toggle_button",
-    "imageName": "fp_toggle_button.png",
-    "roiFront": "1193,462,21,23",
-    "roiBack": "1116,127,150,377",
-    "method": "Template matching",
-    "threshold": 0.7,
-    "description": "寻找花车的切换按钮"
-  },
-  {
     "itemName": "batch_selection",
     "imageName": "fp_batch_selection.png",
     "roiFront": "933,517,44,40",

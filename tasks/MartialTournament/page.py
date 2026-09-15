@@ -1,5 +1,5 @@
 from tasks.MartialTournament.assets import MartialTournamentAssets
-from tasks.Component.RightActivity.assets import RightActivityAssets
+from tasks.Component.RightActivity import RightActivity, RightActivityAssets
 from tasks.GameUi.action import conditional_action
 from tasks.GameUi.default_pages import random_click
 from tasks.GameUi.page import (Page, page_main, page_battle, page_battle_prepare, page_reward,
@@ -8,7 +8,7 @@ from tasks.GlobalGame.assets import GlobalGameAssets
 
 # 武道大会活动主界面
 page_mt = Page(MartialTournamentAssets.I_MT_CHECK)
-page_mt.add_enter_failure_hooks(RightActivityAssets.I_TOGGLE_BUTTON,
+page_mt.add_enter_failure_hooks(RightActivity.sidebar_switch_hook,
                                 conditional_action(GlobalGameAssets.I_UI_REWARD, random_click),
                                 GlobalGameAssets.I_UI_BACK_RED, MartialTournamentAssets.I_MT_REWARD)
 page_mt.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_mt->page_main")

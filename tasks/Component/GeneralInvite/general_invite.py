@@ -140,7 +140,7 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         :param open_invite: 是否需要在本方法内打开邀请界面
         :return: 邀请是否成功
         """
-        logger.hr('Invite friends', 2)
+        logger.hr('邀请好友', 2)
         if not config.friend_list_v:
             logger.warning('No friend to invite')
             return False

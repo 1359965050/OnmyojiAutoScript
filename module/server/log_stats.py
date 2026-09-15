@@ -166,7 +166,8 @@ class LogStatsParser:
         matched = _TITLE_LINE_RE.match(line.strip())
         if not matched:
             return False
-        return matched.group("title").strip().upper() == _BATTLE_TITLE
+        title = matched.group("title").strip().upper()
+        return title in (_BATTLE_TITLE, "战斗开始", "通用战斗开始")
 
     @staticmethod
     def _normalize_title(title: str) -> str:

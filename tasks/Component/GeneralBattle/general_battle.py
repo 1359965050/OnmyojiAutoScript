@@ -736,7 +736,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         """
         if 0 < config.max_continuous <= context.continuous_count:
             return BattleAction.EXIT_WIN if context.is_win else BattleAction.EXIT_LOSE
-        logger.hr("General battle start", 2)
+        logger.hr("战斗开始", 2)
         next_count = context.continuous_count + 1
         self.current_count += 1
         logger.info(f"Current count: {self.current_count}")
@@ -809,7 +809,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         Returns:
             bool: `True` 表示本轮战斗获胜，`False` 表示失败或主动退出。
         """
-        logger.hr("General battle start", 2)
+        logger.hr("战斗开始", 2)
         if config is None:
             config = GeneralBattleConfig()
         if not self._custom_pages_registered:

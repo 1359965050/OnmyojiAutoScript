@@ -29,8 +29,6 @@ class FloatParadeAssets:
 	I_FP_UPGRADE = RuleImage(roi_front=(57,180,39,35), roi_back=(19,153,169,100), threshold=0.8, method="Template matching", file="./tasks/FloatParade/fp/fp_fp_upgrade.png")
 	# 红色关闭 
 	I_FP_RED_CLOSE = RuleImage(roi_front=(1170,109,43,44), roi_back=(1157,101,72,62), threshold=0.8, method="Template matching", file="./tasks/FloatParade/fp/fp_fp_red_close.png")
-	# 寻找花车的切换按钮 
-	I_TOGGLE_BUTTON = RuleImage(roi_front=(1193,462,21,23), roi_back=(1116,127,150,377), threshold=0.7, method="Template matching", file="./tasks/FloatParade/fp/fp_toggle_button.png")
 	# 批量选择 
 	I_BATCH_SELECTION = RuleImage(roi_front=(933,517,44,40), roi_back=(933,517,44,40), threshold=0.8, method="Template matching", file="./tasks/FloatParade/fp/fp_batch_selection.png")
 	# 批量选择确认 

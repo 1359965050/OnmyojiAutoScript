@@ -122,7 +122,7 @@ class SwitchOnmyoji(BaseTask, SwitchOnmyojiAssets):
         不论阴阳师之间切换还是英杰之间切换，统一通过阴阳术主界面的“交替”按钮进入交换界面进行操作。
         :param onmyoji: 目标阴阳师/英杰
         """
-        logger.hr('Switch onmyoji', 2)
+        logger.hr('切换阴阳师/英杰', 2)
         is_hero = onmyoji in [Onmyoji.YORIMITSU, Onmyoji.MICHINAGA]
         target_name = onmyoji.value if hasattr(onmyoji, 'value') else onmyoji.name
         logger.info(f'Switch onmyoji target: {target_name} (is_hero={is_hero})')

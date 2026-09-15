@@ -9,15 +9,6 @@
     "description": "从庭院进入灵染试炼活动"
   },
   {
-    "itemName": "toggle_button",
-    "imageName": "fp_toggle_button.png",
-    "roiFront": "1202,466,22,21",
-    "roiBack": "1090,127,176,377",
-    "method": "Template matching",
-    "threshold": 0.7,
-    "description": "寻找切换按钮"
-  },
-  {
     "itemName": "fp_access_1",
     "imageName": "fp_fp_access_1.png",
     "roiFront": "264,339,26,95",

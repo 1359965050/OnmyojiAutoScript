@@ -325,7 +325,7 @@ def generate_chinese_training_report(save_dir: Path, report_path: Path, trainer=
     classes_list = per_class_data.get('classes', [])
     if classes_list:
         lines.append('## 三、 各品类式神与增益目标检测明细表 (Per-Class Breakdown)\n')
-        lines.append('| YOLO ID | 英文标识 (Key) | 式神 / 目标名称 | 验证样本 | 准确率 (P) | 召回率 (R) | mAP@50 | mAP@50-95 | 评估状态 |')
+        lines.append('| YOLO ID | 英文标识 | 式神 | 验证样本 | 准确率 | 召回率 | mAP@50 | mAP@50-95 | 评估状态 |')
         lines.append('| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |')
 
         warn_classes = []
@@ -344,10 +344,10 @@ def generate_chinese_training_report(save_dir: Path, report_path: Path, trainer=
             img = item.get('images', 0)
 
             if m50 >= 0.90:
-                eval_tag = '🌟 极佳'
-            elif m50 >= 0.75:
-                eval_tag = '✅ 良好'
-            elif m50 >= 0.50:
+                eval_tag = '完美'
+            elif m50 >= 0.80:
+                eval_tag = '一版'
+            elif m50 >= 0.60:
                 eval_tag = '⚠️ 需补充'
                 warn_classes.append(f"{name} ({key})")
             else:

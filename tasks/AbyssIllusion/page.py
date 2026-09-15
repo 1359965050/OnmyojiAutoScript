@@ -1,3 +1,4 @@
+from tasks.Component.RightActivity import RightActivity
 from tasks.GameUi.page import Page, page_main
 from tasks.GlobalGame.assets import GlobalGameAssets
 from tasks.AbyssIllusion.assets import AbyssIllusionAssets
@@ -5,6 +6,7 @@ from tasks.AbyssIllusion.assets import AbyssIllusionAssets
 
 # 活动总览页（伊吹之擂主页面）
 page_act = Page(AbyssIllusionAssets.I_CHECK_ACT_MAIN, key='page_act', register=False)
+page_act.add_enter_failure_hooks(RightActivity.sidebar_switch_hook)
 
 # 狭间幻境挑战页面
 page_abyss_illusion = Page(AbyssIllusionAssets.I_CHECK_ABYSS_ILLUSION_MAIN,

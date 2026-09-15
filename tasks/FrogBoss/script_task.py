@@ -23,7 +23,7 @@ from tasks.FrogBoss.config import Strategy
 
 class ScriptTask(RightActivity, FrogBossAssets, GeneralBattleAssets):
     def run(self):
-        self.enter(self.I_FROG_BOSS_ENTER)
+        self.enter_right_activity(self.I_FROG_BOSS_ENTER)
         # 进入主界面
         while 1:
             self.screenshot()

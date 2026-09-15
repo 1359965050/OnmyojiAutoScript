@@ -18,9 +18,10 @@ class ScriptTask(RightActivity, FloatParadeAssets, TalismanPassAssets):
 
     def run(self):
         con: FloatParadeConfig = self.config.float_parade.float_parade
-        self.enter(self.I_FP_ACCESS)
+        self.enter_right_activity(self.I_FP_ACCESS)
         logger.info('Enter float parade')
-        while 1:
+        wait_timer = Timer(15.0).start()
+        while not wait_timer.reached():
             self.screenshot()
             if self.appear(self.I_FP_UPGRADE):
                 break
@@ -30,8 +31,7 @@ class ScriptTask(RightActivity, FloatParadeAssets, TalismanPassAssets):
                 continue
             if self.appear_then_click(self.I_FP_GIFT_CLOSE, interval=3):
                 continue
-            # if self.appear_then_click(self.I_TOGGLE_BUTTON, interval=3):
-            #     continue
+            time.sleep(0.3)
 
         # 收取 放置里程
         self.get_mileage()
