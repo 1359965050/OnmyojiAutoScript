@@ -1,0 +1,137 @@
+[
+  {
+    "itemName": "generic_fire",
+    "roiFront": "1073,515,199,196",
+    "roiBack": "1073,515,199,196",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "挑战",
+    "description": "通用右下角挑战按钮OCR (挑战)"
+  },
+  {
+    "itemName": "generic_fire_start",
+    "roiFront": "1073,515,199,196",
+    "roiBack": "1073,515,199,196",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "开始",
+    "description": "通用右下角挑战按钮OCR (开始)"
+  },
+  {
+    "itemName": "generic_fire_attack",
+    "roiFront": "1073,515,199,196",
+    "roiBack": "1073,515,199,196",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "出击",
+    "description": "通用右下角挑战按钮OCR (出击)"
+  },
+  {
+    "itemName": "generic_fire_battle",
+    "roiFront": "1073,515,199,196",
+    "roiBack": "1073,515,199,196",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战斗",
+    "description": "通用右下角挑战按钮OCR (战斗)"
+  },
+  {
+    "itemName": "generic_fire_char",
+    "roiFront": "1073,515,199,196",
+    "roiBack": "1073,515,199,196",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战",
+    "description": "通用右下角挑战按钮OCR (单字兜底: 战)"
+  },
+  {
+    "itemName": "generic_tickets_bar",
+    "roiFront": "481,6,600,55",
+    "roiBack": "481,6,600,55",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "",
+    "description": "顶栏活动门票与资源通用检测区域"
+  },
+  {
+    "itemName": "sidebar_activity",
+    "roiFront": "1150,120,110,120",
+    "roiBack": "1150,120,110,120",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "活动",
+    "description": "庭院右侧栏常驻活动图标OCR (活动)"
+  },
+  {
+    "itemName": "overview_title",
+    "roiFront": "140,15,145,45",
+    "roiBack": "140,15,145,45",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "活动总览",
+    "description": "活动总览界面顶部标题OCR (活动总览)"
+  },
+  {
+    "itemName": "overview_version_act",
+    "roiFront": "10,110,220,100",
+    "roiBack": "10,110,220,100",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "版本活动",
+    "description": "活动总览左侧版本活动选项卡OCR (版本活动)"
+  },
+  {
+    "itemName": "overview_goto_act",
+    "roiFront": "1000,600,260,90",
+    "roiBack": "1000,600,260,90",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "前往活动",
+    "description": "活动总览右下角前往活动按钮OCR (前往活动)"
+  },
+  {
+    "itemName": "act_battle_entrance",
+    "roiFront": "260,100,790,450",
+    "roiBack": "260,100,790,450",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战斗",
+    "description": "活动主界面战斗/爬塔核心玩法入口OCR (战斗)"
+  },
+  {
+    "itemName": "act_battle_entrance_char",
+    "roiFront": "260,100,790,450",
+    "roiBack": "260,100,790,450",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战",
+    "description": "活动主界面战斗入口OCR单字兜底 (战)"
+  },
+  {
+    "itemName": "act_battle_entrance_climb",
+    "roiFront": "260,100,790,450",
+    "roiBack": "260,100,790,450",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "爬塔",
+    "description": "活动主界面爬塔玩法入口OCR (爬塔)"
+  },
+  {
+    "itemName": "map_battle_entrance",
+    "roiFront": "0,100,260,400",
+    "roiBack": "0,100,260,400",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战斗",
+    "description": "中转地图左侧关卡卡片入口OCR (战斗)"
+  },
+  {
+    "itemName": "map_battle_entrance_char",
+    "roiFront": "0,100,260,400",
+    "roiBack": "0,100,260,400",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "战",
+    "description": "中转地图左侧关卡卡片入口OCR单字兜底 (战)"
+  }
+]

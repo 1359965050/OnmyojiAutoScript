@@ -85,4 +85,5 @@ class BuyWindow(BaseTask, BuyWindowAssets):
         prefix = f"[{climb_type}] " if climb_type else ""
         logger.warning(f"{prefix}检测到活动门票购买弹窗（门票已不足），判定门票已耗尽，立即关闭弹窗并切换模式！")
         self.close_ticket_buy_window()
+        time.sleep(1.0)
         raise TicketsNotEnough

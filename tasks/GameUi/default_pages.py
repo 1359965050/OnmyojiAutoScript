@@ -6,6 +6,7 @@ from tasks.Component.SwitchAccount.assets import SwitchAccountAssets
 from tasks.Component.SwitchOnmyoji.assets import SwitchOnmyojiAssets
 from tasks.Exploration.assets import ExplorationAssets
 from tasks.GameUi.action import conditional_action, sequence
+from tasks.GameUi.chess_battle import handle_chess_battle_page
 from typing import Union
 
 """GameUi 全局页面定义。"""
@@ -174,6 +175,45 @@ page_town.connect(page_main, GameUiAssets.I_TOWN_GOTO_MAIN, key="page_town->page
 page_main.connect(page_town, GameUiAssets.I_MAIN_GOTO_TOWN, key="page_main->page_town")
 
 # 町中区域页面。
+page_entertainment = Page(GameUiAssets.I_CHECK_ENTERTAINMENT, category="global")
+page_entertainment.add_enter_success_hooks(GameUiAssets.I_CHESS_SKIP)
+page_town.connect(
+    page_entertainment,
+    GameUiAssets.I_TOWN_GOTO_ENTERTAINMENT,
+    key="page_town->page_entertainment",
+    on_enter_failure=[GameUiAssets.I_CHESS_SKIP],
+)
+
+page_chess = Page(GameUiAssets.I_CHECK_CHESS, category="global")
+page_entertainment.connect(
+    page_chess,
+    GameUiAssets.I_ENTERTAINMENT_GOTO_CHESS,
+    key="page_entertainment->page_chess",
+    on_leave_failure=[GameUiAssets.I_CHESS_SKIP],
+    on_enter_failure=[GameUiAssets.I_CHESS_SKIP],
+)
+page_chess.connect(
+    page_entertainment,
+    GlobalGameAssets.I_UI_BACK_YELLOW,
+    key="page_chess->page_entertainment",
+)
+
+page_chess_battle = Page(
+    GameUiAssets.I_CHECK_CHESS_BATTLE,
+    category="global",
+    priority=95,
+)
+page_chess_battle.connect(
+    page_chess,
+    handle_chess_battle_page,
+    key="page_chess_battle->page_chess",
+)
+page_entertainment.connect(
+    page_town,
+    GlobalGameAssets.I_UI_BACK_YELLOW,
+    key="page_entertainment->page_town",
+)
+
 page_duel = Page(GameUiAssets.I_CHECK_DUEL, category="global")
 page_duel.connect(page_town, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_duel->page_town")
 page_town.connect(page_duel, GameUiAssets.I_TOWN_GOTO_DUEL, key="page_town->page_duel")

@@ -7,12 +7,18 @@ from module.base.timer import Timer
 from module.exception import RequestHumanTakeover, GameTooManyClickError, GameStuckError
 from module.logger import logger
 from tasks.GameUi.assets import GameUiAssets
+from tasks.GameUi.chess_battle import ChessBattleNavigationMixin
 from tasks.Restart.assets import RestartAssets
 from tasks.base_task import BaseTask
 from module.device.handle import EmulatorFamily
 
 
-class LoginService(BaseTask, RestartAssets, GameUiAssets):
+class LoginService(
+    ChessBattleNavigationMixin,
+    BaseTask,
+    RestartAssets,
+    GameUiAssets,
+):
     character: str
 
     def __init__(self, *wargs, **kwargs):
@@ -51,6 +57,18 @@ class LoginService(BaseTask, RestartAssets, GameUiAssets):
                     logger.info('Game window is loading (black screen), waiting for rendering...')
                     time.sleep(0.5)
                     continue
+
+            if self.appear_then_click(
+                self.I_RETURN_CHESS_CANCEL,
+                interval=0.8,
+            ):
+                logger.info(
+                    'Detected return chess dialog, canceled to enter result flow'
+                )
+                self.device.sleep(0.5)
+                self.return_to_chess_lobby()
+                confirm_timer.reset()
+                continue
 
             if self.appear_then_click(self.I_CANCEL_BATTLE, interval=0.8):
                 logger.info('Cancel continue battle')

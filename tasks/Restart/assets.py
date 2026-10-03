@@ -111,6 +111,8 @@ class RestartAssets:
 	I_LOGIN_CADPA_RIGHT = RuleImage(roi_front=(1155,570,90,125), roi_back=(1130,550,140,160), threshold=0.7, method="Template matching", file="./tasks/Restart/login/login_login_cadpa_right.png")
 	# PC端网易通行证登录弹窗进入游戏按钮 
 	I_LOGIN_PC_ENTER_GAME = RuleImage(roi_front=(584,426,112,40), roi_back=(520,390,240,110), threshold=0.65, method="Template matching", file="./tasks/Restart/login/login_login_pc_enter_game.png")
+	# 取消返回百鬼棋局，进入棋局结算流程 
+	I_RETURN_CHESS_CANCEL = RuleImage(roi_front=(432,400,181,69), roi_back=(400,370,240,120), threshold=0.8, method="Template matching", file="./tasks/Restart/login/login_return_chess_cancel.png")
 
 
 	# Ocr Rule Assets

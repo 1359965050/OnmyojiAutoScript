@@ -24,6 +24,7 @@ from module.logger import logger
 from tasks.ActivityShikigami.assets import ActivityShikigamiAssets
 from tasks.GameUi.action import ActionSequence, ConditionalAction
 from tasks.GameUi.assets import GameUiAssets
+from tasks.GameUi.chess_battle import ChessBattleNavigationMixin
 from tasks.GameUi.common import infer_tasks_category_from_parts, infer_tasks_category_from_path
 from tasks.GameUi.matcher import collect_rule_images
 from tasks.GameUi.page_definition import Page, Transition, sort_pages_by_priority
@@ -33,7 +34,7 @@ from tasks.SixRealms.assets import SixRealmsAssets
 from tasks.base_task import BaseTask
 
 
-class GameUi(BaseTask, GameUiAssets):
+class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
     """页面识别、导航与未知页恢复的统一入口。"""
 
     REPEATED_TRANSITION_FAILURE_THRESHOLD = 3
@@ -139,6 +140,18 @@ class GameUi(BaseTask, GameUiAssets):
             return target(self)
         if len(signature.parameters) == 0:
             return target()
+        if "task" in signature.parameters:
+            return target(self)
+        has_required_pos = any(
+            p.default is inspect.Parameter.empty
+            and p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            for p in signature.parameters.values()
+        )
+        if not has_required_pos:
+            try:
+                return target()
+            except TypeError:
+                pass
         return target(self)
 
     def match_page_once(self, page: Page) -> bool:
@@ -153,6 +166,9 @@ class GameUi(BaseTask, GameUiAssets):
 
         if page.recognizer is None:
             return False
+        if not hasattr(page.recognizer, "evaluate"):
+            from tasks.GameUi.matcher import ensure_matcher
+            page.recognizer = ensure_matcher(page.recognizer)
         return bool(page.recognizer.evaluate(self))
 
     def confirm_page(self, page: Page, skip_first_screenshot: bool = True) -> bool:

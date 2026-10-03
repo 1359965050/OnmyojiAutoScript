@@ -34,6 +34,8 @@ class GeneralClimb(ConfigBase):
     random_sleep: bool = Field(default=False, description='是否启用在点击战斗前随机休息')
     # 是否存在特殊活动中转地图
     special_act_map: bool = Field(default=True, description='special_act_map_help')
+    # 战斗界面名称（活动玩法入口文字，如“亘地回响”）
+    battle_page_name: str = Field(default='亘地回响', description='battle_page_name_help')
 
     @property
     def limit_time_v(self) -> timedelta:

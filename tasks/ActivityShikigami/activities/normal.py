@@ -10,7 +10,10 @@ class NormalClimbAct(BaseAct):
     """普通爬塔活动"""
 
     def _exit_matcher(self) -> ExitMatcher | None:
-        return pages.any_of(self.I_ACT_FIRE, self.I_AS_BOSS_FIRE)
+        return pages.any_of(
+            self.O_GENERIC_FIRE,
+            getattr(self, 'I_ACT_FIRE', None),
+        )
 
     def before_run(self):
         super().before_run()
@@ -24,12 +27,12 @@ class NormalClimbAct(BaseAct):
             # 体力/门票爬塔与特殊中转界面关联
             page_act_map.connect(
                 page_act_ap,
-                ActivityShikigamiAssets.I_MAP_GOTO_BATTLE,
+                pages.action_map_goto_battle,
                 key="page_act_map->page_act_ap",
             )
             page_act_map.connect(
                 page_act_pass,
-                ActivityShikigamiAssets.I_MAP_GOTO_BATTLE,
+                pages.action_map_goto_battle,
                 key="page_act_map->page_act_pass",
             )
             page_act_ap.connect(
@@ -46,12 +49,12 @@ class NormalClimbAct(BaseAct):
             # 体力/门票爬塔与主界面关联
             page_act.connect(
                 page_act_ap,
-                ActivityShikigamiAssets.I_TO_BATTLE_MAIN,
+                pages.action_act_goto_battle,
                 key="page_act->page_act_ap",
             )
             page_act.connect(
                 page_act_pass,
-                ActivityShikigamiAssets.I_TO_BATTLE_MAIN,
+                pages.action_act_goto_battle,
                 key="page_act->page_act_pass",
             )
             page_act_ap.connect(
@@ -65,15 +68,17 @@ class NormalClimbAct(BaseAct):
                 key="page_act_pass->page_act",
             )
 
-        # 体力爬塔进入是门票则切换
-        page_act_ap.add_enter_failure_hooks(pages.conditional_action(
-            condition=ActivityShikigamiAssets.I_CLIMB_MODE_PASS, action=ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH))
-        # 门票爬塔进入是体力则切换
-        page_act_pass.add_enter_failure_hooks(pages.conditional_action(
-            condition=ActivityShikigamiAssets.I_CLIMB_MODE_AP, action=ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH))
-        # 门票和体力互相切换
-        page_act_pass.connect(page_act_ap, ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH, key="page_act_pass->page_act_ap")
-        page_act_ap.connect(page_act_pass, ActivityShikigamiAssets.I_CLIMB_MODE_SWITCH, key="page_act_ap->page_act_pass")
+        # 自适应页面识别（双态亮度与寿司色彩判定）
+        page_act_ap.recognizer = pages.any_of(self.is_climb_mode_ap)
+        page_act_pass.recognizer = pages.any_of(self.is_climb_mode_pass)
+
+        # 门票和体力互相切换（自适应胶囊区域，点击后等待 1.5s 动画完成）
+        def do_switch_mode(task):
+            getattr(task, 'toggle_climb_mode', lambda: False)(interval=1.5)
+            return True
+
+        page_act_pass.connect(page_act_ap, do_switch_mode, key="page_act_pass->page_act_ap")
+        page_act_ap.connect(page_act_pass, do_switch_mode, key="page_act_ap->page_act_pass")
 
     def lock_team(self, battle_conf: GeneralBattleConfig):
         enable = battle_conf.lock_team_enable

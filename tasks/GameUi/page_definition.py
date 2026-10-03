@@ -114,7 +114,8 @@ class Page:
         # 页面进入该节点的基础代价。
         self.cost = cost
         # 规范化后的页面识别条件。
-        self.recognizer = ensure_matcher(recognizer)
+        self._recognizer: Matcher | None = None
+        self.recognizer = recognizer
         # 从当前页面出发的所有有向边。
         self.transitions: list[Transition] = []
         # 识别到当前页面并稳定进入后的页面级 hook。
@@ -127,6 +128,16 @@ class Page:
         self.on_leave_failure: list[ActionLike] = []
         if register:
             PageRegistry.register(self)
+
+    @property
+    def recognizer(self) -> Matcher | None:
+        """读取规范化后的页面识别条件。"""
+        return self._recognizer
+
+    @recognizer.setter
+    def recognizer(self, value: Union[Matcher, RecognizerLike, Iterable[RecognizerLike], None]):
+        """设置页面识别条件，自动确保转换为合法的 Matcher 对象。"""
+        self._recognizer = ensure_matcher(value)
 
     def __eq__(self, other):
         """按页面 key 判断相等性。"""

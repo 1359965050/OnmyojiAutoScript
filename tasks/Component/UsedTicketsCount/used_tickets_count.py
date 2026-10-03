@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import Optional
 
 from module.atom.ocr import RuleOcr
@@ -142,6 +143,147 @@ class UsedTicketsCount(BaseTask):
 
         return 0, -1, 0
 
+    @classmethod
+    def parse_top_bar_resources(cls, boxed_results: list) -> dict[str, int]:
+        """解析顶栏通用 OCR 区域 (481, 6, 600, 55) 内的多资源信息。
+
+        支持拓扑：
+        1. 截图场景（多独立数字）：
+           从左至右排序后：
+           第 1 项数字 -> 常规活动门票 (pass)
+           第 2 项数字 -> 特殊/首领门票 (boss / ap100 / five)
+           包含 '万' 或第 3 项 -> 体力 (ap)
+        2. 分数型单指标场景：
+           '20/200' -> pass: 180, total: 200, cur_used: 20
+        3. 单纯单数字场景：
+           '50' -> pass: 50, total: 50, cur_used: 0
+
+        Args:
+            boxed_results: OCR 识别出的文本框列表（支持 BoxedResult 实例或含有 box/ocr_text 的对象/字典）
+
+        Returns:
+            dict[str, int]: 结构化各模式资源剩余可用数字，如 {'pass': 50, 'boss': 0, 'ap': 35000}
+        """
+        if not boxed_results:
+            return {}
+
+        # 提取 (x, text) 项并按 x 水平从左到右排序
+        items = []
+        for res in boxed_results:
+            if hasattr(res, 'box') and hasattr(res, 'ocr_text'):
+                x = float(res.box[0, 0])
+                text = str(res.ocr_text).strip()
+            elif isinstance(res, dict):
+                x = float(res.get('x', 0))
+                text = str(res.get('text', '')).strip()
+            elif isinstance(res, (tuple, list)) and len(res) >= 2:
+                x = float(res[0])
+                text = str(res[1]).strip()
+            else:
+                continue
+            if text:
+                items.append((x, text))
+
+        items.sort(key=lambda item: item[0])
+        if not items:
+            return {}
+
+        resources: dict[str, int] = {}
+
+        # 1. 优先检查是否存在分数型表示，如 20/200
+        combined_text = "".join(t for _, t in items)
+        for _, text in items:
+            cur, remain, total = cls.parse_game_ticket_text(text)
+            if '/' in text and total > 0:
+                resources['pass'] = remain
+                resources['total'] = total
+                resources['cur_used'] = cur
+                return resources
+
+        fraction_match = re.search(r'(\d+)\s*/\s*(\d+)', combined_text)
+        if fraction_match:
+            part1 = int(fraction_match.group(1))
+            part2 = int(fraction_match.group(2))
+            resources['pass'] = max(0, part2 - part1)
+            resources['total'] = part2
+            resources['cur_used'] = part1
+            return resources
+
+        # 2. 多独立数字拓扑解析 (如截图中的 50 +, 0 +, 3.5万 +)
+        numeric_tokens: list[tuple[float, int]] = []
+        for x, text in items:
+            clean_text = text.replace('+', '').replace('＋', '').replace('-', '').replace(',', '').strip()
+            if not clean_text:
+                continue
+
+            # 处理体力 '万' 单位，如 3.5万
+            if '万' in clean_text:
+                val_str = clean_text.replace('万', '').strip()
+                try:
+                    ap_val = int(float(val_str) * 10000)
+                    resources['ap'] = ap_val
+                except ValueError:
+                    pass
+                continue
+
+            # 纯整数匹配
+            if clean_text.isdigit():
+                numeric_tokens.append((x, int(clean_text)))
+
+        if not numeric_tokens:
+            return resources
+
+        # 第 1 个数字：常规门票 (pass)
+        resources['pass'] = numeric_tokens[0][1]
+
+        # 第 2 个数字：五倍券/首领特殊挑战门票 (boss / ap100 / five)
+        if len(numeric_tokens) > 1:
+            second_val = numeric_tokens[1][1]
+            resources['boss'] = second_val
+            resources['ap100'] = second_val
+            resources['five'] = second_val
+
+        # 第 3 个数字（若未在前面解析出 '万' 体力）：体力 (ap)
+        if len(numeric_tokens) > 2 and 'ap' not in resources:
+            resources['ap'] = numeric_tokens[2][1]
+
+        return resources
+
+    def detect_generic_top_tickets(
+        self,
+        climb_type: str,
+        ocr_rule: RuleOcr,
+        image=None,
+    ) -> tuple[int, int, int]:
+        """使用顶栏广域规则自适应检测并提取指定爬塔模式的门票状态。
+
+        Args:
+            climb_type: 爬塔模式 ('pass', 'ap', 'boss', 'ap100' 等)
+            ocr_rule: 顶栏 RuleOcr 规则 (如 O_GENERIC_TICKETS_BAR)
+            image: 截图图像
+
+        Returns:
+            tuple[int, int, int]: (已用次数, 剩余可用, 上限)。若未识别出剩余返回 (0, -1, 0)。
+        """
+        if image is None:
+            image = self.device.image
+
+        try:
+            boxed_results = ocr_rule.detect_and_ocr(image, logDisplay=True)
+        except Exception as e:
+            logger.debug(f"顶栏门票 OCR 识别异常: {e}")
+            return 0, -1, 0
+
+        resources = self.parse_top_bar_resources(boxed_results)
+        if not resources:
+            return 0, -1, 0
+
+        remain = resources.get(climb_type, -1)
+        total = resources.get('total', remain if remain >= 0 else 0)
+        cur_used = resources.get('cur_used', 0)
+
+        return cur_used, remain, total
+
     def detect_game_tickets(self, ocr_rule: RuleOcr, image=None) -> tuple[int, int, int]:
         """对游戏界面指定区域执行门票 OCR 识别与结构化提取。
 
@@ -167,19 +309,33 @@ class UsedTicketsCount(BaseTask):
     def check_game_tickets_available(self, climb_type: str, ocr_rule: Optional[RuleOcr] = None) -> bool:
         """检查游戏内是否仍有该类型的门票/体力可用。
 
+        若未显式指定 ocr_rule，则自动回退使用顶栏通用自适应规则 O_GENERIC_TICKETS_BAR。
+
         Args:
-            climb_type: 爬塔类型
-            ocr_rule: 识别门票区域的 RuleOcr 规则
+            climb_type: 爬塔类型 ('pass', 'ap', 'boss', etc.)
+            ocr_rule: 识别门票区域的 RuleOcr 规则（为 None 时采用通用顶栏规则）
 
         Returns:
             bool: True 表示游戏有票可以继续挑战，False 表示已耗尽无票。
         """
-        if ocr_rule is None:
-            # 没有配置 OCR 规则时默认允许，由战斗点击或弹窗接管
+        target_rule = ocr_rule if ocr_rule is not None else getattr(self, 'O_GENERIC_TICKETS_BAR', None)
+        if target_rule is None:
+            # 均无规则时默认允许，由战斗点击或弹窗接管
             return True
 
+        # 预留 0.5 秒缓冲等待，确保刚从战斗结算退回或进入界面时的淡入动效完全结束
+        time.sleep(0.5)
         self.screenshot()
-        cur_used, remain, total = self.detect_game_tickets(ocr_rule, self.device.image)
+        if ocr_rule is not None:
+            cur_used, remain, total = self.detect_game_tickets(ocr_rule, self.device.image)
+        else:
+            cur_used, remain, total = self.detect_generic_top_tickets(climb_type, target_rule, self.device.image)
+
+        if not hasattr(self, '_game_used_map'):
+            self._game_used_map = {}
+        if not hasattr(self, '_game_remain_map'):
+            self._game_remain_map = {}
+
         self._game_used_map[climb_type] = cur_used
         self._game_remain_map[climb_type] = remain
 
@@ -193,9 +349,9 @@ class UsedTicketsCount(BaseTask):
             self._pre_game_tickets_map = {}
         pre_remain = self._pre_game_tickets_map.get(climb_type, -1)
 
-        # 明确识别为 0 且总数 > 0，说明游戏内门票/体力已耗尽
-        if remain == 0 and total > 0:
-            logger.warning(f"[{climb_type}] 游戏门票已耗尽 (已用 {cur_used} / 上限 {total})")
+        # 明确识别为 0（且不是完全未识别 -1），说明游戏内门票/体力已耗尽
+        if remain == 0:
+            logger.warning(f"[{climb_type}] 顶栏识别门票剩余为 0，判定门票耗尽")
             return False
 
         # 如果未识别出有效数字 (-1)

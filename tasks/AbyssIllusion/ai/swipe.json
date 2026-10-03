@@ -1,0 +1,9 @@
+[
+  {
+    "itemName": "swipe_list_up",
+    "roiFront": "110,560,50,30",
+    "roiBack": "110,260,50,30",
+    "mode": "default",
+    "description": "活动总览左侧列表向上滑动"
+  }
+]

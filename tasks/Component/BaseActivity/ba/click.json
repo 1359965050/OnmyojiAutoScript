@@ -1,0 +1,26 @@
+[
+  {
+    "itemName": "generic_mode_switch",
+    "roiFront": "1220,545,38,30",
+    "roiBack": "1220,545,38,30",
+    "description": "通用爬塔模式切换按钮 (1220, 545, 38, 30)"
+  },
+  {
+    "itemName": "sidebar_activity",
+    "roiFront": "1160,140,90,80",
+    "roiBack": "1160,140,90,80",
+    "description": "庭院右侧栏常驻活动大圆形按钮 (1160, 140, 90, 80)"
+  },
+  {
+    "itemName": "overview_version_act",
+    "roiFront": "25,125,130,55",
+    "roiBack": "25,125,130,55",
+    "description": "活动总览左侧版本活动选项卡 (25, 125, 130, 55)"
+  },
+  {
+    "itemName": "overview_goto_act",
+    "roiFront": "1030,615,190,65",
+    "roiBack": "1030,615,190,65",
+    "description": "活动总览右下角前往活动按钮 (1030, 615, 190, 65)"
+  }
+]

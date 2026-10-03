@@ -231,6 +231,8 @@ class BaseCor:
             if result.score < self.score:
                 continue
             result.ocr_text = self.after_process(result.ocr_text)
+            if not result.ocr_text or not result.ocr_text.strip():
+                continue
             results.append(result)
         if logDisplay:
             logger.attr(name='%s %ss' % (self.name, float2str(time.time() - start_time)),

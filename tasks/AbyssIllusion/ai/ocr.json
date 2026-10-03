@@ -7,5 +7,14 @@
     "method": "Default",
     "keyword": "",
     "description": "挑战券数量"
+  },
+  {
+    "itemName": "act_list_ibuki",
+    "roiFront": "10,120,220,580",
+    "roiBack": "10,120,220,580",
+    "mode": "Full",
+    "method": "Default",
+    "keyword": "伊吹之擂",
+    "description": "活动总览左侧列表伊吹之擂选项卡"
   }
 ]

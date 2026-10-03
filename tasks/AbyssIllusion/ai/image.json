@@ -1,14 +1,5 @@
 [
   {
-    "itemName": "main_goto_act",
-    "imageName": "ai_main_goto_act.png",
-    "roiFront": "1170,195,70,80",
-    "roiBack": "1155,180,100,110",
-    "method": "Template matching",
-    "threshold": 0.7,
-    "description": "庭院右侧进入狭间幻境活动入口"
-  },
-  {
     "itemName": "check_act_main",
     "imageName": "ai_check_act_main.png",
     "roiFront": "60,15,170,50",
@@ -38,8 +29,8 @@
   {
     "itemName": "challenge",
     "imageName": "ai_challenge.png",
-    "roiFront": "1130,569,73,64",
-    "roiBack": "1120,559,93,84",
+    "roiFront": "1097,569,150,110",
+    "roiBack": "1067,539,210,170",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "狭间幻境挑战按钮"

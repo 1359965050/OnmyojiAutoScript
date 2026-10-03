@@ -40,18 +40,17 @@ class BaseAct(BaseActivity, ActivityShikigamiAssets):
         return self.current_climb_type
 
     def get_climb_ticket_ocr(self, climb_type: str) -> Optional[RuleOcr]:
-        """获取各爬塔类型对应的界面门票/体力 OCR 规则。"""
+        """获取各爬塔类型对应的界面门票/体力 OCR 规则。
+        若未定义专有规则（如 ap100, boss）则统一采用顶栏广域多资源自适应分拣规则 O_GENERIC_TICKETS_BAR。
+        """
         match climb_type:
-            case 'pass':
-                return self.O_REMAIN_PASS
-            case 'ap':
-                return self.O_REMAIN_AP
             case 'ap100':
-                return self.O_REMAIN_AP100
+                rule = getattr(self, 'O_REMAIN_AP100', None)
             case 'boss':
-                return self.O_REMAIN_BOSS
+                rule = getattr(self, 'O_REMAIN_BOSS', None)
             case _:
-                return None
+                rule = None
+        return rule if rule is not None else getattr(self, 'O_GENERIC_TICKETS_BAR', None)
 
     def before_run(self):
         """活动执行前的页面钩子注册。"""
@@ -104,7 +103,18 @@ class BaseAct(BaseActivity, ActivityShikigamiAssets):
 
                 climb_name = self.get_climb_type_display_name(climb_type)
                 logger.hr(f"开始执行爬塔模式: {climb_name} (目标限额: {target_limit})", 1)
-                self.goto_page(dest_page)
+
+                # 若当前已处于爬塔房间内，直接自适应对齐模式并同步 Navigator 页面状态
+                self.screenshot()
+                cur_room_mode = self.get_current_climb_mode()
+                if cur_room_mode in ('pass', 'ap') and climb_type in ('pass', 'ap'):
+                    if cur_room_mode != climb_type:
+                        self.ensure_climb_mode(climb_type)
+                    self.navigator.current_page = dest_page
+                else:
+                    self.goto_page(dest_page)
+                    if climb_type in ('pass', 'ap'):
+                        self.ensure_climb_mode(climb_type)
 
                 cur_battle_conf = getattr(self.conf, f'{climb_type}_battle_conf', None)
                 if cur_battle_conf is None:
@@ -120,7 +130,11 @@ class BaseAct(BaseActivity, ActivityShikigamiAssets):
                         self.check_activity_timeout()
                         self.check_activity_limit(climb_type)
 
-                        current_page = self.get_current_page()
+                        # 优先在爬塔业务页面集合（房间、战斗准备、战斗中、结算等）内定向识别，避免全局盲扫触发无关页面 OCR
+                        current_page = self.detect_page_in(*self.act_page_handle_dict.keys(), include_global=False)
+                        if current_page is None:
+                            current_page = self.get_current_page()
+
                         if current_page is None:
                             unknown_page_count += 1
                             if unknown_page_count >= 30:
@@ -179,12 +193,12 @@ class BaseAct(BaseActivity, ActivityShikigamiAssets):
             climb_type=self.climb_type,
             ticket_ocr=ticket_ocr,
             battle_conf=cur_battle_conf,
-            fire_ocr=self.O_FIRE,
-            confirm_image=self.I_UI_CONFIRM,
-            confirm_small_image=self.I_UI_CONFIRM_SAMLL,
-            no_tickets_image=self.I_UI_BACK_RED,
-            soul_records_button=self.I_BATTLE_MAIN_TO_RECORDS,
-            soul_records_check=self.I_CHECK_RECORDS,
+            fire_ocr=None,
+            confirm_image=getattr(self, 'I_UI_CONFIRM', None),
+            confirm_small_image=getattr(self, 'I_UI_CONFIRM_SAMLL', None),
+            no_tickets_image=getattr(self, 'I_UI_BACK_RED', None),
+            soul_records_button=getattr(self, 'I_BATTLE_MAIN_TO_RECORDS', None),
+            soul_records_check=getattr(self, 'I_CHECK_RECORDS', None),
             random_sleep_enabled=self.conf.general_climb.random_sleep,
         )
 
@@ -194,12 +208,12 @@ class BaseAct(BaseActivity, ActivityShikigamiAssets):
         return self.check_game_tickets_available(self.climb_type, ticket_ocr)
 
     def enter_battle(self) -> bool:
-        """点击挑战进入战斗流程（代理至通用活动组件）。"""
+        """点击挑战进入战斗流程（代理至通用活动组件，自适应右下角挑战按钮）。"""
         return self.enter_battle_generic(
-            fire_ocr=self.O_FIRE,
-            confirm_image=self.I_UI_CONFIRM,
-            confirm_small_image=self.I_UI_CONFIRM_SAMLL,
-            no_tickets_image=self.I_UI_BACK_RED,
+            fire_ocr=None,
+            confirm_image=getattr(self, 'I_UI_CONFIRM', None),
+            confirm_small_image=getattr(self, 'I_UI_CONFIRM_SAMLL', None),
+            no_tickets_image=getattr(self, 'I_UI_BACK_RED', None),
         )
 
     def lock_team(self, battle_conf: GeneralBattleConfig):
