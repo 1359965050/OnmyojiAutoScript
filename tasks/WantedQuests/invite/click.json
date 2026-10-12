@@ -1,0 +1,32 @@
+[
+  {
+    "itemName": "wq_friend_1",
+    "roiFront": "240,185,180,80",
+    "roiBack": "240,185,180,80",
+    "description": "邀请好友-列表第1位"
+  },
+  {
+    "itemName": "wq_friend_2",
+    "roiFront": "530,185,180,80",
+    "roiBack": "530,185,180,80",
+    "description": "邀请好友-列表第2位"
+  },
+  {
+    "itemName": "wq_friend_3",
+    "roiFront": "240,285,180,80",
+    "roiBack": "240,285,180,80",
+    "description": "邀请好友-列表第3位"
+  },
+  {
+    "itemName": "wq_friend_4",
+    "roiFront": "530,285,180,80",
+    "roiBack": "530,285,180,80",
+    "description": "邀请好友-列表第4位"
+  },
+  {
+    "itemName": "wq_friend_5",
+    "roiFront": "240,385,180,80",
+    "roiBack": "240,385,180,80",
+    "description": "邀请好友-列表第5位"
+  }
+]

@@ -18,15 +18,6 @@
     "description": "一般的收获奖励"
   },
   {
-    "itemName": "a_cards_realm",
-    "imageName": "a_a_cards_realm.png",
-    "roiFront": "0,0,100,100",
-    "roiBack": "0,0,100,100",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "\"结界卡\""
-  },
-  {
     "itemName": "a_card_all",
     "imageName": "a_a_card_all.png",
     "roiFront": "357,175,167,59",

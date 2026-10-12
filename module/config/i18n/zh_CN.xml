@@ -2727,10 +2727,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>是否仅在双倍活动期间捐献绘卷</translation>
         </message>
         <message>
-            <source>draw_mystery_pattern</source>
-            <translation>绘制神秘图案</translation>
-        </message>
-        <message>
             <source>duel_config</source>
             <translation>斗技配置</translation>
         </message>
@@ -2967,10 +2963,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>一星</translation>
         </message>
         <message>
-            <source>one_summon</source>
-            <translation>单次召唤</translation>
-        </message>
-        <message>
             <source>orochi_moans</source>
             <translation>御魂悲鸣</translation>
         </message>
@@ -3077,10 +3069,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>summon_dt</source>
             <translation>召唤设置</translation>
-        </message>
-        <message>
-            <source>summon_type</source>
-            <translation>召唤类型</translation>
         </message>
         <message>
             <source>sup_account_count</source>
@@ -4931,6 +4919,14 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
         <message>
             <source>special_act_map_help</source>
             <translation>活动界面是否需要经过中转地图（如周年庆地图等）。关闭则直接从主界面进入爬塔。</translation>
+        </message>
+        <message>
+            <source>battle_page_name</source>
+            <translation>战斗界面名称</translation>
+        </message>
+        <message>
+            <source>battle_page_name_help</source>
+            <translation>活动玩法入口文字（如“亘地回响”），用于 OCR 识别并定位当期活动爬塔的战斗页面入口。</translation>
         </message>
     </context>
     <context>

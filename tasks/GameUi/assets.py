@@ -152,7 +152,7 @@ class GameUiAssets:
 
 	# Image Rule Assets
 	# 庭院标志 
-	I_CHECK_MAIN = RuleImage(roi_front=(807,108,76,45), roi_back=(49,98,1033,61), threshold=0.95, method="Template matching", file="./tasks/GameUi/page/page_check_main.png")
+	I_CHECK_MAIN = RuleImage(roi_front=(807,108,76,45), roi_back=(49,98,1033,74), threshold=0.95, method="Template matching", file="./tasks/GameUi/page/page_check_main.png")
 	# 庭院卷轴关闭标识 
 	I_MAIN_SCROLL_CLOSE = RuleImage(roi_front=(1181,634,28,39), roi_back=(1162,595,77,112), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_main_scroll_close.png")
 	# 庭院探索标志 
@@ -184,7 +184,7 @@ class GameUiAssets:
 	# 阴阳术页面标志 
 	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1150,105,120,570), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
 	# 好友页面标志 
-	I_CHECK_FRIENDS = RuleImage(roi_front=(74,628,58,66), roi_back=(74,628,58,66), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
+	I_CHECK_FRIENDS = RuleImage(roi_front=(27,251,29,47), roi_back=(5,216,86,106), threshold=0.7, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
 	# 花合战页面标志 
 	I_CHECK_DAILY = RuleImage(roi_front=(28,515,58,62), roi_back=(1,487,154,145), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_daily.png")
 	# 商店页面标志 
@@ -380,7 +380,7 @@ class GameUiAssets:
 	# description 
 	I_CHECK_ONMYODO = RuleImage(roi_front=(1166,117,84,547), roi_back=(1150,105,120,570), threshold=0.75, method="Template matching", file="./tasks/GameUi/page/page_check_onmyodo.png")
 	# description 
-	I_CHECK_FRIENDS = RuleImage(roi_front=(74,628,58,66), roi_back=(74,628,58,66), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
+	I_CHECK_FRIENDS = RuleImage(roi_front=(27,251,29,47), roi_back=(5,216,86,106), threshold=0.7, method="Template matching", file="./tasks/GameUi/page/page_check_friends.png")
 	# description 
 	I_CHECK_DAILY = RuleImage(roi_front=(28,515,58,62), roi_back=(1,487,154,145), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_daily.png")
 	# description 

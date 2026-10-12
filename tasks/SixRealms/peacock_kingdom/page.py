@@ -8,7 +8,7 @@ from tasks.SixRealms.page import page_peacock_kingdom, page_sr_prepare_exit, pag
 
 # 孔雀国准备界面（含初始祝福选择 + 初始技能选择 + 开启确认）
 page_pk_prepare = Page(any_of(SixRealmsAssets.I_PK_START_CONFIRM, SixRealmsAssets.I_PK_START_CONFIRM2,
-                              SixRealmsAssets.I_PK_SKILL_STRANGE_POWER, SixRealmsAssets.I_PK_START_THIRD_SKILL),
+                              SixRealmsAssets.I_PK_SKILL_STRANGE_POWER, SixRealmsAssets.I_PK_START_FIRST_SKILL),
                        category="peacock_kingdom")
 # 孔雀国主界面
 page_pk_main = Page(any_of(SixRealmsAssets.I_PK_CHECK_MAIN, SixRealmsAssets.I_PK_BOSS_PREPARE),

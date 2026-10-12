@@ -63,13 +63,13 @@
     "description": "战斗中的六道轰雷"
   },
   {
-    "itemName": "pk_start_third_skill",
-    "imageName": "pk_pk_start_third_skill.png",
-    "roiFront": "1006,601,85,41",
-    "roiBack": "1006,601,85,41",
+    "itemName": "pk_start_first_skill",
+    "imageName": "pk_pk_start_first_skill.png",
+    "roiFront": "231,601,85,41",
+    "roiBack": "186,571,175,101",
     "method": "Template matching",
     "threshold": 0.8,
-    "description": "选择祈愿之舞"
+    "description": "选择绽放之舞"
   },
   {
     "itemName": "pk_check_main",

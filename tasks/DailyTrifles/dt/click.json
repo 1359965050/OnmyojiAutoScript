@@ -1,0 +1,8 @@
+[
+  {
+    "itemName": "dt_claim_success_blank",
+    "roiFront": "900,530,120,80",
+    "roiBack": "900,530,120,80",
+    "description": "领取成功弹窗空白处(点击关闭)"
+  }
+]

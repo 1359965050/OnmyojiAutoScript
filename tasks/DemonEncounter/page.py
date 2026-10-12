@@ -11,3 +11,4 @@ page_rwt.connect(page_demon_encounter, GlobalGameAssets.I_UI_BACK_YELLOW, key="p
 page_town.connect(page_rwt, GameUiAssets.I_TOWN_GOTO_DEMON_ENCOUNTER, key="page_town->page_rwt")
 # 逢魔之时到现世逢魔
 page_demon_encounter.connect(page_rwt, DemonEncounterAssets.I_DE_TO_REAL_WORLD, key="page_demon_encounter->page_rwt")
+page_demon_encounter_realworld = page_rwt

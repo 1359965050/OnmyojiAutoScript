@@ -1,3 +1,4 @@
+from module.atom.click import RuleClick
 from module.atom.image import RuleImage
 from module.base.timer import Timer
 from module.logger import logger
@@ -72,35 +73,52 @@ class SwitchOnmyoji(BaseTask, SwitchOnmyojiAssets):
         }
         return mapping.get(role)
 
-    def _get_role_click_target(self, role: Onmyoji) -> tuple[int, int] | None:
-        """获取角色的点击目标（若卡片未出战时，点击对应卡片中心位置）"""
+    def _get_role_click_rule(self, role: Onmyoji) -> RuleClick | None:
+        """获取角色卡位的点击规则（若卡片未出战时，点击对应卡位出战）"""
         mapping = {
-            Onmyoji.SEIMI: (310, 410),
-            Onmyoji.KAGURA: (540, 410),
-            Onmyoji.HIROMASA: (760, 410),
-            Onmyoji.YAO_BIKUNI: (990, 410),
-            Onmyoji.YORIMITSU: (540, 410),
-            Onmyoji.MICHINAGA: (760, 410),
+            Onmyoji.SEIMI: self.C_SELECT_SEIMI,
+            Onmyoji.KAGURA: self.C_SELECT_KAGURA,
+            Onmyoji.HIROMASA: self.C_SELECT_HIROMASA,
+            Onmyoji.YAO_BIKUNI: self.C_SELECT_YAO_BIKUNI,
+            Onmyoji.YORIMITSU: self.C_SELECT_YORIMITSU,
+            Onmyoji.MICHINAGA: self.C_SELECT_MICHINAGA,
         }
         return mapping.get(role)
 
     def select_role_in_exchange(self, role: Onmyoji, timeout: float = 12) -> bool:
-        """在交换界面中确认或点击目标角色出战"""
+        """在交换界面中确认或点击目标角色出战。
+
+        注意：实机点击卡片后，游戏会**直接完成切换并自动返回阴阳术主界面**
+        （交换界面随之消失），因此除了"战"标志外，还必须以"已离开交换界面"
+        作为切换成功的判定，否则会在主界面上持续盲点卡位坐标。
+        """
         battle_rule = self._get_role_battle_rule(role)
-        click_coord = self._get_role_click_target(role)
-        if not battle_rule or not click_coord:
+        click_rule = self._get_role_click_rule(role)
+        if not battle_rule or not click_rule:
             logger.warning(f"Unknown role type: {role}")
             return False
 
+        role_name = role.value if hasattr(role, 'value') else role.name
+        mx_click = 5
         timer = Timer(timeout).start()
+        clicked = 0
         while not timer.reached():
             self.screenshot()
+            # 1) 目标角色"战"标志已亮起，说明其已在出战状态
             if self.appear(battle_rule):
-                role_name = role.value if hasattr(role, 'value') else role.name
                 logger.info(f"Role {role_name} is in battle")
                 return True
-            self.click(click_coord, interval=1.2)
-        logger.warning(f"select_role_in_exchange {role} timeout")
+            # 2) 点击后游戏自动完成切换并返回阴阳术主界面（已离开交换界面即视为成功）
+            if clicked and not self.is_in_exchange_page() and self.is_in_onmyodo_main():
+                logger.info(f"Role {role_name} switched, auto returned to onmyodo main")
+                return True
+            # 3) 未出战时拟人化点击对应卡位（设上限熔断，杜绝盲点死循环）
+            if clicked >= mx_click:
+                logger.warning(f"select_role_in_exchange {role_name} reach click limit {mx_click}")
+                break
+            if self.click(click_rule, interval=1.2):
+                clicked += 1
+        logger.warning(f"select_role_in_exchange {role_name} timeout")
         return False
 
     def exit_exchange_page(self, timeout: float = 10) -> bool:
@@ -128,18 +146,25 @@ class SwitchOnmyoji(BaseTask, SwitchOnmyojiAssets):
         logger.info(f'Switch onmyoji target: {target_name} (is_hero={is_hero})')
 
         # 1. 在阴阳术主界面点击交替按钮进入交换界面
-        self.enter_exchange_page()
+        if not self.enter_exchange_page():
+            logger.warning(f'Switch onmyoji aborted: enter exchange page failed ({target_name})')
+            return False
 
         # 2. 切换至对应标签（英杰 / 阴阳师）
-        self.switch_exchange_tab(is_hero)
+        if not self.switch_exchange_tab(is_hero):
+            logger.warning(f'Switch onmyoji aborted: switch exchange tab failed ({target_name})')
+            return False
 
         # 3. 选中目标角色出战
-        self.select_role_in_exchange(onmyoji)
+        if not self.select_role_in_exchange(onmyoji):
+            logger.warning(f'Switch onmyoji failed: select role in exchange timeout ({target_name})')
 
         # 4. 返回阴阳术主界面
-        self.exit_exchange_page()
+        if not self.exit_exchange_page():
+            logger.warning(f'Switch onmyoji failed: exit exchange page timeout ({target_name})')
 
         logger.info(f'Switch onmyoji complete: {target_name}')
+        return True
 
     def _get_onmyoji_battle_dict(self):
         """获取阴阳师出战图标映射（兼容老调用）"""

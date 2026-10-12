@@ -54,6 +54,10 @@ class ExplorationAssets:
 	C_CLICK_SETTINGS = RuleClick(roi_front=(55,662,21,21), roi_back=(55,662,21,21), name="click_settings")
 	# 选中候补出战 
 	C_CLICK_STANDBY_TEAM = RuleClick(roi_front=(545,222,506,100), roi_back=(545,222,506,100), name="click_standby_team")
+	# 点击探索大地图主线tab标题 
+	C_CLICK_MAIN_TITLE = RuleClick(roi_front=(1070,174,77,28), roi_back=(1070,174,77,28), name="click_main_title")
+	# 点击探索大地图玩法tab标题 
+	C_CLICK_PALY_TITLE = RuleClick(roi_front=(1178,172,77,28), roi_back=(1178,172,77,28), name="click_paly_title")
 
 
 	# Image Rule Assets
@@ -117,6 +121,10 @@ class ExplorationAssets:
 	I_E_ROTATE_EXIST_RIGHT = RuleImage(roi_front=(829,580,33,35), roi_back=(700,574,450,46), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_ratate_exsit.png")
 	# 大世界界面右侧面板的主线按钮 
 	I_E_MAIN_LINE = RuleImage(roi_front=(1080,140,85,50), roi_back=(1050,120,200,120), threshold=0.8, method="Template matching", file="./tasks/Exploration/res/res_e_main_line.png")
+	# 探索大地图主线tab标题锚点(章字) 
+	I_CHECK_MAIN_TITLE = RuleImage(roi_front=(1150,457,32,32), roi_back=(1069,222,113,336), threshold=0.85, method="Template matching", file="./tasks/Exploration/res/res_check_main_title.png")
+	# 探索大地图玩法tab标题锚点(御魂) 
+	I_CHECK_PLAY_TITLE = RuleImage(roi_front=(1073,214,40,32), roi_back=(1065,210,190,316), threshold=0.85, method="Template matching", file="./tasks/Exploration/res/res_check_play_title.png")
 
 
 	# Long Click Rule Assets

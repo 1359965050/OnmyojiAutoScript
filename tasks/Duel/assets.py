@@ -62,6 +62,8 @@ class DuelAssets:
 	I_D_CELEB_HONOR = RuleImage(roi_front=(150,640,50,50), roi_back=(80,600,180,100), threshold=0.75, method="Template matching", file="./tasks/Duel/duel/duel_d_celeb_honor.png")
 	# 小白弹窗 
 	I_WHITE_DOG = RuleImage(roi_front=(388,327,70,62), roi_back=(308,254,215,249), threshold=0.8, method="Template matching", file="./tasks/Duel/duel/duel_white_dog.png")
+	# 斗技胜利MVP分享页右下分享按钮 
+	I_D_VICTORY_SHARE = RuleImage(roi_front=(1100,580,90,120), roi_back=(1080,560,130,160), threshold=0.8, method="Masked template matching", file="./tasks/Duel/duel/duel_d_victory_share.png")
 
 
 	# Ocr Rule Assets

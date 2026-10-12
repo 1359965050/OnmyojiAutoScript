@@ -37,6 +37,7 @@ class ScriptTask(BaseExploration):
             pages.page_exp_exit: self.run_on_exp_exit,
             pages.page_exp_entrance: self.run_on_exp_entrance,
             pages.page_exploration: self.run_on_exp,
+            pages.page_mainline: self.run_on_exp,
             pages.page_battle_prepare: self.run_on_battle,
             pages.page_battle: self.run_on_battle,
             pages.page_battle_result: self.run_on_battle,
@@ -49,6 +50,17 @@ class ScriptTask(BaseExploration):
         self.pre_process()
         self.exec_exp_page()
         self.post_process()
+
+    def on_exp_map_without_page(self) -> bool:
+        """页面锚点抖动时的兜底判定：是否仍处于探索副本界面。
+
+        只认 boss 气泡这一强特征：`I_NORMAL_BATTLE_BUTTON` 的 roi_back 是全屏、
+        阈值又低(0.72)，在设置页等界面会误报(实测 0.858)，不能作为判据。
+        能识别到 boss 气泡说明画面依旧是探索主界面，此时**绝不能**调用 goto_page
+        —— 导航器识别不到当前页会触发 "Try switch to a supported page" 回退，
+        误点左上角返回键弹出「退出探索」弹窗，卡在 page_exp_exit -> page_exp_main 的失败过渡里。
+        """
+        return self.appear(self.I_BOSS_BATTLE_BUTTON)
 
     def exec_exp_page(self):
         target_page = self.navigator.resolve_page(pages.page_battle_team_exit)
@@ -64,8 +76,21 @@ class ScriptTask(BaseExploration):
                 if self.ui_reward_appear_click():
                     self.device.stuck_record_clear()
                     none_count = 0
-                elif none_count >= 10:
-                    logger.info("Page is None for 5s, try to goto_page(page_exp_main)")
+                elif none_count >= 4 and self.on_exp_map_without_page():
+                    # 连续 2s 识别不到页面，但能看到 boss 气泡 → 仍在探索副本界面
+                    # (如 boss 出场演出/妖气特效干扰锚点)，直接按探索主界面继续处理，
+                    # 保证 boss 能被识别并攻击，且不会误触导航回退
+                    logger.info(
+                        'Page anchors unstable but boss bubble detected, run exp main directly '
+                        f'(boss={self.I_BOSS_BATTLE_BUTTON.last_score:.3f})'
+                    )
+                    self.run_on_exp_main()
+                    self.device.stuck_record_clear()
+                    none_count = 0
+                elif none_count >= 20:
+                    # 兜底放宽到 10s：boss 出场演出期间 HUD 会被短暂隐藏，
+                    # 过早 goto_page 会误触导航回退导致卡死
+                    logger.info("Page is None for 10s, try to goto_page(page_exp_main)")
                     self.goto_page(pages.page_exp_main)
                     none_count = 0
                 time.sleep(0.5)

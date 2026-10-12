@@ -195,8 +195,8 @@ class SixRealmsAssets:
 	I_PK_CHECK_MAP = RuleImage(roi_front=(1120,19,142,233), roi_back=(1103,0,177,271), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_check_map.png")
 	# 战斗中的六道轰雷 
 	I_PK_BATTLE_THUNDER = RuleImage(roi_front=(79,94,29,30), roi_back=(12,83,205,52), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_battle_thunder.png")
-	# 选择祈愿之舞 
-	I_PK_START_THIRD_SKILL = RuleImage(roi_front=(1006,601,85,41), roi_back=(1006,601,85,41), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_start_third_skill.png")
+	# 选择绽放之舞 
+	I_PK_START_FIRST_SKILL = RuleImage(roi_front=(231,601,85,41), roi_back=(186,571,175,101), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_start_first_skill.png")
 	# 孔雀国主界面标志 
 	I_PK_CHECK_MAIN = RuleImage(roi_front=(93,18,112,48), roi_back=(93,18,112,48), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_check_main.png")
 
@@ -237,8 +237,6 @@ class SixRealmsAssets:
 	# Image Rule Assets
 	# 绽放之屿离开 
 	I_PK_BLOOM_EXIT = RuleImage(roi_front=(1153,630,62,60), roi_back=(1141,615,84,98), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_bloom_exit.png")
-	# 绽放之屿学习 
-	I_PK_BLOOM_LEARN = RuleImage(roi_front=(1115,600,85,85), roi_back=(1080,570,150,130), threshold=0.8, method="Template matching", file="./tasks/SixRealms/peacock_kingdom/pk/pk_pk_bloom_learn.png")
 
 
 	# Image Rule Assets

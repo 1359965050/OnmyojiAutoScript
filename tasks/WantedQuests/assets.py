@@ -19,6 +19,19 @@ class WantedQuestsAssets:
 	I_WQC_FIRE = RuleImage(roi_front=(1088,582,85,49), roi_back=(1058,550,147,139), threshold=0.7, method="Template matching", file="./tasks/WantedQuests/chanllenge/chanllenge_wqc_fire.png")
 
 
+	# Click Rule Assets
+	# 邀请好友-列表第1位 
+	C_WQ_FRIEND_1 = RuleClick(roi_front=(240,185,180,80), roi_back=(240,185,180,80), name="wq_friend_1")
+	# 邀请好友-列表第2位 
+	C_WQ_FRIEND_2 = RuleClick(roi_front=(530,185,180,80), roi_back=(530,185,180,80), name="wq_friend_2")
+	# 邀请好友-列表第3位 
+	C_WQ_FRIEND_3 = RuleClick(roi_front=(240,285,180,80), roi_back=(240,285,180,80), name="wq_friend_3")
+	# 邀请好友-列表第4位 
+	C_WQ_FRIEND_4 = RuleClick(roi_front=(530,285,180,80), roi_back=(530,285,180,80), name="wq_friend_4")
+	# 邀请好友-列表第5位 
+	C_WQ_FRIEND_5 = RuleClick(roi_front=(240,385,180,80), roi_back=(240,385,180,80), name="wq_friend_5")
+
+
 	# Image Rule Assets
 	# description 
 	I_WQ_INVITE_1 = RuleImage(roi_front=(137,361,39,47), roi_back=(108,338,100,100), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_invite_1.png")
@@ -26,16 +39,6 @@ class WantedQuestsAssets:
 	I_WQ_INVITE_2 = RuleImage(roi_front=(462,361,37,47), roi_back=(435,336,100,100), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_invite_2.png")
 	# description 
 	I_WQ_INVITE_3 = RuleImage(roi_front=(754,366,39,42), roi_back=(728,339,100,100), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_invite_3.png")
-	# description 
-	I_WQ_FRIEND_1 = RuleImage(roi_front=(240,185,180,80), roi_back=(240,185,180,80), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_friend_1.png")
-	# description 
-	I_WQ_FRIEND_2 = RuleImage(roi_front=(530,185,180,80), roi_back=(530,185,180,80), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_friend_2.png")
-	# description 
-	I_WQ_FRIEND_3 = RuleImage(roi_front=(240,285,180,80), roi_back=(240,285,180,80), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_friend_3.png")
-	# description 
-	I_WQ_FRIEND_4 = RuleImage(roi_front=(530,285,180,80), roi_back=(530,285,180,80), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_friend_4.png")
-	# description 
-	I_WQ_FRIEND_5 = RuleImage(roi_front=(240,385,180,80), roi_back=(240,385,180,80), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/invite_wq_friend_5.png")
 	# 悬赏封印邀请确定按钮 
 	I_WQ_INVITE_ENSURE = RuleImage(roi_front=(500,540,132,60), roi_back=(500,540,140,65), threshold=0.8, method="Template matching", file="./tasks/WantedQuests/invite/wq_invite_ensure.png")
 	# 悬赏封印邀请取消按钮 

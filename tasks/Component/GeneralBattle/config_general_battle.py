@@ -34,10 +34,10 @@ class GeneralBattleConfig(BaseModel):
     preset_team: int = Field(default=1, description='preset_team_help', ge=1, le=5)
     # 是否开启绿标
     green_enable: bool = Field(default=False, description='green_enable_help')
-    # 绿标类型
-    green_mark_type: GreenMarkEnum = Field(default=GreenMarkEnum.CHOOSE)
     # 选哪一个绿标
     green_mark: GreenMarkType = Field(default=GreenMarkType.GREEN_LEFT1, description='green_mark_help')
+    # 绿标按坐标还是按式神名点击
+    green_mark_type: GreenMarkEnum = Field(default=GreenMarkEnum.CHOOSE, description='green_mark_type_help')
     # 绿标式神的名称
     green_mark_name: str = Field(default='', description='green_mark_name_help')
     # 是否启动战斗时随机点击或者随机滑动

@@ -30,6 +30,13 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
     user_status: UserStatus = UserStatus.ALONE
     wait_start_time: datetime = datetime.now()
     pre_page: pages.Page = None
+    # 候补式神"充足"状态有效期：游戏每消耗一次候补就会把「自动轮换」置回关闭，
+    # 这属于正常表现；此期间只需在主界面重新点开轮换，无需进设置补候补
+    ALTERNATE_ENOUGH_VALID: timedelta = timedelta(seconds=180)
+    # 主界面重开轮换的最大连续尝试次数(熔断，防止点不开时死循环)
+    ROTATE_MAP_TOGGLE_MAX: int = 3
+    alternate_enough_time: datetime = datetime.min
+    rotate_toggle_cnt: int = 0
 
     def _exit_matcher(self) -> ExitMatcher:
         return pages.any_of(self.I_E_SETTINGS_BUTTON, self.I_E_AUTO_ROTATE_ON, self.I_E_AUTO_ROTATE_OFF)
@@ -82,6 +89,8 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
             self.close_buff()
         self.user_status = self._config.exploration_config.user_status
         self.wait_start_time = datetime.now()  # 重置等待时间
+        # 探索页面（大地图始终处于主线/玩法 tab 之一，直接进入主线 tab）
+        self.goto_page(pages.page_mainline)
 
     def post_process(self):
         self.goto_page(pages.page_exploration)
@@ -99,8 +108,10 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
 
     # 打开指定的章节：
     def open_expect_level(self):
-        # 新版大世界界面需要先切换到右侧面板的“主线”标签
-        self.appear_then_click(self.I_E_MAIN_LINE, interval=1)
+        # 选关依赖主线 tab 右侧的章节列表（I_E_EXPLORATION_CLICK + 章节名 OCR）。
+        # 探索大地图常驻「主线/玩法」之一，若停在玩法 tab 不选回主线，右边会是御魂/今日掉落等模块名，
+        # I_E_EXPLORATION_CLICK 不出现、OCR 交集为空 → 一直滑屏卡死。故进选关前无条件确保主线 tab。
+        self.goto_page(pages.page_mainline)
         swipeCount = 0
         config_exploration_level = self.config.exploration.exploration_config.exploration_level
         while True:
@@ -165,6 +176,8 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
         cu, res, total = self.O_E_ALTERNATE_NUMBER.ocr(self.device.image)
         if cu >= 40:
             logger.info("Alternate number is enough")
+            self.alternate_enough_time = datetime.now()  # 标记候补充足，避免反复进设置
+            self.rotate_toggle_cnt = 0
             self.goto_page(pages.page_exp_main)
             return
         choose_rarity = self._config.exploration_config.choose_rarity
@@ -181,6 +194,8 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
             cur, res, total = self.O_E_ALTERNATE_NUMBER.ocr(self.device.image)
             if cur >= 40:
                 logger.info(f'Alternate number is enough, exit')
+                self.alternate_enough_time = datetime.now()  # 标记候补充足，避免反复进设置
+                self.rotate_toggle_cnt = 0
                 break
             # 连续向后滑动超过6次还能识别到候补狗粮(1. 滑动的不够× 2. 没新狗粮了)
             if self.device.click_record.count(self.S_SWIPE_SHIKI_TO_LEFT.name) >= 6 or \
@@ -332,6 +347,16 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
         match self._config.exploration_config.auto_rotate:
             case AutoRotate.yes:
                 if self.appear(self.I_E_AUTO_ROTATE_OFF):  # 轮换关闭/式神不够了则需要打开并添加式神
+                    # 候补刚确认充足：游戏每次消耗候补后都会把轮换置回关闭(正常表现)，
+                    # 此时只需在主界面重新点开轮换即可，省掉一次"进设置+6次滑动"的往返
+                    if (datetime.now() - self.alternate_enough_time < self.ALTERNATE_ENOUGH_VALID
+                            and self.rotate_toggle_cnt < self.ROTATE_MAP_TOGGLE_MAX):
+                        if self.appear_then_click(self.I_E_AUTO_ROTATE_OFF, interval=2):
+                            self.rotate_toggle_cnt += 1
+                            logger.info('Alternate shikigami is enough, reopen auto rotate on map')
+                            return True
+                    # 候补状态未知/不足，或主界面点不开：进设置补候补
+                    self.rotate_toggle_cnt = 0
                     self.click(self.C_CLICK_SETTINGS, interval=2)
                     return True
             case AutoRotate.no:  # 不是自动添加候补式神则关闭轮换
@@ -376,7 +401,8 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
             return True
         # 没打boss或者收集纸人奖励, 且出现了纸人则处理掉落奖励
         if self.appear(self.I_BATTLE_REWARD) and self._config.exploration_config.collect_paper_reward:
-            self.ui_get_reward(self.I_BATTLE_REWARD)
+            # 领完宝箱后游戏可能直接跳回章节界面(page_exp_entrance)，开启提前退出避免空等 10s
+            self.ui_get_reward(self.I_BATTLE_REWARD, exit_when_target_gone=True)
             self.wait_start_time = datetime.now()  # 队友等待时间重置
             return True
         return False

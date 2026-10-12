@@ -23,8 +23,6 @@ class MetaDemonAssets:
 	I_MD_SHIKIGAMI = RuleImage(roi_front=(1039,628,40,38), roi_back=(1018,617,81,77), threshold=0.8, method="Template matching", file="./tasks/MetaDemon/md/md_md_shikigami.png")
 	# 鬼王结算中 
 	I_MD_SETTLING = RuleImage(roi_front=(723,441,82,32), roi_back=(714,431,100,51), threshold=0.8, method="Template matching", file="./tasks/MetaDemon/md/md_md_settling.png")
-	# 鬼王合成 
-	I_MD_SYNTHESIZE = RuleImage(roi_front=(0,0,100,100), roi_back=(0,0,100,100), threshold=0.8, method="Template matching", file="./tasks/MetaDemon/md/md_md_synthesize.png")
 	# 鬼王页面标志 
 	I_CHECK_BOSS_PAGE = RuleImage(roi_front=(1064,19,43,40), roi_back=(1054,7,62,63), threshold=0.8, method="Template matching", file="./tasks/MetaDemon/md/md_check_boss_page.png")
 	# 超鬼王主界面 

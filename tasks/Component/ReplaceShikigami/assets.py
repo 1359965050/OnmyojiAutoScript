@@ -44,8 +44,6 @@ class ReplaceShikigamiAssets:
 	I_DETECT_EMPTY_5 = RuleImage(roi_front=(914,257,100,100), roi_back=(872,221,198,190), threshold=0.8, method="Template matching", file="./tasks/Component/ReplaceShikigami/rs/rs_detect_empty_5.png")
 	# description 
 	I_DETECT_EMPTY_6 = RuleImage(roi_front=(1135,253,100,100), roi_back=(1091,229,156,159), threshold=0.8, method="Template matching", file="./tasks/Component/ReplaceShikigami/rs/rs_detect_empty_6.png")
-	# description 
-	I_NEW = RuleImage(roi_front=(0,0,100,100), roi_back=(0,0,100,100), threshold=0.8, method="Template matching", file="./tasks/Component/ReplaceShikigami/rs/image_name.png")
 
 
 	# Image Rule Assets

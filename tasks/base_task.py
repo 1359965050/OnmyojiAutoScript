@@ -724,26 +724,37 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             self.screenshot()
         return self.appear_then_click(self.I_UI_REWARD, action=self.C_UI_REWARD, interval=0.4, threshold=0.6)
 
-    def ui_get_reward(self, click_image: RuleImage | RuleOcr | RuleClick, click_interval: float = 1):
+    def ui_get_reward(self, click_image: RuleImage | RuleOcr | RuleClick, click_interval: float = 1,
+                      exit_when_target_gone: bool = False):
         """
         传进来一个点击图片 或是 一个ocr， 会点击这个图片，然后等待‘获得奖励’，
         最后当获得奖励消失后 退出
         :param click_interval:
         :param click_image:
+        :param exit_when_target_gone: 已点过一次目标图后，若目标图与奖励面板双双消失
+            (游戏直接跳走，如探索打完 boss+宝箱后跳回章节界面)则提前结束，不再空等满 10s
         :return:
         """
         _timer = Timer(10)
         _timer.start()
+        clicked = False
+        _gone = 0
         while True:
             self.screenshot()
 
             if self.ui_reward_appear_click():
                 sleep(0.5)
+                # 内层等待动画结束，必须有上限，否则奖励面板持续误匹配时会死循环
+                _inner = Timer(10)
+                _inner.start()
                 while True:
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):
                         logger.info('Get reward success')
+                        break
+                    if _inner.reached():
+                        logger.warning('Get reward panel not disappear, stop waiting')
                         break
 
                     # 一直点击
@@ -754,14 +765,27 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                 logger.warning('Get reward timeout')
                 break
 
+            # 目标图消失且奖励面板未出现 → 画面已切走，提前结束空等
+            if (exit_when_target_gone and clicked
+                    and isinstance(click_image, RuleImage) and not self.appear(click_image)):
+                _gone += 1
+                if _gone >= 8:
+                    logger.info('Reward target gone, stop waiting reward')
+                    break
+            else:
+                _gone = 0
+
             if isinstance(click_image, RuleImage):
                 if self.appear_then_click(click_image, interval=click_interval):
+                    clicked = True
                     continue
             elif isinstance(click_image, RuleOcr):
                 if self.ocr_appear_click(click_image, interval=click_interval):
+                    clicked = True
                     continue
             elif isinstance(click_image, RuleClick):
                 if self.click(click_image, interval=click_interval):
+                    clicked = True
                     continue
 
         return True

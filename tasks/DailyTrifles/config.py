@@ -6,12 +6,6 @@ from pydantic import BaseModel, Field
 
 from tasks.Component.config_scheduler import Scheduler
 from tasks.Component.config_base import ConfigBase, dynamic_hide, DateTime
-from enum import Enum
-
-
-class SummonType(str, Enum):
-    default = '普通召唤'
-    recall = '今忆召唤'
 
 
 class PetsConfig(ConfigBase):
@@ -41,19 +35,12 @@ class DoneRecord(ConfigBase):
 
 
 class DailyTriflesConfig(BaseModel):
-    # 庭院事务
+    # 庭院事务（已内含单次召唤，故不再单独提供）
     courtyard_affairs: bool = Field(default=True)
     # 收取邮件
     pickup_email: bool = Field(default=True)
-    one_summon: bool = Field(title='One Summon', default=False)
-    # 召唤类型
-    summon_type: SummonType = Field(default=SummonType.default, description='召唤类型')
-    # 是否绘制神秘图案
-    draw_mystery_pattern: bool = Field(title='Draw Mystery Pattern', default=False, description='是否绘制神秘图案')
     luck_msg: bool = Field(title='Luck Msg', default=False)
     store_sign: bool = Field(title='Store Sign', default=False, description='store_sign_help')
-
-    hide_fields = dynamic_hide('draw_mystery_pattern')
 
 
 class DailyTrifles(ConfigBase):

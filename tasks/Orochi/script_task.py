@@ -53,8 +53,8 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
 
         config: Orochi = self.config.orochi
         if not self.is_in_battle(True):
-            self.goto_page(page_main)
             if config.orochi_config.soul_buff_enable:
+                self.goto_page(page_main)
                 self.open_buff()
                 self.soul(is_open=True)
                 self.close_buff()

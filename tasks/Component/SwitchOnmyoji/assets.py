@@ -15,6 +15,18 @@ class SwitchOnmyojiAssets:
 	C_SWITCH_TAB_ONMYOJI = RuleClick(roi_front=(25,210,45,100), roi_back=(25,210,45,100), name="switch_tab_onmyoji")
 	# 英杰切换标签 
 	C_SWITCH_TAB_HERO = RuleClick(roi_front=(25,445,45,90), roi_back=(25,445,45,90), name="switch_tab_hero")
+	# 交换界面-晴明卡位 
+	C_SELECT_SEIMI = RuleClick(roi_front=(280,380,60,60), roi_back=(280,380,60,60), name="select_seimi")
+	# 交换界面-神乐卡位 
+	C_SELECT_KAGURA = RuleClick(roi_front=(510,380,60,60), roi_back=(510,380,60,60), name="select_kagura")
+	# 交换界面-源博雅卡位 
+	C_SELECT_HIROMASA = RuleClick(roi_front=(730,380,60,60), roi_back=(730,380,60,60), name="select_hiromasa")
+	# 交换界面-八百比丘尼卡位 
+	C_SELECT_YAO_BIKUNI = RuleClick(roi_front=(960,380,60,60), roi_back=(960,380,60,60), name="select_yao_bikuni")
+	# 交换界面-源赖光卡位（英杰页居中左） 
+	C_SELECT_YORIMITSU = RuleClick(roi_front=(510,380,60,60), roi_back=(510,380,60,60), name="select_yorimitsu")
+	# 交换界面-藤原道长卡位（英杰页居中右） 
+	C_SELECT_MICHINAGA = RuleClick(roi_front=(730,380,60,60), roi_back=(730,380,60,60), name="select_michinaga")
 
 
 	# Image Rule Assets

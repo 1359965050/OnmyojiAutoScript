@@ -27,15 +27,6 @@
     "description": "鬼王结算中"
   },
   {
-    "itemName": "md_synthesize",
-    "imageName": "md_md_synthesize.png",
-    "roiFront": "0,0,100,100",
-    "roiBack": "0,0,100,100",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "鬼王合成"
-  },
-  {
     "itemName": "check_boss_page",
     "imageName": "md_check_boss_page.png",
     "roiFront": "1064,19,43,40",

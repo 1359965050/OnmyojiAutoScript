@@ -27,51 +27,6 @@
     "description": "description"
   },
   {
-    "itemName": "wq_friend_1",
-    "imageName": "invite_wq_friend_1.png",
-    "roiFront": "240,185,180,80",
-    "roiBack": "240,185,180,80",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
-  {
-    "itemName": "wq_friend_2",
-    "imageName": "invite_wq_friend_2.png",
-    "roiFront": "530,185,180,80",
-    "roiBack": "530,185,180,80",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
-  {
-    "itemName": "wq_friend_3",
-    "imageName": "invite_wq_friend_3.png",
-    "roiFront": "240,285,180,80",
-    "roiBack": "240,285,180,80",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
-  {
-    "itemName": "wq_friend_4",
-    "imageName": "invite_wq_friend_4.png",
-    "roiFront": "530,285,180,80",
-    "roiBack": "530,285,180,80",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
-  {
-    "itemName": "wq_friend_5",
-    "imageName": "invite_wq_friend_5.png",
-    "roiFront": "240,385,180,80",
-    "roiBack": "240,385,180,80",
-    "method": "Template matching",
-    "threshold": 0.8,
-    "description": "description"
-  },
-  {
     "itemName": "wq_invite_ensure",
     "imageName": "wq_invite_ensure.png",
     "roiFront": "500,540,132,60",

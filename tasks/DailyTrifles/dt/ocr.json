@@ -1,0 +1,11 @@
+[
+  {
+    "itemName": "mail_empty",
+    "roiFront": "495,252,275,66",
+    "roiBack": "495,252,275,66",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "当前暂无系统邮件",
+    "description": "邮箱为空提示"
+  }
+]

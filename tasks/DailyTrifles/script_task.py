@@ -9,31 +9,26 @@ from tasks.Component.config_base import Time
 from tasks.DailyTrifles.page import page_store_gift_room, page_friends_luck
 from winerror import NOERROR
 
-from tasks.GameUi.page import page_main, page_summon, page_guild, page_mall, page_friends, page_courtyard_affairs, page_shikigami_records
+from tasks.GameUi.page import page_main, page_guild, page_mall, page_friends, page_courtyard_affairs, page_shikigami_records
 from tasks.GameUi.default_pages import page_pet
 from tasks.DailyTrifles.config import DailyTriflesConfig
 from tasks.DailyTrifles.assets import DailyTriflesAssets
 from tasks.GlobalGame.assets import GlobalGameAssets
-from tasks.Component.Summon.summon import Summon
 from tasks.Orochi.script_task import ScriptTask as OrochiScriptTask
 from tasks.Orochi.config import Layer
 from tasks.Orochi.page import page_orochi
 from module.logger import logger
 from module.exception import TaskEnd
 from module.base.timer import Timer
-from tasks.DailyTrifles.config import SummonType
-import re
 
 
-class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets):
+class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run(self):
         con = self.config.daily_trifles.trifles_config
         pets_con = self.config.daily_trifles.pets_config
         simple_tidy_con = self.config.daily_trifles.simple_tidy
-        # 每日召唤
-        if con.one_summon:
-            self.run_one_summon()
+        # 庭院事务（已内含单次召唤）
         if con.courtyard_affairs:
             self.run_courtyard_affairs()
         # 宠物喂养
@@ -241,115 +236,6 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets):
             self.run_switch_soul_by_name(conf.group_name, conf.team_name)
         self.run_alone()
 
-    def run_one_summon(self):
-        logger.hr('daily summon', 2)
-        if self.config.daily_trifles.today_is_done('summon'):
-            logger.info('Today is done, skip')
-            return
-        self.goto_page(page_summon)
-        config = self.config.daily_trifles.trifles_config
-        if config.summon_type == SummonType.default:
-            self.summon_one(draw_mystery_pattern=config.draw_mystery_pattern)
-            self.check_time()
-        elif config.summon_type == SummonType.recall:
-            self.summon_recall()
-        self.back_summon_main()
-        self.config.daily_trifles.done_record.summon_dt = datetime.now()
-
-    def check_time(self):
-        config = self.config.daily_trifles.trifles_config
-        now = datetime.now()
-        next_run = now + self.config.daily_trifles.scheduler.success_interval
-        # 检查是否跨月（next_run的月份与当前月份不同）
-        if next_run.month != now.month:
-            # 跨月重置神秘图案触发状态
-            if not config.draw_mystery_pattern:
-                config.draw_mystery_pattern = True
-                logger.info(
-                    f"reset draw_mystery_pattern to True, next_run: {next_run}")
-        else:
-            # 如果还是在同一月份，则没必要再绘制神秘图案
-            config.draw_mystery_pattern = False
-        self.config.save()
-
-    def summon_recall(self):
-        """
-        确保在召唤界面,每日召唤一次
-        召唤结束后回到 召唤主界面
-        :return:
-        """
-        list = [self.O_SELECT_SM2, self.O_SELECT_SM3, self.O_SELECT_SM4]
-        count = 0
-        while True:
-            count += 1
-
-            for i in range(len(list)):
-                sleep(1)
-                self.goto_page(page_summon)
-                self.appear_then_click(self.I_UI_BACK_RED, interval=1)
-                x, y = list[i].coord()
-                self.device.click(x, y)
-                sleep(1)
-                self.screenshot()
-                if self.appear(self.I_RECALL_TICKET):
-                    break
-                logger.info("Select preset group RECALL")
-
-            self.screenshot()
-            if self.appear(self.I_RECALL_TICKET):
-                break
-            if count >= 3:
-                self.config.notifier.push(title='今忆召唤抽卡失败', content='每日任务,今忆召唤抽卡失败!!!')
-                return
-
-        logger.info('Summon one RECALL')
-        self.wait_until_appear(self.I_RECALL_TICKET)
-        while True:
-            ticket_info = self.O_RECALL_TICKET_AREA.ocr(self.device.image)
-            # 处理 None 和空字符串
-            if ticket_info is None or ticket_info == '':
-                ticket_info = 0
-            else:
-                # 使用正则表达式提取字符串中的数字
-                match = re.search(r'\d+', ticket_info)
-                if match:
-                    ticket_info = int(match.group())
-                else:
-                    logger.warning(f'Invalid ticket_info value: {ticket_info}, expected a numeric string')
-                    ticket_info = 0  # 将无效值设置为默认值 0
-            if ticket_info <= 0:
-                logger.warning('There is no any one RECALL ticket')
-                return
-            # 某些情况下滑动异常
-            self.S_RANDOM_SWIPE_1.name = 'S_RANDOM_SWIPE'
-            self.S_RANDOM_SWIPE_2.name = 'S_RANDOM_SWIPE'
-            self.S_RANDOM_SWIPE_3.name = 'S_RANDOM_SWIPE'
-            self.S_RANDOM_SWIPE_4.name = 'S_RANDOM_SWIPE'
-            while 1:
-                self.screenshot()
-                if self.appear(self.I_RECALL_ONE_TICKET):
-                    break
-                if self.appear_then_click(self.I_RECALL_TICKET, interval=1):
-                    continue
-
-            # 画一张票
-            sleep(1)
-            while 1:
-                self.screenshot()
-                if self.appear(self.I_RECALL_SM_CONFIRM, interval=0.6):
-                    self.ui_click_until_disappear(self.I_RECALL_SM_CONFIRM)
-                    break
-                if self.appear(self.I_SM_CONFIRM_2, interval=0.6):
-                    self.ui_click_until_disappear(self.I_SM_CONFIRM_2)
-                    break
-                if self.appear(self.I_RECALL_ONE_TICKET, interval=1):
-                    # 某些时候会点击到 “语言召唤”
-                    if self.appear_then_click(self.I_UI_CANCEL, interval=0.8):
-                        continue
-                    self.summon()
-                    continue
-            logger.info('Summon one success')
-
     def run_luck_msg(self):
         logger.hr('luck msg', 2)
         if self.config.daily_trifles.today_is_done('luck_msg'):
@@ -425,8 +311,43 @@ class ScriptTask(OrochiScriptTask, Summon, DailyTriflesAssets):
             if self.appear_then_click(self.I_ENTER_DAILY, interval=1):
                 continue
         self.appear_then_click(self.I_ONE_COMPLETE, interval=1)
+        # 「一键完成」后会弹出「领取成功」结算弹窗（游戏提示"点击空白处关闭"），
+        # 它会盖住左上角返回键与庭院主页标识，导致 page_courtyard_affairs -> page_main
+        # 过渡持续失败(penalty=1.0)，必须点空白处关闭后再离开
+        self.close_claim_success_popup()
         self.goto_page(page_main)
         self.config.daily_trifles.done_record.courtyard_affairs_dt = datetime.now()
+
+    def close_claim_success_popup(self, appear_timeout: float = 4, close_timeout: float = 8) -> bool:
+        """关闭「一键完成」后的「领取成功」结算弹窗（点空白处）。
+
+        该弹窗会盖住「一键完成」按钮、左上角返回键与庭院主页标识，
+        导致离开过渡一直失败(penalty=1.0)。游戏内提示"点击空白处关闭"。
+
+        :param appear_timeout: 等待弹窗出现的上限(秒)
+        :param close_timeout: 点击关闭的上限(秒)
+        :return: 弹窗已关闭(或未出现)返回 True
+        """
+        # 1) 等弹窗出现：弹窗会盖住「一键完成」按钮
+        appear_timer = Timer(appear_timeout).start()
+        while not appear_timer.reached():
+            self.screenshot()
+            if not self.appear(self.I_ONE_COMPLETE):
+                break
+            self.device.sleep(0.3)
+        else:
+            return True  # 没等到弹窗，无需处理
+        # 2) 点空白处关闭，直到「一键完成」按钮或庭院主页重新可见
+        close_timer = Timer(close_timeout).start()
+        while not close_timer.reached():
+            self.screenshot()
+            if self.appear(self.I_ONE_COMPLETE) or self.appear(self.I_CHECK_MAIN):
+                logger.info('Claim success popup closed')
+                return True
+            logger.info('Claim success popup detected, click blank area to close')
+            self.click(self.C_DT_CLAIM_SUCCESS_BLANK, interval=1)
+        logger.warning('Claim success popup not closed in time')
+        return False
 
     def run_pickup_email(self):
         """领取邮件"""

@@ -10,5 +10,41 @@
     "roiFront": "25,445,45,90",
     "roiBack": "25,445,45,90",
     "description": "英杰切换标签"
+  },
+  {
+    "itemName": "select_seimi",
+    "roiFront": "280,380,60,60",
+    "roiBack": "280,380,60,60",
+    "description": "交换界面-晴明卡位"
+  },
+  {
+    "itemName": "select_kagura",
+    "roiFront": "510,380,60,60",
+    "roiBack": "510,380,60,60",
+    "description": "交换界面-神乐卡位"
+  },
+  {
+    "itemName": "select_hiromasa",
+    "roiFront": "730,380,60,60",
+    "roiBack": "730,380,60,60",
+    "description": "交换界面-源博雅卡位"
+  },
+  {
+    "itemName": "select_yao_bikuni",
+    "roiFront": "960,380,60,60",
+    "roiBack": "960,380,60,60",
+    "description": "交换界面-八百比丘尼卡位"
+  },
+  {
+    "itemName": "select_yorimitsu",
+    "roiFront": "510,380,60,60",
+    "roiBack": "510,380,60,60",
+    "description": "交换界面-源赖光卡位（英杰页居中左）"
+  },
+  {
+    "itemName": "select_michinaga",
+    "roiFront": "730,380,60,60",
+    "roiBack": "730,380,60,60",
+    "description": "交换界面-藤原道长卡位（英杰页居中右）"
   }
 ]
