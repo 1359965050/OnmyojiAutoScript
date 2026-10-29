@@ -43,5 +43,14 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "右上角检查是否在日常中"
+  },
+  {
+    "itemName": "claim_success",
+    "imageName": "dt_claim_success.png",
+    "roiFront": "305,30,185,50",
+    "roiBack": "270,15,255,80",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "领取成功结算弹窗标志"
   }
 ]

@@ -7,5 +7,14 @@
     "method": "Default",
     "keyword": "当前暂无系统邮件",
     "description": "邮箱为空提示"
+  },
+  {
+    "itemName": "mail_confirm",
+    "roiFront": "670,530,180,70",
+    "roiBack": "640,510,220,100",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "确定",
+    "description": "全部领取确认按钮"
   }
 ]

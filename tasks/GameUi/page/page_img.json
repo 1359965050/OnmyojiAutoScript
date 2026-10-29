@@ -183,7 +183,7 @@
     "itemName": "check_area_boss",
     "imageName": "page_check_area_boss.png",
     "roiFront": "20,320,150,130",
-    "roiBack": "20,320,150,130",
+    "roiBack": "10,310,170,150",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "description"

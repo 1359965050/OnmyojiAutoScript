@@ -111,7 +111,7 @@ class GameUiAssets:
 	# 秘闻页面标志 
 	I_CHECK_SECRET_ZONES = RuleImage(roi_front=(1145,592,110,119), roi_back=(1145,592,110,119), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_secret_zones.png")
 	# 地鬼页面标志 
-	I_CHECK_AREA_BOSS = RuleImage(roi_front=(20,320,150,130), roi_back=(20,320,150,130), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_area_boss.png")
+	I_CHECK_AREA_BOSS = RuleImage(roi_front=(20,320,150,130), roi_back=(10,310,170,150), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_area_boss.png")
 	# 平安奇谭页面标志 
 	I_CHECK_HEIAN_KITAN = RuleImage(roi_front=(27,48,47,39), roi_back=(27,48,47,39), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_heian_kitan.png")
 	# 契灵页面标志 
@@ -306,7 +306,7 @@ class GameUiAssets:
 	# description 
 	I_CHECK_SECRET_ZONES = RuleImage(roi_front=(1145,592,110,119), roi_back=(1145,592,110,119), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_secret_zones.png")
 	# description 
-	I_CHECK_AREA_BOSS = RuleImage(roi_front=(20,320,150,130), roi_back=(20,320,150,130), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_area_boss.png")
+	I_CHECK_AREA_BOSS = RuleImage(roi_front=(20,320,150,130), roi_back=(10,310,170,150), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_area_boss.png")
 	# description 
 	I_CHECK_HEIAN_KITAN = RuleImage(roi_front=(27,48,47,39), roi_back=(27,48,47,39), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_heian_kitan.png")
 	# description 

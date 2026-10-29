@@ -203,6 +203,9 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
     def run_pets_feed(self):
         """宠物喂养"""
         logger.hr('Pets feed', 2)
+        if self.config.daily_trifles.trifles_config.courtyard_affairs and self.config.daily_trifles.today_is_done('courtyard_affairs'):
+            logger.info('Pets feed already completed by courtyard affairs today, skip')
+            return
         self.goto_page(page_pet)
         self._feed()
         self.goto_page(page_main)
@@ -293,6 +296,9 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
     def run_courtyard_affairs(self):
         """庭院事务"""
         logger.hr('courtyard affairs', 2)
+        if self.config.daily_trifles.today_is_done('courtyard_affairs'):
+            logger.info('Today is done, skip')
+            return
         self.goto_page(page_main)
         timeout_timer = Timer(3).start()
         while not timeout_timer.reached():
@@ -302,7 +308,8 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                 timeout_timer.reset()
                 break
         if timeout_timer.reached():
-            logger.info('Not have courtyard affairs, exit')
+            logger.info('Not have courtyard affairs (already done today), exit')
+            self.config.daily_trifles.done_record.courtyard_affairs_dt = datetime.now()
             return
         while True:
             self.screenshot()
@@ -318,30 +325,36 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
         self.goto_page(page_main)
         self.config.daily_trifles.done_record.courtyard_affairs_dt = datetime.now()
 
-    def close_claim_success_popup(self, appear_timeout: float = 4, close_timeout: float = 8) -> bool:
+    def close_claim_success_popup(self, appear_timeout: float = 3, close_timeout: float = 8) -> bool:
         """关闭「一键完成」后的「领取成功」结算弹窗（点空白处）。
 
-        该弹窗会盖住「一键完成」按钮、左上角返回键与庭院主页标识，
-        导致离开过渡一直失败(penalty=1.0)。游戏内提示"点击空白处关闭"。
+        该弹窗会盖住左上角返回键与庭院主页标识，导致离开过渡一直失败(penalty=1.0)。
+        游戏内提示"点击空白处关闭"。
 
         :param appear_timeout: 等待弹窗出现的上限(秒)
         :param close_timeout: 点击关闭的上限(秒)
         :return: 弹窗已关闭(或未出现)返回 True
         """
-        # 1) 等弹窗出现：弹窗会盖住「一键完成」按钮
+        # 1) 等弹窗出现（特征：出现「领取成功」标志）
         appear_timer = Timer(appear_timeout).start()
+        has_popup = False
         while not appear_timer.reached():
             self.screenshot()
-            if not self.appear(self.I_ONE_COMPLETE):
+            if self.appear(self.I_CLAIM_SUCCESS):
+                has_popup = True
+                break
+            if not self.appear(self.I_ONE_COMPLETE) and not self.appear(self.I_CHECK_COURTYARD_AFFAIRS):
+                has_popup = True
                 break
             self.device.sleep(0.3)
-        else:
+        if not has_popup:
             return True  # 没等到弹窗，无需处理
-        # 2) 点空白处关闭，直到「一键完成」按钮或庭院主页重新可见
+
+        # 2) 点空白处关闭，直到弹窗消失或庭院主页/庭院事务主界面重新可见
         close_timer = Timer(close_timeout).start()
         while not close_timer.reached():
             self.screenshot()
-            if self.appear(self.I_ONE_COMPLETE) or self.appear(self.I_CHECK_MAIN):
+            if not self.appear(self.I_CLAIM_SUCCESS) or self.appear(self.I_CHECK_COURTYARD_AFFAIRS) or self.appear(self.I_CHECK_MAIN):
                 logger.info('Claim success popup closed')
                 return True
             logger.info('Claim success popup detected, click blank area to close')
@@ -352,6 +365,9 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
     def run_pickup_email(self):
         """领取邮件"""
         logger.hr('pick up email', 2)
+        if self.config.daily_trifles.today_is_done('pickup_email'):
+            logger.info('Today is done, skip')
+            return
         self.goto_page(page_main)
         self.screenshot()
         if self.appear(self.I_DT_HARVEST_MAIL_COPY):
@@ -361,38 +377,88 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
             self.device.click(x=1165, y=35, control_name='MAIL_ICON')
             logger.info('Clicked fixed mail icon position')
         self.device.sleep(1)
-        self.screenshot()
+
+        # 1. 等待进入邮箱界面或判定空邮箱
+        enter_timer = Timer(5).start()
+        in_mailbox = False
+        while not enter_timer.reached():
+            self.screenshot()
+            if self.appear(self.I_HARVEST_MAIL_ALL) or self.appear(self.O_MAIL_EMPTY) or self.appear(GlobalGameAssets.I_UI_BACK_RED):
+                in_mailbox = True
+                break
+            self.device.sleep(0.3)
+        if not in_mailbox:
+            logger.warning('Failed to enter mail page')
+            return
+
         if self.appear(self.O_MAIL_EMPTY):
             logger.info('No system emails, exit mail page')
-            self.appear_then_click(GlobalGameAssets.I_UI_BACK_RED, interval=1.2)
-            self.device.sleep(1)
+            self.ui_click_until_disappear(GlobalGameAssets.I_UI_BACK_RED, interval=1.2)
             self.goto_page(page_main)
             self.config.daily_trifles.done_record.pickup_email_dt = datetime.now()
             return
-        timeout_timer = Timer(20).start()
-        while not timeout_timer.reached():
+
+        # 2. 尝试一键领取邮件（优先处理“全部领取”弹窗）
+        logger.info('Try harvest all mails')
+        harvest_timer = Timer(8).start()
+        clicked_harvest = False
+        confirmed_harvest = False
+        while not harvest_timer.reached():
             self.screenshot()
-            if self.appear(self.O_MAIL_EMPTY):
-                logger.info('No system emails, exit mail page')
-                self.appear_then_click(GlobalGameAssets.I_UI_BACK_RED, interval=1.2)
+            # 优先处理“全部领取”确认弹窗（通过模板匹配或OCR“确定”）
+            if self.appear(self.I_HARVEST_MAIL_CONFIRM) or self.ocr_appear(self.O_MAIL_CONFIRM):
+                logger.info('Confirm harvest all mails')
+                if self.appear_then_click(self.I_HARVEST_MAIL_CONFIRM, interval=0.8) or \
+                        self.ocr_appear_click(self.O_MAIL_CONFIRM, interval=0.8):
+                    confirmed_harvest = True
+                    self.device.sleep(0.5)
+                    break
+            # 处理可能的“获得奖励”弹窗
+            if self.ui_reward_appear_click():
+                confirmed_harvest = True
+                self.device.sleep(0.3)
                 break
-            if self.appear_then_click(self.I_HARVEST_MAIL_ALL, interval=2):
-                timeout_timer.reset()
-                continue
-            if self.appear_then_click(self.I_READ_ALL_MAIL, interval=3):
-                continue
-            if self.appear_then_click(self.I_HARVEST_MAIL_CONFIRM, interval=1):
-                continue
-            from tasks.Restart.assets import RestartAssets
-            if self.appear_then_click(RestartAssets.I_HARVEST_MAIL_OPEN, interval=1):
-                continue
-            if self.appear(self.I_DT_HARVEST_MAIL_COPY):
-                self.device.click(x=1165, y=35, control_name='MAIL_ICON')
-                continue
-        self.appear_then_click(GlobalGameAssets.I_UI_BACK_RED, interval=1.2)
-        self.device.sleep(1)
+            # 点击“一键领取”纸人
+            if not clicked_harvest:
+                if self.appear_then_click(self.I_HARVEST_MAIL_ALL, interval=1.5):
+                    clicked_harvest = True
+                    self.device.sleep(0.8)
+                    continue
+            else:
+                # 已点击过一键领取，若等待超过 2 秒既无确认弹窗也无奖励弹窗，说明暂无附件可领
+                if harvest_timer.current() > 3.0 and not self.appear(self.I_HARVEST_MAIL_CONFIRM) and not self.ocr_appear(self.O_MAIL_CONFIRM):
+                    logger.info('No harvestable attachments or already harvested')
+                    break
+            self.device.sleep(0.3)
+
+        # 若确认了领取，等待并关闭可能弹出的获得奖励弹窗
+        if confirmed_harvest:
+            reward_timer = Timer(3).start()
+            while not reward_timer.reached():
+                self.screenshot()
+                if self.ui_reward_appear_click():
+                    self.device.sleep(0.3)
+                    continue
+                if not self.appear(self.I_HARVEST_MAIL_CONFIRM) and not self.ocr_appear(self.O_MAIL_CONFIRM):
+                    break
+                self.device.sleep(0.3)
+
+        # 3. 尝试一键已读
+        logger.info('Try read all mails')
+        read_timer = Timer(4).start()
+        while not read_timer.reached():
+            self.screenshot()
+            if self.appear_then_click(self.I_READ_ALL_MAIL, interval=1.2):
+                self.device.sleep(0.5)
+                break
+            self.device.sleep(0.3)
+
+        # 4. 关闭邮箱，返回庭院
+        logger.info('Close mail page')
+        self.ui_click_until_disappear(GlobalGameAssets.I_UI_BACK_RED, interval=1.2)
         self.goto_page(page_main)
         self.config.daily_trifles.done_record.pickup_email_dt = datetime.now()
+        logger.info('Mail pickup finished')
 
     def plan_next_dt(self):
         # 定时领体力（每天 12-14、20-22 时内各有 20 体力）

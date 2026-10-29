@@ -154,7 +154,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
 
         # 如果已经打过该BOSS,直接跳过不打了
         if self.is_group_ranked():
-            self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
+            self.ui_click(self.I_AB_CLOSE_RED, self.I_FILTER)
             return True
 
         # 难度/层数处理
@@ -177,7 +177,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             result = False
             logger.warning("Area Boss Fight Failed ")
         self.wait_until_appear(self.I_AB_CLOSE_RED)
-        self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=1)
+        self.ui_click(self.I_AB_CLOSE_RED, self.I_FILTER)
         return result
 
     def start_fight(self) -> bool:

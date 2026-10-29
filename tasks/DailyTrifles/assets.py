@@ -12,7 +12,7 @@ class DailyTriflesAssets:
 
 	# Click Rule Assets
 	# 领取成功弹窗空白处(点击关闭) 
-	C_DT_CLAIM_SUCCESS_BLANK = RuleClick(roi_front=(900,530,120,80), roi_back=(900,530,120,80), name="dt_claim_success_blank")
+	C_DT_CLAIM_SUCCESS_BLANK = RuleClick(roi_front=(580,680,120,25), roi_back=(580,680,120,25), name="dt_claim_success_blank")
 
 
 	# Image Rule Assets
@@ -26,6 +26,8 @@ class DailyTriflesAssets:
 	I_ENTER_DAILY = RuleImage(roi_front=(1131,122,84,76), roi_back=(1117,98,136,226), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_enter_daily.png")
 	# 右上角检查是否在日常中 
 	I_CHECK_IN_DAILY = RuleImage(roi_front=(1131,115,106,88), roi_back=(1128,94,151,281), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_check_in_daily.png")
+	# 领取成功结算弹窗标志 
+	I_CLAIM_SUCCESS = RuleImage(roi_front=(305,30,185,50), roi_back=(270,15,255,80), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_claim_success.png")
 
 
 	# Image Rule Assets
@@ -34,7 +36,7 @@ class DailyTriflesAssets:
 	# 一键已读所有邮件 
 	I_READ_ALL_MAIL = RuleImage(roi_front=(180,605,130,35), roi_back=(149,588,182,72), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_read_all_mail.png")
 	# 确认收取邮件 
-	I_HARVEST_MAIL_CONFIRM = RuleImage(roi_front=(687,543,168,64), roi_back=(687,543,168,64), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_confirm.png")
+	I_HARVEST_MAIL_CONFIRM = RuleImage(roi_front=(678,541,168,64), roi_back=(620,500,260,130), threshold=0.68, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_confirm.png")
 	# 邮件图标 
 	I_DT_HARVEST_MAIL_COPY = RuleImage(roi_front=(1156,15,29,21), roi_back=(1127,0,80,60), threshold=0.7, method="Template matching", file="./tasks/DailyTrifles/dt/dt_harvest_mail_copy.png")
 
@@ -42,6 +44,8 @@ class DailyTriflesAssets:
 	# Ocr Rule Assets
 	# 邮箱为空提示 
 	O_MAIL_EMPTY = RuleOcr(roi=(495,252,275,66), area=(495,252,275,66), mode="Single", method="Default", keyword="当前暂无系统邮件", name="mail_empty")
+	# 全部领取确认按钮 
+	O_MAIL_CONFIRM = RuleOcr(roi=(670,530,180,70), area=(640,510,220,100), mode="Single", method="Default", keyword="确定", name="mail_confirm")
 
 
 	# Image Rule Assets
@@ -70,11 +74,11 @@ class DailyTriflesAssets:
 
 	# Image Rule Assets
 	# 宠物小屋 
-	I_PET_HOUSE = RuleImage(roi_front=(1012,414,56,25), roi_back=(952,412,144,60), threshold=0.7, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_house.png")
+	I_PET_HOUSE = RuleImage(roi_front=(1012,414,56,25), roi_back=(900,380,240,120), threshold=0.7, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_house.png")
 	# 爪印 
-	I_PET_CLAW = RuleImage(roi_front=(1171,625,55,56), roi_back=(1171,625,55,56), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_claw.png")
+	I_PET_CLAW = RuleImage(roi_front=(1171,625,55,56), roi_back=(1110,570,165,145), threshold=0.75, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_claw.png")
 	# 快速喂养 
-	I_PET_FEAST = RuleImage(roi_front=(849,624,69,49), roi_back=(849,624,69,49), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_feast.png")
+	I_PET_FEAST = RuleImage(roi_front=(849,624,69,49), roi_back=(800,580,170,120), threshold=0.75, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_feast.png")
 	# 喂食 
 	I_PET_FEED = RuleImage(roi_front=(899,511,79,68), roi_back=(884,485,127,123), threshold=0.8, method="Template matching", file="./tasks/DailyTrifles/pet/pet_pet_feed.png")
 	# 跳过 

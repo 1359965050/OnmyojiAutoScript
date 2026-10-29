@@ -153,6 +153,8 @@ page_travel.connect(page_main, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_trav
 page_main.connect(page_travel, GameUiAssets.I_MAIN_GOTO_TRAVEL, key="page_main->page_travel")
 
 page_pet = Page(any_of(DailyTriflesAssets.I_PET_CLAW, DailyTriflesAssets.I_PET_FEAST), category="global")
+page_pet.add_enter_failure_hooks(conditional_action(condition=GameUiAssets.I_CHECK_MAIN,
+                                                    action=RestartAssets.C_LOGIN_SCROLL_CLOSE_AREA))
 page_pet.connect(page_main, GlobalGameAssets.I_UI_BACK_CIRCLE, key="page_pet->page_main")
 page_main.connect(page_pet, DailyTriflesAssets.I_PET_HOUSE, key="page_main->page_pet")
 page_pet.add_enter_success_hooks(conditional_action(condition=lambda task: not task.appear(DailyTriflesAssets.I_PET_FEAST),

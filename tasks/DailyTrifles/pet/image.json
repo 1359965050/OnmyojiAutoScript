@@ -3,7 +3,7 @@
     "itemName": "pet_house",
     "imageName": "pet_pet_house.png",
     "roiFront": "1012,414,56,25",
-    "roiBack": "952,412,144,60",
+    "roiBack": "900,380,240,120",
     "method": "Template matching",
     "threshold": 0.7,
     "description": "宠物小屋"
@@ -12,18 +12,18 @@
     "itemName": "pet_claw",
     "imageName": "pet_pet_claw.png",
     "roiFront": "1171,625,55,56",
-    "roiBack": "1171,625,55,56",
+    "roiBack": "1110,570,165,145",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "爪印"
   },
   {
     "itemName": "pet_feast",
     "imageName": "pet_pet_feast.png",
     "roiFront": "849,624,69,49",
-    "roiBack": "849,624,69,49",
+    "roiBack": "800,580,170,120",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.75,
     "description": "快速喂养"
   },
   {
