@@ -58,6 +58,8 @@ class Device(Platform, Screenshot, Control, AppControl):
 
         if is_pc:
             super().__init__(*args, **kwargs)
+            from module.atom.image import set_roi_match_padding, DESKTOP_ROI_MATCH_PAD
+            set_roi_match_padding(DESKTOP_ROI_MATCH_PAD)
             from tasks.Script.config_device import ScreenshotMethod, ControlMethod
             self.config.script.device.screenshot_method = ScreenshotMethod.WINDOW_BACKGROUND
             self.config.script.device.control_method = ControlMethod.WINDOW_MESSAGE
@@ -93,6 +95,11 @@ class Device(Platform, Screenshot, Control, AppControl):
                     logger.warning('Timeout waiting for Onmyoji PC client window to appear.')
                     if hasattr(self, 'init_handle'):
                         self.init_handle()
+
+            # 自动校准桌面版窗口物理客户区大小为标准 1280x720，保证 1:1 像素资产对齐
+            if hasattr(self, 'desktop_window_set_size'):
+                self.desktop_window_set_size(1280, 720)
+
             logger.info('Device initialized successfully for Windows Native Client.')
 
             # 关键等待：等待客户端窗口脱离启动黑屏阶段，确保游戏画面渲染就绪
@@ -107,10 +114,11 @@ class Device(Platform, Screenshot, Control, AppControl):
                 from module.image.rpc import ensure_image_server_ready
                 ensure_image_server_ready()
                 from tasks.Restart.assets import RestartAssets
-                from tasks.Component.Login.service import LoginService
+                from tasks.Component.Login.service import LoginService, find_desktop_login_popup
                 self.screenshot()
                 is_at_login = (
                     need_login
+                    or find_desktop_login_popup() != 0
                     or RestartAssets.I_LOGIN_PC_ENTER_GAME.match(self.image)
                     or RestartAssets.I_LOGIN_CADPA_RIGHT.match(self.image)
                 )
@@ -120,6 +128,9 @@ class Device(Platform, Screenshot, Control, AppControl):
             except Exception as e:
                 logger.warning(f'Auto login in Device init: {e}')
             return
+
+        from module.atom.image import set_roi_match_padding
+        set_roi_match_padding(0)
 
         for trial in range(4):
             try:

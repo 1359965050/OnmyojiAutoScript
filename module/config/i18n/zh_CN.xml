@@ -6148,6 +6148,10 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>拾光之窗</translation>
         </message>
         <message>
+            <source>costume_shikigami_13</source>
+            <translation>梦隙闲花</translation>
+        </message>
+        <message>
             <source>default</source>
             <translation>默认</translation>
         </message>

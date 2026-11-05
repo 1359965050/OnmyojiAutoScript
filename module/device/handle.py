@@ -265,12 +265,33 @@ class Handle:
             return None
 
         # 优先检测阴阳师桌面版窗口（忽略 IDE 或编辑器窗口）
+        pc_candidates = []
         for window_title in windows:
             if '阴阳师' in window_title or 'Onmyoji' in window_title:
                 if any(ide in window_title.lower() for ide in ['ide', 'antigravity', 'visual studio', 'code', 'pycharm', 'cursor']):
                     continue
-                logger.info(f'Found Onmyoji Windows client title: {window_title}')
-                return window_title
+                pc_candidates.append(window_title)
+
+        if pc_candidates:
+            if len(pc_candidates) == 1:
+                logger.info(f'Found Onmyoji Windows client title: {pc_candidates[0]}')
+                return pc_candidates[0]
+            # 存在多个候选窗口时（例如启动器残留或同名窗口），优先取客户区面积最大的真实渲染窗口
+            best_title = pc_candidates[0]
+            best_area = -1
+            for title in pc_candidates:
+                hwnd = FindWindow(None, title)
+                if hwnd and IsWindow(hwnd):
+                    try:
+                        rect = GetClientRect(hwnd)
+                        area = (rect[2] - rect[0]) * (rect[3] - rect[1])
+                        if area > best_area:
+                            best_area = area
+                            best_title = title
+                    except Exception:
+                        pass
+            logger.info(f'Selected best Onmyoji Windows client title: {best_title} (client area: {best_area})')
+            return best_title
 
         if is_windows_client:
             logger.info('Onmyoji PC client window is not present yet.')

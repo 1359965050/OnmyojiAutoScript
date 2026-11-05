@@ -496,7 +496,10 @@ class Script:
 
         self._reset_task_runtime_outcome()
         try:
-            self.device.screenshot()
+            if command == 'Restart':
+                logger.info('Skip screenshot before Restart task')
+            else:
+                self.device.screenshot()
             module_name = 'script_task'
             module_path = str(Path.cwd() / 'tasks' / command / (module_name + '.py'))
             logger.info(f'module_path: {module_path}, module_name: {module_name}')

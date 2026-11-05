@@ -17,7 +17,7 @@ class ConfigManual:
         > BondlingFairyland > EvoZone > GoryouRealm > HeroTest
         > CollectiveMissions
         > TalismanPass > Delegation > Hyakkiyakou
-        > Secret > WeeklyTrifles > Duel > Chess > SixRealms
+        > Secret > WeeklyTrifles > Duel > FindJade > Chess > SixRealms
         > TrueOrochi > RichMan
         > MetaDemon > FrogBoss > FloatParade > Quiz > KittyShop > DyeTrials > MemoryScrolls > GuguArtStudio > AbyssIllusion
         """

@@ -13,6 +13,66 @@ from tasks.base_task import BaseTask
 from module.device.handle import EmulatorFamily
 
 
+def find_desktop_login_popup(target_pid: int | None = None) -> int:
+    """
+    按类名 MPAY_LOGIN 查找网易通行证登录独立顶层弹窗。
+    网易 MPay 弹窗采用 DirectUI 绘制，无子控件且独立于游戏主窗口渲染表面。
+    """
+    import sys
+    if sys.platform != 'win32':
+        return 0
+    from win32gui import EnumWindows, GetClassName, IsWindow
+    from win32process import GetWindowThreadProcessId
+
+    found_hwnd = 0
+
+    def enum_cb(hwnd, param):
+        nonlocal found_hwnd
+        try:
+            if not IsWindow(hwnd):
+                return True
+            if GetClassName(hwnd) == 'MPAY_LOGIN':
+                if target_pid:
+                    _, win_pid = GetWindowThreadProcessId(hwnd)
+                    if win_pid == target_pid:
+                        found_hwnd = hwnd
+                        return False
+                else:
+                    found_hwnd = hwnd
+                    return False
+        except Exception:
+            pass
+        return True
+
+    EnumWindows(enum_cb, None)
+    return found_hwnd
+
+
+def confirm_desktop_login_popup(hwnd: int, wait: float = 10.0) -> bool:
+    """
+    向 MPay 弹窗注入回车键（VK_RETURN）确认默认的“进入游戏”，并轮询等待弹窗销毁。
+    DirectUI 弹窗后台鼠标消息无响应，但键盘回车消息可直接触发默认确定按钮。
+    """
+    import time
+    from win32api import SendMessage
+    from win32con import WM_KEYDOWN, WM_KEYUP, VK_RETURN
+    from win32gui import IsWindow
+
+    logger.info(f"Found MPay login popup (hwnd={hwnd}), sending VK_RETURN to enter game...")
+    deadline = time.time() + wait
+    while time.time() < deadline:
+        if not IsWindow(hwnd):
+            logger.info("MPay login popup confirmed closed.")
+            return True
+        try:
+            SendMessage(hwnd, WM_KEYDOWN, VK_RETURN, 0)
+            SendMessage(hwnd, WM_KEYUP, VK_RETURN, 0)
+        except Exception as e:
+            logger.debug(f"Send VK_RETURN to MPay popup failed: {e}")
+        time.sleep(1.0)
+    return not IsWindow(hwnd)
+
+
 class LoginService(
     ChessBattleNavigationMixin,
     BaseTask,
@@ -45,6 +105,15 @@ class LoginService(
             self.device.bring_to_front()
 
         while True:
+            # 桌面客户端网易通行证 MPay 弹窗检测与直连穿透
+            if getattr(self.device, 'emulator_family', None) == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+                mpay_hwnd = find_desktop_login_popup()
+                if mpay_hwnd:
+                    confirm_desktop_login_popup(mpay_hwnd)
+                    self.device.sleep(0.8)
+                    confirm_timer.reset()
+                    continue
+
             if not login_success and orientation_timer.reached():
                 self.device.get_orientation()
                 orientation_timer.reset()

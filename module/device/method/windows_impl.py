@@ -7,20 +7,66 @@ import numpy as np
 import time
 
 from math import dist
+import ctypes
+from ctypes import c_long, byref, POINTER, Structure, wintypes
+from contextlib import contextmanager
 from functools import cached_property
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
                       SetForegroundWindow, IsWindowVisible, GetDC, ReleaseDC, GetParent,
                       EnumChildWindows, ClientToScreen, ScreenToClient, WindowFromPoint, GetAncestor,
-                      ShowWindow, IsIconic, SetWindowPos, GetForegroundWindow)
+                      ShowWindow, IsIconic, SetWindowPos, GetForegroundWindow,
+                      GetClientRect, GetWindowLong)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
                       WM_PARENTNOTIFY, WM_MOUSEACTIVATE, WM_MOUSEWHEEL,
                       WM_SETFOCUS, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, GA_ROOT,
-                      SW_RESTORE, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, HWND_BOTTOM)
+                      SW_RESTORE, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, HWND_BOTTOM,
+                      GWL_STYLE, GWL_EXSTYLE, HWND_TOP, SWP_SHOWWINDOW)
 from win32ui import CreateDCFromHandle, CreateBitmap
 from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage, SetCursorPos, mouse_event
+
+
+# DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+_PER_MONITOR_AWARE_V2 = ctypes.c_void_p(-4)
+
+
+@contextmanager
+def dpi_awareness():
+    """
+    临时把当前线程切到 Per-Monitor V2 DPI 感知，退出时恢复原上下文。
+    OAS 进程自身未声明 DPI 感知，GDI 调用默认被系统虚拟化成逻辑像素。
+    桌面客户端按物理像素原生渲染，因此在感知上下文里测绘与截图能拿到 1:1 完整的物理像素画面。
+    """
+    user32 = ctypes.windll.user32
+    previous = None
+    try:
+        previous = user32.SetThreadDpiAwarenessContext(_PER_MONITOR_AWARE_V2)
+    except (AttributeError, OSError):
+        pass
+    try:
+        yield
+    finally:
+        if previous:
+            try:
+                user32.SetThreadDpiAwarenessContext(previous)
+            except (AttributeError, OSError):
+                pass
+
+
+def _window_total_size(width: int, height: int, style: int, ex_style: int) -> tuple[int, int]:
+    """用 user32.AdjustWindowRectEx 计算包含标题栏/边框的窗口总尺寸 (w, h)"""
+    user32 = ctypes.windll.user32
+
+    class RECT(Structure):
+        _fields_ = [('left', c_long), ('top', c_long), ('right', c_long), ('bottom', c_long)]
+
+    user32.AdjustWindowRectEx.argtypes = [POINTER(RECT), c_long, c_long, c_long]
+    user32.AdjustWindowRectEx.restype = wintypes.BOOL
+    rect = RECT(0, 0, width, height)
+    user32.AdjustWindowRectEx(byref(rect), style, False, ex_style)
+    return rect.right - rect.left, rect.bottom - rect.top
 
 
 from module.base.cBezier import BezierTrajectory
@@ -58,7 +104,15 @@ class Window(Handle):
         if IsIconic(handle):
             self.ensure_window_restored(handle)
 
-        widthScreen, heightScreen = self.screenshot_size
+        is_windows_client = (self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT)
+        if is_windows_client:
+            with dpi_awareness():
+                client_rect = GetClientRect(handle)
+                widthScreen = client_rect[2] - client_rect[0]
+                heightScreen = client_rect[3] - client_rect[1]
+        else:
+            widthScreen, heightScreen = self.screenshot_size
+
         # 窗口尺寸异常/最小化检测与保护
         if widthScreen <= 0 or heightScreen <= 0:
             logger.warning(f"Window size invalid ({widthScreen}x{heightScreen}), window may be minimized. Attempting refresh...")
@@ -66,12 +120,17 @@ class Window(Handle):
                 self.ensure_window_restored(handle)
             elif hasattr(self, 'init_handle'):
                 self.init_handle()
-            widthScreen, heightScreen = self.screenshot_size
+            if is_windows_client:
+                with dpi_awareness():
+                    client_rect = GetClientRect(handle)
+                    widthScreen = client_rect[2] - client_rect[0]
+                    heightScreen = client_rect[3] - client_rect[1]
+            else:
+                widthScreen, heightScreen = self.screenshot_size
             if widthScreen <= 0 or heightScreen <= 0:
                 # 兜底返回 1280x720 全黑帧，避免 GDI 创建 0 尺寸位图引发致命崩溃
                 return np.zeros((720, 1280, 3), dtype=np.uint8)
 
-        is_windows_client = (self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT)
         hwndDc = None
         mfcDc = None
         saveDc = None
@@ -79,24 +138,31 @@ class Window(Handle):
 
         try:
             if is_windows_client:
-                hwndDc = GetDC(handle)
+                with dpi_awareness():
+                    hwndDc = GetDC(handle)
+                    if not hwndDc:
+                        raise ScriptError(f"Failed to obtain window DC for handle {handle}")
+                    mfcDc = CreateDCFromHandle(hwndDc)
+                    saveDc = mfcDc.CreateCompatibleDC()
+                    saveBitMap = CreateBitmap()
+                    saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
+                    saveDc.SelectObject(saveBitMap)
+                    saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
+                    signedIntsArray = saveBitMap.GetBitmapBits(True)
             else:
                 # 返回句柄窗口的设备环境，覆盖整个窗口，包括非客户区，标题栏，菜单，边框
                 hwndDc = GetWindowDC(handle)
-
-            if not hwndDc:
-                raise ScriptError(f"Failed to obtain window DC for handle {handle}")
-
-            # 创建设备描述表与内存设备描述表
-            mfcDc = CreateDCFromHandle(hwndDc)
-            saveDc = mfcDc.CreateCompatibleDC()
-            saveBitMap = CreateBitmap()
-            saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
-            saveDc.SelectObject(saveBitMap)
-            saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
+                if not hwndDc:
+                    raise ScriptError(f"Failed to obtain window DC for handle {handle}")
+                mfcDc = CreateDCFromHandle(hwndDc)
+                saveDc = mfcDc.CreateCompatibleDC()
+                saveBitMap = CreateBitmap()
+                saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
+                saveDc.SelectObject(saveBitMap)
+                saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
+                signedIntsArray = saveBitMap.GetBitmapBits(True)
 
             # 解析图像缓冲区为 RGB 矩阵
-            signedIntsArray = saveBitMap.GetBitmapBits(True)
             imgSrceen = frombuffer(signedIntsArray, dtype='uint8')
             imgSrceen.shape = (heightScreen, widthScreen, 4)
             imgSrceen = cv2.cvtColor(imgSrceen, cv2.COLOR_BGR2RGB)
@@ -128,6 +194,71 @@ class Window(Handle):
                     ReleaseDC(handle, hwndDc)
                 except Exception:
                     pass
+
+    def desktop_client_size_virtual(self, hwnd: int = 0) -> tuple[int, int]:
+        """返回桌面客户端客户区在 Windows DPI 虚拟化空间下的尺寸 (width, height)"""
+        h = hwnd or (self.control_handle_list[0] if getattr(self, 'control_handle_list', None) else getattr(self, 'screenshot_handle_num', 0))
+        if not h or not IsWindow(h):
+            return (1280, 720)
+        try:
+            rect = GetClientRect(h)
+            w, height = rect[2] - rect[0], rect[3] - rect[1]
+            return (w, height) if w > 0 and height > 0 else (1280, 720)
+        except Exception:
+            return (1280, 720)
+
+    def desktop_message_coord(self, x: float, y: float, hwnd: int = 0) -> tuple[int, int]:
+        """
+        把资产坐标（标准 1280x720）换算成 Windows 窗口消息坐标（lParam）。
+        截图在 DPI 感知上下文内取得（物理像素 1280x720）；
+        SendMessage/PostMessage 由 Python 发出时会被系统按虚拟化空间解释。
+        """
+        virt_w, virt_h = self.desktop_client_size_virtual(hwnd)
+        return int(round(x * virt_w / 1280.0)), int(round(y * virt_h / 720.0))
+
+    def desktop_window_set_size(self, width: int = 1280, height: int = 720) -> bool:
+        """
+        检测桌面客户端客户区物理尺寸，非 1280x720 时用 SetWindowPos 自动校准到目标物理尺寸。
+        在 DPI 感知上下文内完成，确保客户区物理像素恰为 1280x720，与模板资产 1:1 对应。
+        """
+        hwnd = self.control_handle_list[0] if getattr(self, 'control_handle_list', None) else getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            hwnd = self.control_handle_list[0] if getattr(self, 'control_handle_list', None) else getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not IsWindow(hwnd):
+            return False
+
+        with dpi_awareness():
+            for attempt in range(5):
+                if not IsWindow(hwnd):
+                    return False
+                try:
+                    rect = GetClientRect(hwnd)
+                    cw, ch = rect[2] - rect[0], rect[3] - rect[1]
+                except Exception:
+                    return False
+
+                if cw == width and ch == height:
+                    logger.info(f"Desktop client size matches target: {width}x{height}")
+                    return True
+
+                style = GetWindowLong(hwnd, GWL_STYLE)
+                ex_style = GetWindowLong(hwnd, GWL_EXSTYLE)
+                total_w, total_h = _window_total_size(width, height, style, ex_style)
+                total_w += width - cw
+                total_h += height - ch
+                try:
+                    SetWindowPos(hwnd, HWND_TOP, 0, 0, total_w, total_h, SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+                    time.sleep(0.1)
+                except Exception as e:
+                    logger.warning(f"desktop_window_set_size SetWindowPos failed: {e}")
+                    return False
+
+            rect = GetClientRect(hwnd)
+            cw, ch = rect[2] - rect[0], rect[3] - rect[1]
+            logger.info(f"Desktop client calibrated size: {cw}x{ch} (target physical {width}x{height})")
+            return (cw == width and ch == height)
 
     @cached_property
     def control_handle_list(self) -> list:
@@ -314,10 +445,7 @@ class Window(Handle):
             if IsIconic(hwnd):
                 self.ensure_window_restored(hwnd)
 
-            size = self.screenshot_size
-            cw, ch = size if size else (1280, 720)
-            target_x = int(round(x * (cw / 1280.0))) if (cw != 1280 and cw > 0) else int(round(x))
-            target_y = int(round(y * (ch / 720.0))) if (ch != 720 and ch > 0) else int(round(y))
+            target_x, target_y = self.desktop_message_coord(x, y, hwnd)
 
             press_time = random.uniform(0.045, 0.120) if not fast else random.uniform(0.020, 0.045)
             clickPos = MAKELONG(target_x, target_y)
@@ -446,10 +574,7 @@ class Window(Handle):
             handleNum = self.control_handle_list[0]
             if IsIconic(handleNum):
                 self.ensure_window_restored(handleNum)
-            size = self.screenshot_size
-            cw, ch = size if size else (1280, 720)
-            if cw != 1280 or ch != 720:
-                trace = [[int(pt[0] * (cw / 1280.0)), int(pt[1] * (ch / 720.0))] for pt in trace]
+            trace = [list(self.desktop_message_coord(pt[0], pt[1], handleNum)) for pt in trace]
         elif self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
             handleNum = self.control_handle_list[1]
         elif self.emulator_family == EmulatorFamily.FAMILY_NOX:  # 夜神模拟器

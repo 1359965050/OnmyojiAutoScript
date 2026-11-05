@@ -25,6 +25,22 @@ from tasks.WantedQuests.config import CooperationType, CooperationSelectMask, WQ
 from tasks.WantedQuests.explore import WQExplore, ExploreWantedBoss
 
 
+def _read_location_info(rule: RuleOcr, image):
+    import re
+    from copy import copy
+    pattern = r"(.+?)\s*\(?[数教]?量[:：]\s*(\d+)"
+    txt = rule.ocr(image).replace('：', ':').replace('（', '(').replace('）', ')')
+    match = re.search(pattern, txt)
+    if match and match.group(1):
+        return match
+    # 数量可能被单行 OCR 漏读；只收紧上下留白，保留完整地点名。
+    retry = copy(rule)
+    x, y, w, h = rule.roi
+    retry.roi = [x, y + 7, w, h - 14]
+    txt_retry = retry.ocr(image).replace('：', ':').replace('（', '(').replace('）', ')')
+    return re.search(pattern, txt_retry)
+
+
 class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
     # 追踪界面(显示"前往"按钮的界面,左上角位置,神秘任务不好使)显示以下名称时,任务不再执行
     unwanted_boss_name_list: list = []
@@ -323,12 +339,9 @@ class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
         if wq_type not in type_ordered_list:
             logger.warning(f'{wq_type.value} is not in the order list')
             return None
-        wq_info_txt = info_rule.ocr(self.device.image)
-        wq_info_txt = wq_info_txt.replace('：', ':').replace('（', '(').replace('）', ')')
-        import re
-        match = re.search(r"(.+?)\s*\(?[数教]量[:：]\s*(\d+)", wq_info_txt)
-        if not match:
-            logger.warning(f'Unknown wq info: {wq_info_txt}')
+        match = _read_location_info(info_rule, self.device.image)
+        if not match or not match.group(1):
+            logger.warning(f'Unknown wq info: {info_rule.ocr(self.device.image)}')
             return None
         wq_dest, wq_number = match.group(1).strip(), int(match.group(2))
         do_num = num_want // wq_number + (num_want % wq_number > 0)

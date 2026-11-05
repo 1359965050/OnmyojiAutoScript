@@ -13,6 +13,15 @@ from module.logger import logger
 from module.base.utils import is_approx_rectangle
 from module.base.utils.utils import random_normal_distribution_int
 
+ROI_MATCH_PAD = 0
+DESKTOP_ROI_MATCH_PAD = 2
+
+
+def set_roi_match_padding(pad: int) -> None:
+    """设置模板匹配的 roi_back 外扩容差（像素，四边同值）。0 表示不启用。"""
+    global ROI_MATCH_PAD
+    ROI_MATCH_PAD = max(0, int(pad))
+
 
 class RuleImage:
     debug_mode: bool = False
@@ -203,6 +212,21 @@ class RuleImage:
             self.load_kp_des()
         return self._des
 
+    @staticmethod
+    def _pad_roi(roi: list | tuple) -> tuple[int, int, int, int]:
+        """
+        把 ROI 四边各外扩 ROI_MATCH_PAD 像素，返回 (x0, y0, w, h)。
+        左上侧夹到 0，右/下侧越界由切片自然截断。
+        返回的 x0/y0 是外扩后的原点，命中回算以它为基准。
+        """
+        x, y, w, h = [int(v) for v in roi]
+        pad = ROI_MATCH_PAD
+        if pad <= 0:
+            return x, y, w, h
+        x0 = max(0, x - pad)
+        y0 = max(0, y - pad)
+        return x0, y0, x + w + pad - x0, y + h + pad - y0
+
     def corp(self, image: np.ndarray, roi: list | tuple | None = None) -> np.ndarray:
         """
         截取图片
@@ -210,11 +234,8 @@ class RuleImage:
         :param roi
         :return:
         """
-        if roi is None:
-            x, y, w, h = self.roi_back
-        else:
-            x, y, w, h = roi
-        x, y, w, h = int(x), int(y), int(w), int(h)
+        target_roi = self.roi_back if roi is None else roi
+        x, y, w, h = self._pad_roi(target_roi)
         return image[y:y + h, x:x + w]
 
     def _template_image_invalid(self, mat: np.ndarray | None) -> bool:
@@ -224,9 +245,13 @@ class RuleImage:
             return True
         return False
 
-    def _update_roi_front(self, loc: tuple[int, int], size: tuple[int, int]) -> None:
-        self.roi_front[0] = loc[0] + self.roi_back[0]
-        self.roi_front[1] = loc[1] + self.roi_back[1]
+    def _update_roi_front(self, loc: tuple[int, int], size: tuple[int, int], origin: tuple[int, int] | None = None) -> None:
+        if origin is None:
+            x0, y0, _, _ = self._pad_roi(self.roi_back)
+        else:
+            x0, y0 = origin
+        self.roi_front[0] = loc[0] + x0
+        self.roi_front[1] = loc[1] + y0
         self.roi_front[2] = size[0]
         self.roi_front[3] = size[1]
 
@@ -237,13 +262,14 @@ class RuleImage:
         scale_range = None
         if self.scale_range is not None:
             scale_range = list(self.scale_range)
+        padded_roi_back = list(self._pad_roi(self.roi_back)) if self.roi_back else [0, 0, 0, 0]
         return {
             "name": self.name,
             "file": file_path,
             "method": self.method,
             "threshold": self.threshold,
             "roi_front": list(self.roi_front),
-            "roi_back": list(self.roi_back),
+            "roi_back": padded_roi_back,
             "scale_range": scale_range,
             "scale_step": self.scale_step,
         }
@@ -501,8 +527,9 @@ class RuleImage:
                 result = False
             else:
                 dst = np.array(cv2.perspectiveTransform(pts, m), dtype=np.int32)
-                self.roi_front[0] = int(dst[0, 0, 0]) + self.roi_back[0]
-                self.roi_front[1] = int(dst[0, 0, 1]) + self.roi_back[1]
+                x0, y0, _, _ = self._pad_roi(self.roi_back)
+                self.roi_front[0] = int(dst[0, 0, 0]) + x0
+                self.roi_front[1] = int(dst[0, 0, 1]) + y0
                 if show:
                     cv2.polylines(source, [dst], isClosed=True, color=(0, 0, 255), thickness=2)
                 if not is_approx_rectangle(np.array([pos[0] for pos in dst])):

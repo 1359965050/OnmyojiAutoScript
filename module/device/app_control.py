@@ -77,7 +77,7 @@ class AppControl(Adb, Uiautomator2):
                 return
 
             if os.path.isdir(path):
-                for candidate in ['Launch.exe', os.path.join('bin', 'onmyoji.exe'), 'onmyoji.exe']:
+                for candidate in [os.path.join('bin', 'onmyoji.exe'), 'onmyoji.exe', 'Launch.exe']:
                     c_path = os.path.join(path, candidate)
                     if os.path.exists(c_path):
                         path = c_path
