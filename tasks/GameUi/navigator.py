@@ -393,17 +393,26 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
 
         self.navigator.last_enter_success_page_key = page.key
 
-    def _run_enter_success_hooks_if_needed(self, page: Page) -> None:
+    def _run_enter_success_hooks_if_needed(self, page: Page) -> bool:
         """仅在页面变化时触发进入成功 hook。
 
         Args:
             page: 当前页面。
+
+        Returns:
+            本次是否实际执行了进入成功 hook。
         """
 
         if self.navigator.last_enter_success_page_key == page.key:
-            return
+            return False
         self._run_hooks(page.on_enter_success)
-        self._mark_page_entered(page)
+        if page.key in {"page_battle_prepare", "page_battle"} and (
+            self.navigator.current_page is None or self.navigator.current_page.key != page.key
+        ):
+            self.navigator.last_enter_success_page_key = None
+        else:
+            self._mark_page_entered(page)
+        return True
 
     def _allowed_pages_for_navigation(self, destination: Page, current: Page | None) -> dict[str, Page]:
         """构建本轮导航允许访问的页面集合。
@@ -492,11 +501,14 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
         current = self.navigator.current_page
         if current is not None and self.confirm_page(current, skip_first_screenshot=skip_first_screenshot):
             return current
-        return self._detect_current_page_with_fallback(
+        detected = self._detect_current_page_with_fallback(
             skip_first_screenshot=skip_first_screenshot,
             categories=self._navigation_detect_categories(destination),
             context="goto_page",
         )
+        if detected is None:
+            self.navigator.current_page = None
+        return detected
 
     def _wait_for_destination(self, destination: Page, timeout: float = 6.0) -> bool:
         """等待下一页面稳定出现。
@@ -763,7 +775,8 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
         return True
 
     def goto_page(self, destination: Page, confirm_wait: float = 0, skip_first_screenshot: bool = True,
-                  timeout: int = 30, *, accepted_pages: tuple[Page, ...] = ()) -> bool | None:
+                  timeout: int = 30, *, accepted_pages: tuple[Page, ...] = (),
+                  total_timeout: float | None = None, none_buffer_time: float = 2.0) -> bool | None:
         """导航到目标页面。
 
         Args:
@@ -772,6 +785,8 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
             skip_first_screenshot: 是否复用当前截图。
             timeout: 无有效进展超时时间，单位秒。
             accepted_pages: 可直接继续任务的其他页面，识别到后无需转往目标页。
+            total_timeout: 整次导航的总超时上限，单位秒；为空时取 `max(timeout * 3, 90)`。
+            none_buffer_time: 连续识别为 None 时延迟触发关闭未知页的缓冲时间，单位秒。
 
         Returns:
             是否成功到达目标页面。
@@ -781,9 +796,17 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
         """
 
         destination = self.navigator.resolve_page(destination) or self.navigator.add_page(destination)
-        logger.hr(f"UI goto {destination}")
+        logger.hr(f"界面跳转: {destination}")
         start_time = time.time()
+        effective_total_timeout = float(total_timeout) if total_timeout is not None else max(float(timeout) * 3.0, 90.0)
+        hard_timer = Timer(effective_total_timeout).start()
         progress_timer = Timer(timeout).start()
+        effective_none_buffer = (
+            min(float(none_buffer_time), max(0.0, float(timeout) * 0.4))
+            if none_buffer_time > 0
+            else 0.0
+        )
+        none_grace_timer: Timer | None = None
         last_progress_signature: tuple[str, str] | None = None
         last_detected_page_key: str | None = None
         repeated_failure_transition_key: str | None = None
@@ -795,52 +818,81 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
             repeated_failure_transition_key = None
             repeated_failure_count = 0
 
+        def raise_navigation_timeout() -> None:
+            self._log_navigation_timeout(
+                destination,
+                last_path_signature=last_progress_signature,
+                repeated_failure_transition_key=repeated_failure_transition_key,
+                repeated_failure_count=repeated_failure_count,
+                last_repeated_failure_close_result=last_repeated_failure_close_result,
+            )
+
         while True:
             current = self._refresh_current_page(destination, skip_first_screenshot)
             skip_first_screenshot = False
 
             if current is None:
+                if hard_timer.reached():
+                    raise_navigation_timeout()
+                if effective_none_buffer > 0:
+                    if none_grace_timer is None:
+                        none_grace_timer = Timer(effective_none_buffer).start()
+                    if not none_grace_timer.reached() and not progress_timer.reached():
+                        time.sleep(0.25)
+                        continue
                 if self.close_unknown_pages(skip_first_screenshot=False):
                     progress_timer.reset()
+                    none_grace_timer = None
                     last_progress_signature = ("close_unknown", destination.key)
                     last_detected_page_key = None
                     reset_repeated_transition_failures()
-                elif progress_timer.reached():
-                    self._log_navigation_timeout(
-                        destination,
-                        last_path_signature=last_progress_signature,
-                        repeated_failure_transition_key=repeated_failure_transition_key,
-                        repeated_failure_count=repeated_failure_count,
-                        last_repeated_failure_close_result=last_repeated_failure_close_result,
-                    )
-                    raise GamePageUnknownError(f"Cannot goto page[{destination}]")
+                    if hard_timer.reached():
+                        raise_navigation_timeout()
+                elif progress_timer.reached() or hard_timer.reached():
+                    raise_navigation_timeout()
                 continue
 
+            none_grace_timer = None
+
+            enter_hook_executed = False
             if current.key != last_detected_page_key:
-                self._run_enter_success_hooks_if_needed(current)
+                enter_hook_executed = self._run_enter_success_hooks_if_needed(current)
                 progress_timer.reset()
                 last_detected_page_key = current.key
                 reset_repeated_transition_failures()
+                if enter_hook_executed and current.key in {"page_battle_prepare", "page_battle", "page_login"}:
+                    if hard_timer.reached():
+                        raise_navigation_timeout()
+                    # 战斗/登录钩子会驱动多步状态流转并停留在新页面，必须重新刷新当前页而不能沿用钩子前的 current
+                    last_detected_page_key = None
+                    continue
 
             if current == destination or any(current.key == page.key for page in accepted_pages):
                 # current 来自 _refresh_current_page，其返回已是两帧稳定确认的结果，无需再次 confirm。
                 return self._finalize_arrival(current, confirm_wait, start_time)
 
+            if hard_timer.reached():
+                raise_navigation_timeout()
+
             path = self._build_path(current, destination)
             if not path:
+                if current.key in {"page_battle_result", "page_reward"} and current.on_enter_success:
+                    if not enter_hook_executed:
+                        self._run_hooks(current.on_enter_success, interval=0.8)
+                    if progress_timer.current() < min(10.0, float(timeout) * 0.5):
+                        if progress_timer.reached() or hard_timer.reached():
+                            raise_navigation_timeout()
+                        time.sleep(0.2)
+                        continue
                 if self.close_unknown_pages(skip_first_screenshot=False):
                     progress_timer.reset()
                     last_progress_signature = ("close_unknown", current.key)
                     reset_repeated_transition_failures()
+                    if hard_timer.reached():
+                        raise_navigation_timeout()
                     continue
-                if progress_timer.reached():
-                    self._log_navigation_timeout(
-                        destination,
-                        last_path_signature=last_progress_signature,
-                        repeated_failure_transition_key=repeated_failure_transition_key,
-                        repeated_failure_count=repeated_failure_count,
-                        last_repeated_failure_close_result=last_repeated_failure_close_result,
-                    )
+                if progress_timer.reached() or hard_timer.reached():
+                    raise_navigation_timeout()
                 continue
 
             path_signature = (current.key, " -> ".join(transition.key for transition in path))
@@ -861,6 +913,7 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
                         repeated_failure_count = 1
                     if repeated_failure_count % self.REPEATED_TRANSITION_FAILURE_THRESHOLD == 0:
                         close_success = self.close_unknown_pages(skip_first_screenshot=False)
+                        last_repeated_failure_close_result = str(close_success)
                         logger.warning(f"Transition {transition.key} repeated failure close result: {close_success}")
                         if close_success:
                             progress_timer.reset()
@@ -875,11 +928,5 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
             if advanced and self.navigator.current_page == destination:
                 # _execute_transition 的到达等待已对目标页完成两帧确认，直接收尾返回，避免回环重复确认。
                 return self._finalize_arrival(destination, confirm_wait, start_time)
-            if progress_timer.reached():
-                self._log_navigation_timeout(
-                    destination,
-                    last_path_signature=last_progress_signature,
-                    repeated_failure_transition_key=repeated_failure_transition_key,
-                    repeated_failure_count=repeated_failure_count,
-                    last_repeated_failure_close_result=last_repeated_failure_close_result,
-                )
+            if progress_timer.reached() or hard_timer.reached():
+                raise_navigation_timeout()

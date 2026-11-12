@@ -289,8 +289,17 @@ page_area_boss = Page(GameUiAssets.I_CHECK_AREA_BOSS, category="global")
 page_area_boss.connect(page_exploration, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_area_boss->page_exploration")
 page_exploration.connect(page_area_boss, GameUiAssets.I_EXPLORATION_GOTO_AREA_BOSS, key="page_exploration->page_area_boss")
 
+def exit_heian_kitan(task) -> bool:
+    """退出平安奇谭回到探索界面，兼容标准返回键与奇谭专属弯曲返回键。"""
+    return (
+        task.appear_then_click(GlobalGameAssets.I_UI_BACK_YELLOW, interval=0.8)
+        or task.appear_then_click(GlobalGameAssets.I_UI_BACK_CIRCLE, interval=0.8)
+        or task.appear_then_click(GameUiAssets.I_CHECK_HEIAN_KITAN, interval=0.8)
+    )
+
+
 page_heian_kitan = Page(GameUiAssets.I_CHECK_HEIAN_KITAN, category="global")
-page_heian_kitan.connect(page_exploration, GameUiAssets.I_CHECK_HEIAN_KITAN, key="page_heian_kitan->page_exploration")
+page_heian_kitan.connect(page_exploration, exit_heian_kitan, key="page_heian_kitan->page_exploration")
 page_exploration.connect(page_heian_kitan, GameUiAssets.I_EXPLORATION_GOTO_HEIAN_KITAN, key="page_exploration->page_heian_kitan")
 
 
@@ -402,13 +411,20 @@ def handle_battle_reward_page(task) -> bool:
     """
     if task.appear_then_click(GeneralBattleAssets.I_OVER_GHOST, interval=0.8):
         return True
+    if task.appear_then_click(GeneralBattleAssets.I_GB_SKIN_CONFIRM, interval=0.8):
+        return True
+    if task.appear(GeneralInviteAssets.I_GI_SURE) and task.appear_then_click(GlobalGameAssets.I_UI_CANCEL, interval=0.8):
+        return True
+    pet_present = getattr(task, "I_PET_PRESENT", None)
+    if pet_present is not None and task.appear(pet_present):
+        return task.click(random_click(ltrb=(False, False, True, False)), interval=0.8)
     return task.click(random_click(), interval=0.8)
 
 page_reward.add_enter_success_hooks(handle_battle_reward_page)
 
 page_battle_team_exit = Page(GeneralBattleAssets.I_GB_CHECK_TEAM_EXIT, priority=75)
 page_battle_team = Page(any_of(GeneralInviteAssets.I_GI_EMOJI_1, GeneralInviteAssets.I_GI_EMOJI_2,
-                               GeneralInviteAssets.I_FIRE),
+                               GeneralInviteAssets.I_FIRE, GeneralInviteAssets.I_GI_IN_ROOM),
                         category="global", priority=25)
 page_battle_team_exit.connect(page_battle_team, GlobalGameAssets.I_UI_CANCEL, key="page_battle_team_exit->page_battle_team")
 page_battle_team.connect(page_battle_team_exit, GlobalGameAssets.I_UI_BACK_YELLOW, key="page_battle_team->page_battle_team_exit")

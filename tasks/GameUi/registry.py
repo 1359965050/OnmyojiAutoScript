@@ -77,9 +77,9 @@ class PageRegistry:
             return
         base_dir = Path(__file__).resolve().parent.parent
         for task_dir in base_dir.iterdir():
-            if not task_dir.is_dir():
+            if not task_dir.is_dir() or task_dir.name.startswith((".", "_")):
                 continue
-            for module_name in ("page"):
+            for module_name in ("page",):
                 module_file = task_dir / f"{module_name}.py"
                 if not module_file.exists():
                     continue
