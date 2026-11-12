@@ -28,7 +28,6 @@ OASX-master/
 baigui/
 models/pretrained/
 runs/
-!module/gui/FluentUI/fluentuiplugin.dll
 build-fluentui-Desktop_*/
 module/config/argument/setting.json
 module/config/i18n/*.json
