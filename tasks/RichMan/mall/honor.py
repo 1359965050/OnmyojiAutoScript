@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 import time
 
+from module.base.timer import Timer
 from module.logger import logger
 
 from tasks.GameUi.page import page_main, page_guild
@@ -27,8 +28,12 @@ class Honor(Special):
         mystery_bought, black_bought = False, False
         max_swipes = 5
         swipe_count = 0
-        
+        timer = Timer(30).start()
+
         while 1:
+            if timer.reached():
+                logger.warning('Execute honor timeout')
+                break
             self.screenshot()
             if not mystery_bought and con.mystery_amulet and self.appear(self.I_HONOR_BLUE):
                 self._honor_mystery_amulet(con.mystery_amulet)
@@ -54,7 +59,7 @@ class Honor(Special):
                 time.sleep(2)
 
     def _honor_mystery_amulet(self, enable: bool=False):
-        logger.hr('Buy mystery amulet', 3)
+        logger.hr('购买神秘符咒', 3)
         if not enable:
             logger.info('Buy mystery amulet is disabled')
             return
@@ -73,7 +78,7 @@ class Honor(Special):
         self.buy_more(self.I_HONOR_BLUE)
 
     def _honor_black_daruma_scrap(self, enable: bool=False):
-        logger.hr('Buy black daruma scrap', 3)
+        logger.hr('购买御行达摩碎片', 3)
         if not enable:
             logger.info('Buy black daruma scrap is disabled')
             return

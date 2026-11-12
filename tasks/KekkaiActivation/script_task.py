@@ -5,7 +5,7 @@ import time
 
 import random
 import re
-from cached_property import cached_property
+from functools import cached_property
 from datetime import datetime, timedelta
 from module.atom.click import RuleClick
 
@@ -92,7 +92,7 @@ class ScriptTask(KU, KekkaiActivationAssets):
         """
         self.goto_page(page_guild_card)
         # 太诡异了 为什么有这么长的动画, 那么长的动画先休息一会
-        logger.hr('Start activation')
+        logger.hr('开始结界挂卡')
         time.sleep(0.5)
         while 1:
             self.screenshot()
@@ -113,12 +113,18 @@ class ScriptTask(KU, KekkaiActivationAssets):
             if card_status and card_effect:
                 logger.info('Card is using')
                 interval = self.ocr_time()
-                self.set_next_run("KekkaiActivation", target=interval+datetime.now())
+                if interval is None:
+                    interval = timedelta(minutes=5)
+                self.set_next_run("KekkaiActivation", target=interval + datetime.now())
                 return False
             # 如果已经选中这张卡了， 那就激活这张卡
             if card_status and not card_effect:
                 logger.info('Card is selected but not using')
+                activate_timer = Timer(20).start()
                 while 1:
+                    if activate_timer.reached():
+                        logger.warning('KekkaiActivation activate card timeout')
+                        break
                     self.screenshot()
                     if self.appear(self.I_A_INVITE, threshold=0.8):
                         logger.info('Card is activated')
@@ -128,6 +134,8 @@ class ScriptTask(KU, KekkaiActivationAssets):
                     if self.appear_then_click(self.I_A_ACTIVATE_YELLOW, interval=1):
                         continue
                 interval = self.ocr_time(True)
+                if interval is None:
+                    interval = timedelta(minutes=5)
                 self.set_next_run("KekkaiActivation", target=interval + datetime.now())
                 return True
             # 如果是什么都没有，那就是可以开始挂卡了
@@ -158,7 +166,11 @@ class ScriptTask(KU, KekkaiActivationAssets):
         elif self.appear(self.I_A_ACTIVATE_YELLOW):
             return False
         logger.info('Unknown card effect')
+        effect_timer = Timer(15).start()
         while 1:
+            if effect_timer.reached():
+                logger.warning('Check card effect timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_A_INVITE, threshold=0.7):
                 return True
@@ -197,7 +209,11 @@ class ScriptTask(KU, KekkaiActivationAssets):
             self.push_notify(content='Unknown card rule')
             return
 
+        find_timer = Timer(20).start()
         while 1:
+            if find_timer.reached():
+                logger.warning('Appear card class timeout: {}'.format(card_class))
+                return
             self.screenshot()
 
             if self.appear(target_class):
@@ -208,7 +224,11 @@ class ScriptTask(KU, KekkaiActivationAssets):
             if self.click(self.C_A_SELECT_CARD_LIST, interval=2.5):
                 continue
         logger.info('Appear card class: {}'.format(card_class))
+        select_timer = Timer(15).start()
         while 1:
+            if select_timer.reached():
+                logger.warning('Select card class timeout: {}'.format(card_class))
+                break
             self.screenshot()
             if not self.appear(target_class):
                 break
@@ -224,7 +244,11 @@ class ScriptTask(KU, KekkaiActivationAssets):
                 # 未发现卡，处理逻辑
                 self._card_not_found()
             if self.appear(self.I_A_EMPTY):
+                place_timer = Timer(20).start()
                 while 1:
+                    if place_timer.reached():
+                        logger.warning('Place kekkai card timeout')
+                        return
                     self.screenshot()
                     if not self.appear(self.I_A_EMPTY):
                         self.config.kekkai_activation.activation_config.card_not_found_count = 0

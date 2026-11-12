@@ -36,7 +36,11 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
         """
         # 点击分享
         # self.ui_click(wechat, self.I_WT_QR_CODE)
+        share_timer = Timer(15).start()
         while 1:
+            if share_timer.reached():
+                logger.warning('WeeklyTrifles click_share timeout')
+                break
             self.screenshot()
             if self.appear(self.I_WT_QR_CODE):
                 break
@@ -61,7 +65,7 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
         图鉴分享
         :return:
         """
-        logger.hr('Share collect')
+        logger.hr('图鉴每周分享')
         self.goto_page(page_shikigami_share)
         # 点击分享
         appeared = self.ui_click_until_appear_or_timeout(self.I_WT_COLLECT_WECHAT, self.I_WT_QR_CODE, 1.2, 5)
@@ -90,12 +94,16 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
         地鬼分享
         :return:
         """
-        logger.hr('Share area boss')
+        logger.hr('地域鬼王每周分享')
         self.goto_page(page_area_boss)
 
         # 一路进去
         obtained = False
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('WeeklyTrifles _share_area_boss enter timeout')
+                return
             self.screenshot()
             if self.appear(self.I_WT_AB_WECHAT):
                 break
@@ -124,11 +132,16 @@ class ScriptTask(GameUi, WeeklyTriflesAssets):
         秘闻分享
         :return:
         """
-        logger.hr('Share secret')
+        logger.hr('秘闻副本每周分享')
         self.goto_page(page_secret_zones)
         # 一路进去
         valid = False
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('WeeklyTrifles _share_secret enter timeout')
+                self.goto_page(page_main)
+                return
             self.screenshot()
             if self.appear(self.I_WT_SE_WECHAT):
                 self.wait_until_stable(self.I_WT_SE_WECHAT, skip_first_screenshot=True)

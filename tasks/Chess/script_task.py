@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 
 from module.utils.power_manager import PowerManager
+from module.base.timer import Timer
 from module.exception import GameStuckError, TaskEnd
 from module.logger import logger
 from tasks.Chess.assets import ChessAssets
@@ -565,7 +566,10 @@ class ScriptTask(
         """等待稳定回目数字；返回 None 表示本局已经结算。"""
         candidate = None
         confirmed = 0
+        wait_timer = Timer(180).start()
         while True:
+            if wait_timer.reached():
+                raise GameStuckError('Chess: wait_for_round_start timed out after 180s')
             self.device.stuck_record_clear()
             if self._refresh_round_state_screenshot():
                 candidate = None

@@ -62,7 +62,7 @@ class ManualClaimMixin(PortraitUIMixin):
             last_ys = None
             stabilize_deadline = Timer(STABILIZE_MAX_SECONDS).start()
 
-        logger.hr('AutoCheckinBigGod (Manual)', level=1)
+        logger.hr('网易大神签到（手动辅助）', level=1)
 
         if not self._check_adb_connection():
             logger.error('未检测到ADB设备，请确保模拟器已启动并已连接ADB')
@@ -96,6 +96,9 @@ class ManualClaimMixin(PortraitUIMixin):
         claimed_any = False
         claimed = False
         while 1:
+            if timeout.reached():
+                logger.warning('手动领取超时（240s），退出')
+                break
             self._screenshot_safe()
 
             # 1. 启动时的重新登录弹窗（如果有的话）
@@ -243,9 +246,6 @@ class ManualClaimMixin(PortraitUIMixin):
             # 5. 不在圈子：进圈子
             if self._appear_then_click(A.I_CIRCLE, interval=4):
                 continue
-            # 超时保护
-            if timeout.reached():
-                break
 
         self._cleanup_portrait()
         if claimed:

@@ -43,20 +43,28 @@ class ScriptTask(GameUi, DelegationAssets):
         :param name:
         :return:
         """
-        def ui_click(click, stop):
+        def ui_click(click, stop, timeout: float = 15.0):
+            click_timer = Timer(timeout).start()
             while 1:
+                if click_timer.reached():
+                    logger.warning(f'Delegation ui_click timeout for {getattr(stop, "name", stop)}')
+                    return False
                 self.screenshot()
                 if self.appear(stop):
-                    break
+                    return True
                 if self.click(click, interval=1.5):
                     continue
-        logger.hr('Delegation one', 2)
+        logger.hr('开始式神委派', 2)
         self.O_D_NAME.keyword = name
         self.screenshot()
         if not self.ocr_appear(self.O_D_NAME):
             logger.warning(f'Delegation: {name} not found')
             return False
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning(f'Delegation enter {name} timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_D_START):
                 break
@@ -73,7 +81,7 @@ class ScriptTask(GameUi, DelegationAssets):
                 continue
             if self.ocr_appear_click(self.O_D_NAME, interval=1):
                 continue
-        # 进入委派  fefe e  fe
+        # 进入委派
         logger.info(f'Enter Delegation: {name}')
         ui_click(self.C_D_1, self.I_D_SELECT_1)
         ui_click(self.C_D_2, self.I_D_SELECT_2)
@@ -81,7 +89,11 @@ class ScriptTask(GameUi, DelegationAssets):
         ui_click(self.C_D_4, self.I_D_SELECT_4)
         # 委派开始
         logger.info(f'Delegation: {name} start')
+        start_timer = Timer(20).start()
         while 1:
+            if start_timer.reached():
+                logger.warning(f'Delegation start {name} timeout')
+                return False
             self.screenshot()
             if not self.appear(self.I_D_START):
                 break
@@ -89,6 +101,7 @@ class ScriptTask(GameUi, DelegationAssets):
                 continue
             if self.appear_then_click(self.I_D_START, interval=1.8):
                 continue
+        return True
         # ui_click(self.C_D_5, self.I_D_SELECT_5)
         # self.ui_click_until_disappear(self.I_D_START)
 
@@ -117,10 +130,10 @@ class ScriptTask(GameUi, DelegationAssets):
                 continue
 
 
-            if not self.appear(self.I_REWARDS_MIN):
-                continue
             if check_timer.reached():
                 break
+            if not self.appear(self.I_REWARDS_MIN):
+                continue
             # O_D_DONE 命中的是卡片上“完成”缎带，可点的领取位置在其正下方同样大小的一块
             if self.ocr_appear(self.O_D_DONE, interval=1):
                 # 同一帧里可能有多张卡都显示“完成”，此时 Full 模式会把多个命中框合并成一个，

@@ -1,6 +1,7 @@
 import time
 
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 from tasks.SixRealms.peacock_kingdom.base_peacock_kingdom import BasePeacockKingdom
@@ -40,13 +41,20 @@ class PeacockKingdom(BasePeacockKingdom):
 
     def run(self):
         self.before_run()
-        logger.hr('Peacock Kingdom', 1)
+        logger.hr('孔雀国', 1)
+        unknown_page_timer = Timer(30).start()
         while True:
             self.screenshot()
             current_page = self.get_current_page()
             if current_page is None:
+                if unknown_page_timer.reached():
+                    logger.warning('PeacockKingdom unknown page timeout, returning to peacock_kingdom page')
+                    self.goto_page(pages.page_peacock_kingdom)
+                    unknown_page_timer.reset()
+                    continue
                 time.sleep(0.5)
                 continue
+            unknown_page_timer.reset()
             handle = self.pk_page_handle_dict.get(current_page, None)
             if handle is None:
                 self.goto_page(pages.page_peacock_kingdom)
@@ -107,7 +115,7 @@ class PeacockKingdom(BasePeacockKingdom):
 
     def run_on_pk_store(self):
         """宁息商店"""
-        logger.hr('shop land')
+        logger.hr('商店秘境')
         if self.skill_roaring_thunder >= 1:
             logger.info('Skill level is enough, skip shopping')
             self.goto_page(pages.page_pk_main)
@@ -140,13 +148,13 @@ class PeacockKingdom(BasePeacockKingdom):
 
     def run_on_pk_mistery(self):
         """神秘之屿 进入后直接退出"""
-        logger.hr('mistery land')
+        logger.hr('神秘秘境')
         logger.info('Enter mystery land, exit immediately per user request')
         self.exit_island(exit_rule=self.I_UI_BACK_BLUE, fallback_pos=(33, 58))
 
     def run_on_pk_bloom(self):
         """绽放之屿 挑选最左侧紧那罗挑战"""
-        logger.hr('bloom land')
+        logger.hr('繁花秘境')
         # 1. 点击最左侧式神(紧那罗)展开详情面板
         self.device.click(x=200, y=400, control_name='bloom_kinnara')
         time.sleep(1.0)
@@ -162,7 +170,7 @@ class PeacockKingdom(BasePeacockKingdom):
 
     def run_on_pk_chaos(self):
         """混沌之屿 宝箱/精英"""
-        logger.hr('chaos land')
+        logger.hr('混乱秘境')
         is_box: bool = self.appear(self.I_PK_CHAOS_BOX)
         if is_box:
             logger.info('Do not get box, fast exit chaos land')
@@ -175,7 +183,7 @@ class PeacockKingdom(BasePeacockKingdom):
 
     def run_on_pk_battle(self):
         """鏖战之屿 普通怪"""
-        logger.hr('fire land')
+        logger.hr('战斗秘境')
         self.ui_click(self.C_NPC_FIRE_RIGHT, self.I_PK_BATTLE_FIRE, interval=0.8)
         if self.enter_battle(self.I_PK_BATTLE_FIRE):
             logger.info('Start normal battle')

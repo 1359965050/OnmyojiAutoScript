@@ -97,7 +97,7 @@ class DokanAssets:
 	# 状态：战斗结算，可能是打完小朋友了，也可能是失败了。 
 	I_RYOU_DOKAN_BATTLE_OVER = RuleImage(roi_front=(571,503,106,49), roi_back=(571,503,106,49), threshold=0.8, method="Template matching", file="./tasks/Dokan/res/res_ryou_dokan_battle_over.png")
 	# 状态：战斗中，左上角的加油图标 
-	I_RYOU_DOKAN_FIGHTING = RuleImage(roi_front=(232,36,42,19), roi_back=(232,36,42,19), threshold=0.8, method="Template matching", file="./tasks/Dokan/res/res_ryou_dokan_fighting.png")
+	I_RYOU_DOKAN_FIGHTING = RuleImage(roi_front=(232,36,74,19), roi_back=(210,25,120,40), threshold=0.8, method="Template matching", file="./tasks/Dokan/res/res_ryou_dokan_fighting.png")
 	# 状态：道馆已经结束 
 	I_RYOU_DOKAN_FINISHED = RuleImage(roi_front=(658,649,91,27), roi_back=(658,649,91,27), threshold=0.8, method="Template matching", file="./tasks/Dokan/res/res_ryou_dokan_finished.png")
 	# 道馆失败/成功 出现的突破排名 弹窗 

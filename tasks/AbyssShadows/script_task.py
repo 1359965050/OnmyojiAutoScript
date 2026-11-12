@@ -176,7 +176,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         :return AreaType
         """
         logger.info("Checking current area")
+        area_timer = Timer(25).start()
         while 1:
+            if area_timer.reached():
+                logger.warning("Check current area timeout")
+                return None
             self.screenshot()
             # 关闭战报界面
             if self.appear(self.I_ABYSS_MAP_EXIT):
@@ -203,7 +207,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         """
         # 确保进入区域,有 切换区域 按钮
         logger.info(f"Change area to {area_name}")
+        enter_timer = Timer(25).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning("Ensure abyss navigation/change_area button timeout")
+                return False
             self.screenshot()
             # 如果出现挑战完成，直接退出
             if self.appear(self.I_CHECK_FINISH):
@@ -227,7 +235,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
             return True
 
         # 切换到选择区域界面
+        switch_timer = Timer(25).start()
         while 1:
+            if switch_timer.reached():
+                logger.warning("Open change area page timeout")
+                return False
             self.screenshot()
             # 如果出现挑战完成，直接退出
             if self.appear(self.I_CHECK_FINISH):
@@ -269,7 +281,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         """
         logger.info(f"Select boss: {area_name.name} start")
         click_times = 0
+        select_timer = Timer(25).start()
         while 1:
+            if select_timer.reached():
+                logger.warning(f"select boss: {area_name.name} timeout")
+                return False
             self.screenshot()
             # 区域图片与入口图片不一致，使用点击进去
             if self.appear(self.I_ABYSS_DRAGON_OVER) or self.appear(self.I_ABYSS_DRAGON):
@@ -303,8 +319,12 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         # 点击前往按钮的次数，阴阳师BUG:点击后不动，
         # 所以如果失败了，在点击前，尝试使用左下方的摇杆移动一点点
         count_click_goto_enemy = 0
+        goto_timer = Timer(60).start()
         # 点击战报
         while 1:
+            if goto_timer.reached():
+                logger.warning(f"Goto enemy {item_code} timeout")
+                return False
             self.screenshot()
             if self.appear(self.I_ABYSS_FIRE):
                 break
@@ -312,11 +332,16 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
             if count_click_goto_enemy > 0 and self.appear(self.I_ABYSS_NAVIGATION):
                 self.move_a_little()
             # 打开导航页面
-            self.open_navigation()
+            if not self.open_navigation():
+                return False
 
             click_times = 0
+            click_area_timer = Timer(15).start()
             # 点击攻打区域,直到出现"前往"字样
             while 1:
+                if click_area_timer.reached():
+                    logger.warning(f"Timeout while clicking {click_area}")
+                    return False
                 self.screenshot()
                 # 如果点3次还没进去就表示目标已死亡,跳过
                 if click_times >= 3:
@@ -333,8 +358,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
                     continue
 
             # 点击前往按钮,知道该按钮消失或出现"挑战"字样
-
+            move_timer = Timer(25).start()
             while 1:
+                if move_timer.reached():
+                    logger.warning(f"Wait I_ABYSS_FIRE after goto {item_code} timeout")
+                    break
                 self.screenshot()
                 if self.appear(self.I_CHECK_FINISH):
                     raise AbyssShadowsFinished
@@ -359,7 +387,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         # 同一敌人,需要第二次攻击时,此时刚刚退出战斗,先出现大地图的帧,然后才会出现战斗按钮，故延迟几秒检测
         timer_animation = Timer(2)
         timer_animation.start()
+        attack_timer = Timer(30).start()
         while 1:
+            if attack_timer.reached():
+                logger.warning("Attack enemy timeout")
+                return False
             self.screenshot()
             if self.appear(self.I_CHECK_FINISH):
                 raise AbyssShadowsFinished
@@ -421,7 +453,13 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         self.ui_click_until_disappear(self.I_START_ENSURE, interval=2)
 
     def process(self):
+        max_rounds = 60
+        round_count = 0
         while True:
+            round_count += 1
+            if round_count > max_rounds:
+                logger.warning("AbyssShadows process exceeded max rounds limit")
+                break
             self.init_list_from_cfg()
             _next = self.get_next()
             if _next is None:
@@ -478,14 +516,18 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
 
         return None
 
-    def open_navigation(self):
+    def open_navigation(self) -> bool:
         logger.info("Open navigation")
+        nav_timer = Timer(25).start()
         while True:
+            if nav_timer.reached():
+                logger.warning("Open navigation timeout")
+                return False
             self.screenshot()
             if self.appear(self.I_CHECK_FINISH):
                 raise AbyssShadowsFinished
             if self.appear(self.I_ABYSS_MAP):
-                break
+                return True
             if self.appear(self.I_ABYSS_NAVIGATION):
                 self.click(self.I_ABYSS_NAVIGATION, interval=1)
                 continue
@@ -615,7 +657,12 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         need_check_damage = condition.is_need_damage_value()
         self.device.screenshot_interval_set(1)
         self.device.stuck_record_add('BATTLE_STATUS_S')
+        battle_hard_timer = Timer(600).start()
         while True:
+            if battle_hard_timer.reached():
+                logger.warning("AbyssShadows run_battle hard timeout (600s)")
+                self.device.screenshot_interval_set()
+                break
             self.screenshot()
             if need_check_damage:
                 _cur_damage = self.O_DAMAGE.ocr_digit(self.device.image)
@@ -653,7 +700,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
 
     def quit_battle(self):
         logger.info("Quitting battle")
+        quit_timer = Timer(25).start()
         while True:
+            if quit_timer.reached():
+                logger.warning("Quit battle timeout")
+                return
             self.screenshot()
             if self.appear(self.I_EXIT_ENSURE):
                 if self.click(self.I_EXIT_ENSURE, interval=1):
@@ -748,7 +799,12 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AbyssShadowsAssets):
         # TODO 设想使用平均亮度分辨 是否可用
         self.change_area(item_code.get_areatype())
 
+        timer = Timer(25).start()
         while True:
+            if timer.reached():
+                logger.warning(f"check_available({item_code}) timeout")
+                return False
+            self.screenshot()
             if self.appear(self.I_ABYSS_NAVIGATION):
                 self.click(self.I_ABYSS_NAVIGATION, interval=2)
                 continue

@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 import time
 
+from module.base.timer import Timer
 from module.logger import logger
 
 from tasks.GameUi.page import page_main, page_travel
@@ -18,13 +19,17 @@ class ThousandThings(GameUi, RichManAssets):
         :param con:
         :return:
         """
-        logger.hr('Start Thousand Things')
+        logger.hr('千物商店')
         if not con.enable:
             logger.info('Thousand Things is disabled')
             return
         self.goto_page(page_travel)
 
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('Enter Thousand Things timeout')
+                return
             self.screenshot()
             if self.appear(self.I_TT_CHECK):
                 break
@@ -43,7 +48,11 @@ class ThousandThings(GameUi, RichManAssets):
         if con.ap:
             self.tt_buy_ap()
         self.device.click_record_clear()
+        exit_timer = Timer(20).start()
         while 1:
+            if exit_timer.reached():
+                logger.warning('Exit Thousand Things timeout')
+                break
             self.screenshot()
             if self.appear(self.I_TT_ENTER):
                 break
@@ -62,7 +71,11 @@ class ThousandThings(GameUi, RichManAssets):
             return False
         if not self.tt_check_money(2000):
             return False
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning('Open buy mystery amulet popup timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_TT_BUY_UP):
                 break
@@ -81,7 +94,11 @@ class ThousandThings(GameUi, RichManAssets):
             return False
         if not self.tt_check_money(350):
             return False
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning('Open buy black daruma scrap popup timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_TT_BUY_UP):
                 break
@@ -102,7 +119,11 @@ class ThousandThings(GameUi, RichManAssets):
             return False
         self.O_TT_NUMBER.keyword = '2'
         click_count = 0
+        ap_timer = Timer(25).start()
         while 1:
+            if ap_timer.reached():
+                logger.warning('Buy ap timeout')
+                break
             self.screenshot()
             if self.ocr_appear(self.O_TT_NUMBER):
                 break
@@ -136,12 +157,20 @@ class ThousandThings(GameUi, RichManAssets):
     def tt_get_reward(self, image_button):
         from time import sleep
         click_count = 0
+        reward_wait_timer = Timer(35).start()
         while 1:
+            if reward_wait_timer.reached():
+                logger.warning('Thousand Things get reward timeout')
+                return False
             self.screenshot()
 
             if click_count >= 6:
                 logger.warning('Get reward failed')
+                close_timer = Timer(15).start()
                 while 1:
+                    if close_timer.reached():
+                        logger.warning('Close buy up popup timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_TT_BUY_UP):
                         break
@@ -151,7 +180,11 @@ class ThousandThings(GameUi, RichManAssets):
 
             if self.ui_reward_appear_click():
                 sleep(0.5)
+                anim_timer = Timer(15).start()
                 while 1:
+                    if anim_timer.reached():
+                        logger.warning('Wait reward animation end timeout')
+                        break
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):

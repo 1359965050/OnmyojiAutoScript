@@ -1,5 +1,5 @@
 import random
-from cached_property import cached_property
+from functools import cached_property
 from module.base.protect import random_sleep
 from module.base.timer import Timer
 from module.logger import logger
@@ -19,7 +19,7 @@ class RichManAct(BaseAct, Debugger):
         """
             更新前请先看 ./README.md
         """
-        logger.hr(f'Start run climb type PASS', 1)
+        logger.hr('开始执行爬塔模式: 门票爬塔', 1)
         if hasattr(self, "find_and_click_act_battle"):
             self.find_and_click_act_battle()
         elif hasattr(self, "I_TO_BATTLE_MAIN"):
@@ -52,11 +52,15 @@ class RichManAct(BaseAct, Debugger):
             if self.appear_then_click(self.I_UI_CONFIRM, interval=2):
                 continue
             if self.appear_then_click(self.I_RM_THROW, interval=2):  # 开始扔骰子
-                logger.hr('Throw ticket', 3)
+                logger.hr('投掷门票', 3)
                 click_ticket = 0
                 self.device.stuck_record_clear()
                 self.device.stuck_record_add('BATTLE_STATUS_S')
+                throw_timer = Timer(45).start()
                 while True:
+                    if throw_timer.reached():
+                        logger.warning('RichMan throw dice timeout')
+                        break
                     self.screenshot()
                     if self.ui_reward_appear_click():  # 获得奖励
                         break
@@ -74,7 +78,7 @@ class RichManAct(BaseAct, Debugger):
                 continue
             if self.appear(self.I_RM_BUY_AP) or self.appear(self.I_RM_BUY_REWARD) or \
                     self.appear(self.I_RM_BUY_TICKET):  # 开始买东西
-                logger.hr('Buy envent', 3)
+                logger.hr('购买活动商品', 3)
                 click_ticket = 0
                 rich_man_conf = self.config.model.activity_shikigami.rich_man
                 timeout_timer = Timer(5).start()
@@ -104,7 +108,7 @@ class RichManAct(BaseAct, Debugger):
                         continue
             if self.appear(self.I_RM_QUESTION, interval=2):  # 开始答题
                 click_ticket = 0
-                logger.hr('Start question', 3)
+                logger.hr('开始答题挑战', 3)
                 q, a1, a2, a3 = self.detect_question_and_answers()
                 index = self.answer.answer_one(question=q, options=[a1, a2, a3])
                 if index is None:
@@ -134,7 +138,11 @@ class RichManAct(BaseAct, Debugger):
             #     click_ticket += 1
             #     click_fire = 0
             #     continue
+        back_timer = Timer(20).start()
         while True:
+            if back_timer.reached():
+                logger.warning('RichMan return to battle main timeout')
+                break
             self.screenshot()
             if hasattr(self, "I_TO_BATTLE_MAIN") and self.appear(self.I_TO_BATTLE_MAIN, interval=1):
                 break

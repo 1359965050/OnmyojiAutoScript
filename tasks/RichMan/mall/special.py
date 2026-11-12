@@ -4,6 +4,7 @@
 import time
 import re
 
+from module.base.timer import Timer
 from module.logger import logger
 from module.atom.image import RuleImage
 
@@ -27,7 +28,12 @@ class Special(Buy, MallNavbar):
             return
         # 向下滑找到购买的物品
         totem_bought, medium_bought, low_bought = False, False, False
+        swipe_count = 0
+        timer = Timer(45).start()
         while 1:
+            if timer.reached() or swipe_count >= 10:
+                logger.warning('Special room swipe limit reached')
+                break
             self.screenshot()
             if not totem_bought and self.appear(self.I_SP_BUY_TOTEM):
                 self._special_totom(con.totem_pass)
@@ -48,6 +54,7 @@ class Special(Buy, MallNavbar):
                 break
 
             if self.swipe(self.S_SP_DOWN, interval=2):
+                swipe_count += 1
                 time.sleep(2)
 
     def _special_totom(self, totem_pass: bool):
@@ -55,7 +62,7 @@ class Special(Buy, MallNavbar):
         购买御灵，要求必须下滑出现御灵
         :return:
         """
-        logger.hr('Buy totem', 3)
+        logger.hr('购买御灵门票', 3)
         if not totem_pass:
             logger.info('Buy totem is disabled')
             return
@@ -78,7 +85,7 @@ class Special(Buy, MallNavbar):
         购买中级盘，要求必须下滑出现中级盘
         :return:
         """
-        logger.hr('Buy medium', 3)
+        logger.hr('购买中级御魂', 3)
         if buy_number <= 0:
             logger.info('Buy medium is disabled')
             return
@@ -114,7 +121,7 @@ class Special(Buy, MallNavbar):
         购买低级盘，要求必须下滑出现低级盘
         :return:
         """
-        logger.hr('Buy low', 3)
+        logger.hr('购买低级御魂', 3)
         if buy_number <= 0:
             logger.info('Buy low is disabled')
             return

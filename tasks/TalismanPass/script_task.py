@@ -114,7 +114,7 @@ class ScriptTask(GameUi, TalismanPassAssets):
         获得1500签御魂奖励
         :return: 如果没有发现御魂奖励则退出
         """
-        logger.hr('Harvest soul')
+        logger.hr('领取花合战经验与奖励')
         timer_harvest = Timer(5)  # 如果连续5秒没有发现任何奖励，退出
         while 1:
             self.screenshot()

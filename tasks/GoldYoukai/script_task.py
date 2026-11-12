@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from cached_property import cached_property
+from functools import cached_property
 
 from module.exception import TaskEnd
 from module.logger import logger
@@ -60,15 +60,18 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
             while 1:
                 self.screenshot()
 
+                if wait_timer.reached():
+                    if self.is_in_room():
+                        # 超过时间依然挑战
+                        logger.warning('Wait for too long and start the challenge')
+                        self.click_fire()
+                        self.run_general_battle()
+                    else:
+                        logger.warning('Wait for room timeout, leaving wait loop')
+                    count += 1
+                    break
                 if not self.is_in_room():
                     continue
-                if wait_timer.reached():
-                    # 超过时间依然挑战
-                    logger.warning('Wait for too long and start the challenge')
-                    self.click_fire()
-                    count += 1
-                    self.run_general_battle()
-                    break
                 if not self.appear(self.I_ADD_5_1):
                     # 有人进来了，可以进行挑战
                     logger.info('There is someone in the room and start the challenge')

@@ -10,6 +10,7 @@ from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import any_of, page_main, page_shikigami_records, page_soul_zones
+from module.base.timer import Timer
 from module.logger import logger
 from module.exception import TaskEnd
 
@@ -42,7 +43,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, SougenbiAssets):
             self.run_switch_soul_by_name(con.switch_soul_config.group_name, con.switch_soul_config.team_name)
 
         self.goto_page(page_soul_zones)
+        enter_timer = Timer(15).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('Click sougenbi timeout')
+                break
             self.screenshot()
             if self.appear(self.I_S_CHECK_SOUGENBI):
                 break
@@ -69,7 +74,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, SougenbiAssets):
             case _:
                 raise ValueError('Sougenbi class error')
         self.check_lock(con.general_battle_config.lock_team_enable, self.I_S_TEAM_LOCK, self.I_S_TEAM_UNLOCK)
+        layer_timer = Timer(15).start()
         while 1:
+            if layer_timer.reached():
+                logger.warning('Select sougenbi layer timeout')
+                break
             self.screenshot()
             if self.appear(image_target):
                 break
@@ -93,7 +102,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, SougenbiAssets):
                 break
 
             # 点击挑战
+            fire_timer = Timer(15).start()
             while 1:
+                if fire_timer.reached():
+                    logger.warning('Sougenbi click fire timeout')
+                    break
                 self.screenshot()
                 if self.appear_then_click(self.I_S_FIRE, interval=1):
                     pass

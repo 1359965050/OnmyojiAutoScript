@@ -3,7 +3,7 @@
 # github https://github.com/runhey
 import random
 import time
-from cached_property import cached_property
+from functools import cached_property
 from tasks.ActivityShikigami.page import page_act
 
 from tasks.GameUi.game_ui import GameUi
@@ -71,7 +71,11 @@ class ScriptTask(GameUi, QuizAssets, ActivityShikigamiAssets, Debugger):
 
     def enter(self):
         self.goto_page(page_act)
+        enter_timer = Timer(20).start()
         while True:
+            if enter_timer.reached():
+                logger.warning('Quiz enter timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_START):
                 break
@@ -80,7 +84,7 @@ class ScriptTask(GameUi, QuizAssets, ActivityShikigamiAssets, Debugger):
         logger.info('Quiz start')
 
     def once(self) -> bool:
-        logger.hr('Quiz', 3)
+        logger.hr('答题挑战', 3)
         start_cnt = 0
         self.answer_cnt = 0
         # 重置倒计时状态

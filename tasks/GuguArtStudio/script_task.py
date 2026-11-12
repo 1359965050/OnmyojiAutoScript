@@ -80,7 +80,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, GuguArtStudioAssets):
                                          self.conf.switch_soul_config.team_name)
 
     def get_reward(self):
-        logger.hr('Get gugu reward', 3)
+        logger.hr('领取呱呱画室奖励', 3)
         reward_click = [self.C_GAS_REWARD_1, self.C_GAS_REWARD_2, self.C_GAS_REWARD_3, self.C_GAS_REWARD_4, self.C_GAS_REWARD_5]
         for click in reward_click:
             self.I_GAS_REWARD_LOCK.roi_back = click.roi_back

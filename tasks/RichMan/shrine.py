@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 import time
 
+from module.base.timer import Timer
 from module.logger import logger
 
 from tasks.GameUi.page import page_main, page_summon
@@ -14,13 +15,17 @@ from tasks.RichMan.config import Shrine as ConfigShrine
 class Shrine(GameUi, RichManAssets):
 
     def execute_shrine(self, con: ConfigShrine):
-        logger.hr('Start Shrine')
+        logger.hr('神龛商店')
         if not con.enable:
             logger.info('Shrine is disabled')
             return
         self.goto_page(page_summon)
 
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning('Enter Shrine timeout')
+                return
             self.screenshot()
             if self.appear(self.I_S_NEXT_PERIOD):
                 break
@@ -61,7 +66,7 @@ class Shrine(GameUi, RichManAssets):
         return False
 
     def shrine_black_daruma(self):
-        logger.hr('Shrine black daruma', 2)
+        logger.hr('兑换御行达摩', 2)
         self.screenshot()
         if not self.shrine_check_money(1500):
             return
@@ -81,7 +86,7 @@ class Shrine(GameUi, RichManAssets):
         time.sleep(1)
 
     def shrine_white_five(self):
-        logger.hr('Shrine white five', 2)
+        logger.hr('兑换五星奉为达摩', 2)
         self.screenshot()
         if not self.appear(self.I_S_WHITE_FIVE):
             logger.info('White five is not available')
@@ -101,7 +106,7 @@ class Shrine(GameUi, RichManAssets):
         time.sleep(1)
 
     def shrine_white_four(self):
-        logger.hr('Shrine white four', 2)
+        logger.hr('兑换四星奉为达摩', 2)
         self.screenshot()
         if not self.appear(self.I_S_WHITE_FOUR):
             logger.info('White four is not available')

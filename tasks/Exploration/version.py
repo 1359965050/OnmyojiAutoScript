@@ -2,7 +2,7 @@
 # @author runhey
 # github https://github.com/runhey
 from pathlib import Path
-from module.base.decorator import cached_property
+from functools import cached_property
 
 from module.atom.gif import RuleGif
 from module.atom.image import RuleImage

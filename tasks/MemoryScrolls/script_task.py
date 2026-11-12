@@ -29,7 +29,11 @@ class ScriptTask(GameUi, MemoryScrollsAssets):
     def goto_memoryscrolls_main(self, con):
         # 循环寻找&点击绘卷入口
         if self.wait_until_appear(self.I_MS_ENTER, wait_time=30):
+            enter_timer = Timer(20).start()
             while 1:
+                if enter_timer.reached():
+                    logger.warning('Enter Memory Scrolls main page timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_MS_FRAGMENT_S):
                     logger.info('Entered Memory Scrolls main page')
@@ -79,7 +83,11 @@ class ScriptTask(GameUi, MemoryScrollsAssets):
         进入指定分卷
         :param scroll_number: 分卷编号
         """
+        scroll_timer = Timer(20).start()
         while 1:
+            if scroll_timer.reached():
+                logger.warning('Enter Memory Scrolls contribution page timeout')
+                return False
             self.screenshot()
             if self.appear(GlobalGameAssets.I_UI_BACK_RED):
                 logger.info('Entered Memory Scrolls contribution page')

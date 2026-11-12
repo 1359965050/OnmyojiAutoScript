@@ -135,7 +135,12 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralRoom, GameUi, SwitchSoul, 
                 self.run_general_battle(config=self.conf.general_battle_config, exit_matcher=self.team_exit_matcher)
 
         # 有一种情况是本来要退出的，但是队长邀请了进入的战斗的加载界面
+        exit_timer = Timer(30).start()
         while True:
+            if exit_timer.reached():
+                logger.warning('OtherWorldTwilight member exit timeout')
+                break
+            self.screenshot()
             if self.appear(self.I_CHECK_MAIN) or self.appear(self.I_OWT_FIRE):
                 break
             # 如果可能在房间就退出
@@ -150,6 +155,7 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralRoom, GameUi, SwitchSoul, 
         logger.info('Start run alone')
         self.goto_page(pages.page_owt)
         self.check_lock(self.conf.general_battle_config.lock_team_enable, self.I_OWT_LOCK, self.I_OWT_UNLOCK)
+        unknown_page_timer = Timer(10)
         while True:
             if self.current_count >= self.conf.other_world_twilight_config.limit_count:
                 logger.info('Count limit out')
@@ -159,13 +165,14 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralRoom, GameUi, SwitchSoul, 
                 break
             self.screenshot()
             current_page = self.get_current_page(False)
-            unknown_page_timer = Timer(10)
             match current_page:
                 case None:
                     sleep(0.5)
                 case pages.page_owt:
+                    unknown_page_timer.clear()
                     self.appear_then_click(self.I_OWT_FIRE, interval=1.2)
                 case pages.page_battle_prepare | pages.page_battle | pages.page_reward:
+                    unknown_page_timer.clear()
                     self.run_general_battle(self.conf.general_battle_config, exit_matcher=self.I_OWT_FIRE)
                 case _:
                     if not unknown_page_timer.started():

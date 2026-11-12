@@ -118,7 +118,11 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
             logger.info(f'count: {hya_count}/{self.limit_count}')
             logger.info(f'time: {(datetime.now() - self.start_time).total_seconds():.1f}s/{self.limit_time.total_seconds()}s')
 
+        close_timer = Timer(15).start()
         while 1:
+            if close_timer.reached():
+                logger.warning('Hyakkiyakou exit access timeout')
+                break
             self.screenshot()
 
             if not self.appear(self.I_HACCESS):
@@ -229,7 +233,11 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
         # 这里改成：在三个候选中选择稀有度最高的作为鬼王
         self._best_boss_button = None
         self._select_best_boss()
+        start_timer = Timer(20).start()
         while 1:
+            if start_timer.reached():
+                logger.warning('Hyakkiyakou start round timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_HTITLE):
                 break
@@ -240,7 +248,7 @@ class ScriptTask(GameUi, HyaSlave, SwitchOnmyoji):
                 continue
         self.device.stuck_record_add('BATTLE_STATUS_S')
         # 正式开始
-        logger.hr('Start Hyakkiyakou')
+        logger.hr('开始百鬼夜行')
         init_bean_flag: bool = False
         last_action = [0, 0, False, 10]
         self.hya_fs_check_timer.reset()

@@ -8,7 +8,7 @@ from tasks.GameUi.default_pages import page_battle_prepare, page_battle
 from tasks.GameUi.matcher import any_of
 from typing import List, Callable, Optional
 
-from cached_property import cached_property
+from functools import cached_property
 
 from module.atom.image import RuleImage
 from module.atom.ocr import RuleOcr
@@ -221,7 +221,11 @@ class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
         self.screenshot()
         if not self.appear(btn):
             return
+        trace_timer = Timer(20).start()
         while 1:
+            if trace_timer.reached():
+                logger.warning('WantedQuests trace_one timeout')
+                return
             self.screenshot()
             # 追踪成功  或  是现世任务 不需要追踪
             if self.appear(self.I_WQ_TRACE_ONE_ENABLE) or self.appear(self.I_WQ_TRACE_ONE_REALWORLD):
@@ -245,7 +249,7 @@ class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
         :param num_want: 一共要打败的怪物数量
         :return:
         """
-        logger.hr('Start wanted quests')
+        logger.hr('开始悬赏封印')
         if not self.appear(self.I_GOTO_1):
             # 如果没有出现 '前往'按钮， 那就是这个可能是神秘任务但是没有解锁
             logger.info('This is a secret mission but not unlock')
@@ -411,7 +415,7 @@ class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
         :return:
         """
 
-        logger.hr('Invite friends')
+        logger.hr('邀请好友协作')
         self.invite_random(self.I_WQ_INVITE_1)
         self.invite_random(self.I_WQ_INVITE_2)
         self.invite_random(self.I_WQ_INVITE_3)
@@ -498,7 +502,11 @@ class ScriptTask(WQExplore, SecretScriptTask, WantedQuestsAssets):
                     break
                 # TODO OCR识别到文字 但是没有选中 尝试重新选择  (选择好友时,弹出协作邀请导致选择好友失败)
             # 检测跨服好友按钮是否高亮
+            diff_timer = Timer(15).start()
             while 1:
+                if diff_timer.reached():
+                    logger.warning('WantedQuests highlight diff_svr button timeout')
+                    break
                 self.screenshot()
                 if not self.appear_highlight(self.I_WQ_INVITE_DIFF_SVR_HIGHLIGHT):
                     self.click(self.I_WQ_INVITE_DIFF_SVR)

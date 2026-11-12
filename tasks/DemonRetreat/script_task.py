@@ -3,7 +3,7 @@
 # github https://github.com/runhey
 from time import sleep
 from datetime import timedelta, datetime, time
-from cached_property import cached_property
+from functools import cached_property
 
 from module.exception import TaskEnd
 from module.logger import logger
@@ -52,7 +52,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssSha
 
         # 战斗结束 回到寮信息界面 准备领取奖励
         # 先返回
+        claim_timer = Timer(30).start()
         while 1:
+            if claim_timer.reached():
+                logger.warning("DemonRetreat claim rewards timeout")
+                break
             self.screenshot()
             if self.appear_then_click(self.I_PRAY, interval=1):
                 logger.warning("Claim rewards")
@@ -81,7 +85,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssSha
         self.goto_page(page_guild)
 
         goto_demon_retreat_num = 0
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning("Enter demon_retreat timeout")
+                return False
             self.screenshot()
             # 进入神社
             if self.appear_then_click(self.I_SHRINE, interval=1):
@@ -121,7 +129,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssSha
 
     def demon_retreat(self):
         cfg: DemonRetreat = self.config.demon_retreat
-        logger.hr('demon retreat', 2)
+        logger.hr('首领退治', 2)
 
         # 来晚了直接进入战斗
         if not set(self.O_LATER_ENTER_CHECK.ocr(image=self.device.image)).intersection(set("集结")):
@@ -162,7 +170,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DemonRetreatAssets, AbyssSha
             # 点击准备按钮
             self.wait_until_appear(self.I_PREPARE_HIGHLIGHT)
             self.wait_until_appear(self.I_BUFF)
+            prepare_timer = Timer(15).start()
             while 1:
+                if prepare_timer.reached():
+                    logger.warning("DemonRetreat prepare wait timeout")
+                    break
                 self.screenshot()
                 if not self.appear(self.I_BUFF):
                     break

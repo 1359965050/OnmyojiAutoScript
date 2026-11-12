@@ -18,8 +18,11 @@ class BasePeacockKingdom(GeneralBattle, SixRealmsCommon):
         """
         使用OCR读取技能名称，返回 (匹配到的最高优先级技能的中心X坐标, 技能名称)
         """
+        ocr_rule = getattr(self, 'O_PK_SKILL_NAME', None)
+        if ocr_rule is None:
+            return None, None
         for name in priority_names:
-            x, y, w, h = self.O_PK_SKILL_NAME.ocr_full(self.device.image, keyword=name)
+            x, y, w, h = ocr_rule.ocr_full(self.device.image, keyword=name)
             if w > 0:
                 logger.info(f'OCR Recognize skill: {name} at x={x}')
                 return x + w // 2, name

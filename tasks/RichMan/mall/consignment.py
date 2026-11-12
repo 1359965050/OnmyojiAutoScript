@@ -35,13 +35,13 @@ class Consignment(Buy, MallNavbar):
             logger.warning('Consignment money is not enough')
             return
         remain_number = self.O_CON_NUMBER.ocr(self.device.image)
-        if remain_number == 0:
-            logger.warning('Consignment number is 0')
+        if not isinstance(remain_number, int) or remain_number <= 0:
+            logger.warning(f'Consignment number is invalid or 0: {remain_number}')
             return
-        if remain_number == 10:
+        if remain_number >= 10:
             self.buy_more(self.I_CON_TICKET)
         else:
-            self.buy_one(self.I_CON_TICKET, remain_number)
+            self.buy_more(self.I_CON_TICKET, remain_number)
         logger.info('Consignment buy_sale_ticket is success')
 
 

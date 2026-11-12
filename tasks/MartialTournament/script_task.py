@@ -5,7 +5,7 @@ from datetime import datetime
 import random
 import time
 
-from cached_property import cached_property
+from functools import cached_property
 
 from module.atom.image import RuleImage
 from module.base.protect import random_sleep
@@ -16,6 +16,8 @@ from module.logger import logger
 from tasks.base_task import BaseTask
 from tasks.MartialTournament.assets import MartialTournamentAssets
 from tasks.MartialTournament.config import MartialTournament, GeneralBattleConfig
+from tasks.Component.BaseActivity.exceptions import LimitCountOut, LimitTimeOut, TicketsNotEnough
+from tasks.Component.BuyWindow.buy_window import BuyWindow
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle, ExitMatcher
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.game_ui import GameUi
@@ -24,19 +26,7 @@ from tasks.GameUi.default_pages import random_click
 from typing import Optional, Callable
 
 
-class LimitTimeOut(Exception):
-    pass
-
-
-class LimitCountOut(Exception):
-    pass
-
-
-class TicketsNotEnough(Exception):
-    pass
-
-
-class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
+class ScriptTask(GeneralBattle, BuyWindow, SwitchSoul, GameUi, MartialTournamentAssets):
 
     @cached_property
     def conf(self) -> MartialTournament:
@@ -147,15 +137,22 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
                 self.team_locked = False
                 self.ticket_type = 'pass_1'
                 self.goto_page(self.current_climb_page)
-                logger.hr(f'Start climb mode: {mode}', 2)
+                logger.hr(f'开始执行爬塔模式: {mode}', 2)
                 try:
+                    unknown_page_timer = Timer(30).start()
                     while True:
                         self.screenshot()
                         self.update_status()
                         current_page = self.get_current_page()
                         if current_page is None:
+                            if unknown_page_timer.reached():
+                                logger.warning(f'Climb mode {mode} unknown page timeout, returning to climb page')
+                                self.goto_page(self.current_climb_page)
+                                unknown_page_timer.reset()
+                                continue
                             time.sleep(0.5)
                             continue
+                        unknown_page_timer.reset()
                         handle = self.mt_page_handle_dict.get(current_page, None)
                         if handle is None:
                             self.goto_page(self.current_climb_page)
@@ -234,7 +231,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
 
     def search_boss(self) -> bool:
         """搜索boss, 等待挑战浮窗出现"""
-        logger.hr('Search boss', 2)
+        logger.hr('搜索首领', 2)
         search_times, max_times = 0, random.randint(3, 5)
         wait_timer = Timer(10).start()
         while True:
@@ -259,47 +256,41 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
                 continue
         return False
 
-    def enter_battle(self) -> bool:
-        """点击挑战按钮进入战斗 (挑战界面为浮窗)"""
-        logger.hr('Enter battle', 2)
-        click_times, max_times = 0, random.randint(3, 5)
+    def _enter_mt_battle(self, challenge_btn: RuleImage, label: str, max_times: int | None = None) -> bool:
+        """通用武道会进战入口：集成 BuyWindow 弹窗熔断与超时保护"""
+        logger.hr(f'进入{label}', 2)
+        limit = max_times if max_times is not None else random.randint(3, 5)
+        wait_timer = Timer(limit * 10 + 15).start()
+        click_times = 0
         while True:
             self.screenshot()
             if self.is_in_battle(False):
                 return True
-            if click_times >= max_times:
-                logger.warning('Cannot enter battle, click reach max times')
+            if self.is_ticket_buy_window():
+                self.handle_ticket_buy_window(self.current_mode)
+            if wait_timer.reached():
+                logger.warning(f'Cannot enter {label}, wait timeout')
+                raise TicketsNotEnough
+            if click_times >= limit:
+                logger.warning(f'Cannot enter {label}, click reach max times')
                 raise TicketsNotEnough
             if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=1) or \
                     self.appear_then_click(self.I_UI_CONFIRM, interval=1):
                 continue
-            if self.appear_then_click(self.I_MT_CHALLENGE, interval=1.5):
+            if self.appear_then_click(challenge_btn, interval=1.5):
                 self.device.click_record_clear()
                 click_times += 1
-                logger.info(f'Try click challenge, remain times[{max_times - click_times}]')
+                logger.info(f'Try click {label}, remain times[{limit - click_times}]')
                 continue
         return False
 
+    def enter_battle(self) -> bool:
+        """点击挑战按钮进入战斗 (挑战界面为浮窗)"""
+        return self._enter_mt_battle(self.I_MT_CHALLENGE, '挑战')
+
     def enter_ap_battle(self) -> bool:
         """点击体力界面的挑战按钮进入战斗"""
-        logger.hr('Enter AP battle', 2)
-        click_times, max_times = 0, random.randint(3, 5)
-        while True:
-            self.screenshot()
-            if self.is_in_battle(False):
-                return True
-            if click_times >= max_times:
-                logger.warning('Cannot enter AP battle, click reach max times')
-                raise TicketsNotEnough
-            if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=1) or \
-                    self.appear_then_click(self.I_UI_CONFIRM, interval=1):
-                continue
-            if self.appear_then_click(self.I_MT_CHALLENGE_AP, interval=1.5):
-                self.device.click_record_clear()
-                click_times += 1
-                logger.info(f'Try click AP challenge, remain times[{max_times - click_times}]')
-                continue
-        return False
+        return self._enter_mt_battle(self.I_MT_CHALLENGE_AP, '体力挑战')
 
     def detect_boss_type(self) -> str:
         """检测当前浮窗中的boss类型: 'single'单体, 'group'群体"""
@@ -320,41 +311,25 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
         if self.last_soul_type == boss_type:
             return
         conf = self.conf.switch_soul_config
-        if boss_type == 'single':
-            enable = conf.enable_switch_single or conf.enable_switch_single_by_name
-            if not enable:
-                self.last_soul_type = boss_type
-                return
-        elif boss_type == 'ap':
-            enable = conf.enable_switch_mt_ap or conf.enable_switch_mt_ap_by_name
-            if not enable:
-                self.last_soul_type = boss_type
-                return
-        else:  # group
-            enable = conf.enable_switch_group or conf.enable_switch_group_by_name
-            if not enable:
-                self.last_soul_type = boss_type
-                return
-        logger.hr(f'Start switch soul ({boss_type})', 2)
+        soul_mapping = {
+            'single': (conf.enable_switch_single, conf.single_group_team,
+                       conf.enable_switch_single_by_name, conf.single_group_team_name),
+            'ap': (conf.enable_switch_mt_ap, conf.mt_ap_team,
+                   conf.enable_switch_mt_ap_by_name, conf.mt_ap_team_name),
+            'group': (conf.enable_switch_group, conf.group_boss_team,
+                      conf.enable_switch_group_by_name, conf.group_boss_team_name),
+        }
+        by_idx, idx_val, by_name, name_val = soul_mapping.get(boss_type, soul_mapping['group'])
+        if not (by_idx or by_name):
+            self.last_soul_type = boss_type
+            return
+        logger.hr(f'开始切换御魂 ({boss_type})', 2)
         self.ui_click(enter_button, stop=self.I_CHECK_RECORDS, interval=1)
-        if boss_type == 'single':
-            if conf.enable_switch_single_by_name:
-                group, team = conf.single_group_team_name.split(",")
-                self.run_switch_soul_by_name(group, team)
-            elif conf.enable_switch_single:
-                self.run_switch_soul(conf.single_group_team)
-        elif boss_type == 'ap':
-            if conf.enable_switch_mt_ap_by_name:
-                group, team = conf.mt_ap_team_name.split(",")
-                self.run_switch_soul_by_name(group, team)
-            elif conf.enable_switch_mt_ap:
-                self.run_switch_soul(conf.mt_ap_team)
-        else:  # group
-            if conf.enable_switch_group_by_name:
-                group, team = conf.group_boss_team_name.split(",")
-                self.run_switch_soul_by_name(group, team)
-            elif conf.enable_switch_group:
-                self.run_switch_soul(conf.group_boss_team)
+        if by_name:
+            group, team = name_val.split(",")
+            self.run_switch_soul_by_name(group, team)
+        elif by_idx:
+            self.run_switch_soul(idx_val)
         self.last_soul_type = boss_type
         self.exit_shikigami_records()
         # 等待界面重新出现
@@ -367,18 +342,12 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MartialTournamentAssets):
 
     def lock_team(self, battle_conf: GeneralBattleConfig):
         """根据配置判断是否锁定阵容, 并执行锁定或解锁"""
-        enable = battle_conf.lock_team_enable
-        if enable:
-            logger.info('Lock team')
-            self.ui_click(self.I_UNLOCK, stop=self.I_LOCK, interval=1.5)
-            return
-        logger.info('Unlock team')
-        self.ui_click(self.I_LOCK, stop=self.I_UNLOCK, interval=1.5)
+        self.check_lock(battle_conf.lock_team_enable, self.I_LOCK, self.I_UNLOCK)
 
     def check_tickets_enough(self) -> bool:
         """统一检查门票/体力是否足够
         pass1和pass2数量同时显示, 直接读两种券选有票的用"""
-        logger.hr('Check tickets')
+        logger.hr('检查门票数量')
         self.screenshot()
         # ap模式
         if self.current_mode == 'ap':

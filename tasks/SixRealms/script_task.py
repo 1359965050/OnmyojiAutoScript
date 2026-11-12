@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
 # @author AzurTian
-from cached_property import cached_property
+from functools import cached_property
 from datetime import datetime, timedelta
 
 from pathlib import Path

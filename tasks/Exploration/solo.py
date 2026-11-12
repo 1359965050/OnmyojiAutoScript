@@ -1,8 +1,9 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+from enum import Enum
 from time import sleep
-from cached_property import cached_property
+from functools import cached_property
 
 from module.logger import logger
 from module.base.timer import Timer
@@ -12,11 +13,53 @@ from tasks.Exploration.base import BaseExploration
 from tasks.Exploration.config import ChooseRarity, AutoRotate, UserStatus, ExplorationLevel, UpType
 
 
+class Scene(Enum):
+    """遗留探索场景枚举，兼容 SoloExploration 状态机。"""
+    UNKNOWN = 0
+    WORLD = 1
+    ENTRANCE = 2
+    MAIN = 3
+    BATTLE_PREPARE = 4
+    BATTLE_FIGHTING = 5
+    TEAM = 6
+
+
 class SoloExploration(BaseExploration):
     INVITE_FLAG_OFF = (157, 109, 83)
     INVITE_FLAG_ON = (227, 193, 153)
     FRIEND_LEAVE_TIMEOUT = 10
     explore_init = False
+
+    def get_current_scene(self, reuse_screenshot: bool = True) -> Scene:
+        if not reuse_screenshot:
+            self.screenshot()
+        if self.appear(self.I_CHECK_EXPLORATION) and not self.appear(self.I_E_SETTINGS_BUTTON):
+            return Scene.WORLD
+        if self.appear(self.I_E_EXPLORATION_CLICK):
+            return Scene.ENTRANCE
+        if self.appear(self.I_E_SETTINGS_BUTTON) or self.appear(self.I_E_AUTO_ROTATE_ON) or self.appear(self.I_E_AUTO_ROTATE_OFF):
+            return Scene.MAIN
+        if self.is_in_prepare():
+            return Scene.BATTLE_PREPARE
+        if self.is_in_battle():
+            return Scene.BATTLE_FIGHTING
+        if self.is_in_room() or self.appear(self.I_CREATE_ENSURE):
+            return Scene.TEAM
+        return Scene.UNKNOWN
+
+    def wait_world_stable(self, timeout: float = 10.0) -> bool:
+        timer = Timer(timeout).start()
+        while not timer.reached():
+            scene = self.get_current_scene(reuse_screenshot=False)
+            if scene == Scene.WORLD and self.appear(self.I_EXP_ARROW_RIGHT):
+                return True
+            if scene == Scene.ENTRANCE:
+                logger.warning('World scene unstable, possibly transient frame after paper doll collection')
+                return False
+            if self.appear_then_click(self.I_EXP_ARROW_LEFT, interval=2):
+                continue
+        logger.warning('wait_world_stable timeout')
+        return False
 
     @cached_property
     def _invite_config(self) -> InviteConfig:
@@ -55,7 +98,7 @@ class SoloExploration(BaseExploration):
         return True
 
     def run_solo(self):
-        logger.hr('solo')
+        logger.hr('单人探索')
         search_fail_cnt = 0
         swipe_unchanged_cnt = 0
 
@@ -141,7 +184,7 @@ class SoloExploration(BaseExploration):
                 continue
 
     def run_leader(self):
-        logger.hr('leader')
+        logger.hr('队长探索')
         search_fail_cnt = 0
         swipe_unchanged_cnt = 0
         friend_leave_timer = Timer(self.FRIEND_LEAVE_TIMEOUT)
@@ -173,7 +216,11 @@ class SoloExploration(BaseExploration):
             # 邀请好友, 非常有可能是后面邀请好友，然后直接跳到组队了
             elif scene == Scene.ENTRANCE:
                 swipe_unchanged_cnt = 0
+                team_timer = Timer(20).start()
                 while 1:
+                    if team_timer.reached():
+                        logger.warning('Exploration run_leader create team timeout')
+                        break
                     self.screenshot()
                     if self.is_in_room():
                         break
@@ -195,7 +242,11 @@ class SoloExploration(BaseExploration):
                     continue
                 else:
                     logger.warning('Invite failed, quit')
+                    quit_timer = Timer(15).start()
                     while 1:
+                        if quit_timer.reached():
+                            logger.warning('Exploration invite failed quit timeout')
+                            break
                         self.screenshot()
                         if self.appear(self.I_CHECK_EXPLORATION):
                             break
@@ -268,7 +319,7 @@ class SoloExploration(BaseExploration):
                 continue
 
     def run_member(self):
-        logger.hr('member')
+        logger.hr('队员探索')
         wait_timer = Timer(50)
         friend_leave_timer = Timer(self.FRIEND_LEAVE_TIMEOUT)
 
@@ -324,7 +375,11 @@ class SoloExploration(BaseExploration):
     def invite_friend(self, name: str = None, find_mode: FindMode = FindMode.AUTO_FIND) -> bool:
         logger.info('Click add to invite friend')
         # 点击＋号
+        add_timer = Timer(15).start()
         while 1:
+            if add_timer.reached():
+                logger.warning('Exploration invite_friend open list timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_LOAD_FRIEND):
                 break
@@ -438,7 +493,11 @@ class SoloExploration(BaseExploration):
         logger.info('Click invite ensure')
         if not self.appear(self.I_INVITE_ENSURE):
             logger.warning('No appear invite ensure while invite friend')
+        confirm_timer = Timer(15).start()
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Exploration invite_friend confirm timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_INVITE_ENSURE):
                 break
@@ -456,7 +515,7 @@ class SoloExploration(BaseExploration):
 
 class ScriptTask(SoloExploration):
     def run(self):
-        logger.hr('exploration')
+        logger.hr('探索副本')
         self.pre_process()
         random_click_cnt = 0
         while 1:

@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from cached_property import cached_property
+from functools import cached_property
 from datetime import datetime
 import requests
 import re
@@ -25,7 +25,11 @@ class ScriptTask(RightActivity, FrogBossAssets, GeneralBattleAssets):
     def run(self):
         self.enter_right_activity(self.I_FROG_BOSS_ENTER)
         # 进入主界面
+        frog_timer = Timer(60).start()
         while 1:
+            if frog_timer.reached():
+                logger.warning('FrogBoss main loop timeout')
+                break
             self.screenshot()
 
             # 已经下注
@@ -40,7 +44,11 @@ class ScriptTask(RightActivity, FrogBossAssets, GeneralBattleAssets):
             if self.appear(self.I_BET_SUCCESS):
                 logger.info('You bet win')
                 self.detect()
+                reward_timer = Timer(20).start()
                 while 1:
+                    if reward_timer.reached():
+                        logger.warning('FrogBoss collect win reward timeout')
+                        break
                     self.screenshot()
                     if self.appear(self.I_BET_LEFT) and self.appear(self.I_BET_RIGHT):
                         break
@@ -91,7 +99,7 @@ class ScriptTask(RightActivity, FrogBossAssets, GeneralBattleAssets):
         self.set_next_run(task='FrogBoss', target=time_set - time_delta)
 
     def do_bet(self):
-        logger.hr('do bet', level=2)
+        logger.hr('对弈竞猜下注', level=2)
         self.screenshot()
         flag_glod_30 = 0
         count_left = self.O_LEFT_COUNT.ocr(self.device.image)
@@ -126,7 +134,11 @@ class ScriptTask(RightActivity, FrogBossAssets, GeneralBattleAssets):
                 continue
         # 正式下注
         logger.info('Formal bet')
+        bet_timer = Timer(20).start()
         while 1:
+            if bet_timer.reached():
+                logger.warning('FrogBoss formal bet timeout')
+                break
             self.screenshot()
             if self.appear(self.I_BETTED):
                 break

@@ -14,6 +14,7 @@ from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import any_of, page_main, page_reward, page_shikigami_records, page_soul_zones
 from tasks.FallenSun.assets import FallenSunAssets
 from tasks.FallenSun.config import FallenSun, UserStatus
+from module.base.timer import Timer
 from module.logger import logger
 from module.exception import TaskEnd
 
@@ -68,7 +69,11 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
 
     def fallen_sun_enter(self) -> bool:
         logger.info('Enter fallen_sun')
+        enter_timer = Timer(15).start()
         while True:
+            if enter_timer.reached():
+                logger.warning('Enter fallen_sun timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_FORM_TEAM):
                 return True
@@ -92,8 +97,12 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
         :return:
         """
         logger.info('Check lock: %s', lock)
+        lock_timer = Timer(15).start()
         if lock:
             while 1:
+                if lock_timer.reached():
+                    logger.warning('FallenSun lock team timeout')
+                    return False
                 self.screenshot()
                 if self.appear(self.I_FALLEN_SUN_LOCK):
                     return True
@@ -101,6 +110,9 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
                     continue
         else:
             while 1:
+                if lock_timer.reached():
+                    logger.warning('FallenSun unlock team timeout')
+                    return False
                 self.screenshot()
                 if self.appear(self.I_FALLEN_SUN_UNLOCK):
                     return True
@@ -116,7 +128,11 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
         self.check_lock(self.config.fallen_sun.general_battle_config.lock_team_enable)
         # 创建队伍
         logger.info('Create team')
+        create_timer = Timer(15).start()
         while 1:
+            if create_timer.reached():
+                logger.warning('FallenSun create team timeout')
+                break
             self.screenshot()
             if self.appear(self.I_CHECK_TEAM):
                 break
@@ -250,7 +266,11 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
                     exit_matcher=self.I_CHECK_TEAM,
                 )
 
+        exit_timer = Timer(20).start()
         while 1:
+            if exit_timer.reached():
+                logger.warning('FallenSun run_member exit timeout')
+                break
             # 有一种情况是本来要退出的，但是队长邀请了进入的战斗的加载界面
             if self.appear(self.I_CHECK_MAIN) or self.appear(self.I_CHECK_EXPLORATION):
                 break
@@ -296,7 +316,11 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
                 break
 
             # 点击挑战
+            fire_timer = Timer(15).start()
             while 1:
+                if fire_timer.reached():
+                    logger.warning('FallenSun click fire timeout')
+                    break
                 self.screenshot()
                 if self.appear_then_click(self.I_FALLEN_SUN_FIRE, interval=1):
                     pass

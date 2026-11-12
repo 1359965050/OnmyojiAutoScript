@@ -1,5 +1,6 @@
 from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from module.logger import logger
 from tasks.Exploration import page as pages
 from tasks.Exploration.base import BaseExploration
@@ -58,7 +59,11 @@ class WQExplore(ExplorationScriptTask, HighLight):
             logger.info("Costume '云景阆苑' detected, enable multi-scale matching for highlight")
         else:
             self.TEMPLATE_GIF.match = self.TEMPLATE_GIF.match_origin
+        enter_timer = Timer(20).start()
         while True:
+            if enter_timer.reached():
+                logger.warning('WQExplore enter exp entrance timeout')
+                break
             self.screenshot()
             if pages.page_exp_entrance == self.get_current_page():
                 break

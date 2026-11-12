@@ -47,7 +47,7 @@ class Bondlings(Buy, MallNavbar):
         :param buy_money: 每一个购买的钱数
         :return:
         """
-        logger.hr(buy_button.name, 3)
+        logger.hr(f'兑换物品: {buy_button.name}', 3)
         if buy_number == 0:
             logger.info('Buy number is 0')
             return

@@ -40,12 +40,18 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
         self.limit_time: timedelta = timedelta(hours=limit_time.hour, minutes=limit_time.minute,
                                                seconds=limit_time.second)
         self.prepare_duel()
+        nav_fail_count = 0
         while True:
             self.screenshot()
             self.check_and_get_reward()
             if not self.duel_main():
+                nav_fail_count += 1
+                if nav_fail_count >= 5:
+                    logger.warning('Duel main navigation failed too many times, exit loop')
+                    break
                 self.goto_page(page_duel)
                 continue
+            nav_fail_count = 0
             if not self.can_start_duel():
                 break
             self.start_duel()
@@ -84,7 +90,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
 
     def start_duel(self):
         """进行一次斗技"""
-        logger.hr('Duel battle', 2)
+        logger.hr('斗技战斗', 2)
         self.current_count += 1
         self.enter_battle()
         self.battle_prepare()
@@ -103,8 +109,12 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
 
     def enter_battle(self):
         """点击开始战斗(一直到出现战斗准备界面)"""
-        logger.hr('duel battle matching')
+        logger.hr('斗技匹配对手中')
+        enter_timer = Timer(60).start()
         while not self.is_in_battle_prepare():
+            if enter_timer.reached():
+                logger.warning('Duel enter_battle timeout')
+                break
             self.screenshot()
             # 战斗按钮
             self.ui_click_until_disappear(self.I_D_BATTLE, interval=1.2)
@@ -114,7 +124,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
 
     def battle_prepare(self):
         """选式神准备斗技阶段"""
-        logger.hr('duel battle preparing')
+        logger.hr('斗技战前准备中')
         not_in_prepare_cnt, max_retry = 0, 3
         prepare_timeout = Timer(90).start()
         auto_entry_ready = False
@@ -172,7 +182,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
 
     def wait_battle(self) -> bool:
         """等待战斗结束, 返回战斗结果, 最后会退出到斗技主界面"""
-        logger.hr('duel battle waiting')
+        logger.hr('等待斗技结算')
         battle_operated = False
         battle_timeout_timer = Timer(270).start()
         stuck_refresh_timer = Timer(15).start()
@@ -252,7 +262,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
         return ret
 
     def duel_exit_battle(self):
+        exit_timer = Timer(30).start()
         while 1:
+            if exit_timer.reached():
+                logger.warning('Duel exit_battle timeout')
+                return
             self.screenshot()
             if self.appear(self.I_D_FAIL) or self.appear(self.I_FALSE):
                 return
@@ -272,7 +286,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
         roi_h = self.I_DUEL_HONOR.roi_front[3]
         self.O_D_HONOR.roi = [roi_x, roi_y, roi_w, roi_h]
         current, remain, total = self.O_D_HONOR.ocr(self.device.image)
-        return current == total and remain == 0
+        return total > 0 and current == total and remain == 0
 
     def get_and_update_cur_score(self, skip_screenshot: bool = True) -> int:
         """
@@ -316,7 +330,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchOnmyoji, DuelAssets):
         if not self.conf.duel_config.switch_all_soul:
             return
         click_count = 0  # 计数
+        switch_timer = Timer(20).start()
         while 1:
+            if switch_timer.reached():
+                logger.warning('Duel switch_all_soul timeout')
+                break
             self.screenshot()
             if click_count >= 3:
                 break

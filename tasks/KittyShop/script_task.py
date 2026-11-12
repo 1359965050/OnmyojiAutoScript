@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from cached_property import cached_property
+from functools import cached_property
 
 from module.exception import TaskEnd
 from module.logger import logger
@@ -26,15 +26,20 @@ class ScriptTask(GameUi, ActivityShikigamiAssets, KittyShopAssets):
 
     def run(self) -> None:
         self.goto_page(page_main)
+        entry_button = getattr(self, 'I_SHI', None) or getattr(self, 'I_MAIN_GOTO_ACT', None)
+        entry_timer = Timer(60).start()
         while 1:
+            if entry_timer.reached():
+                logger.warning('Enter KittyShop timeout')
+                break
             self.screenshot()
             if self.appear(self.I_START_FARMING):
                 break
             if self.appear_then_click(self.I_GO1, interval=2):
                 continue
-            if self.appear_then_click(self.I_SHI, interval=2):
+            if entry_button is not None and self.appear_then_click(entry_button, interval=2):
                 continue
-        logger.hr('Start Kitty Shop')
+        logger.hr('开始喵喵商店')
         attempts = int(self.config.model.kitty_shop.kitty_shop_config.kitty_attempts)
         for _ in range(max(attempts, 0)):
             self._run()
@@ -44,7 +49,7 @@ class ScriptTask(GameUi, ActivityShikigamiAssets, KittyShopAssets):
         raise TaskEnd
 
     def _run(self):
-        logger.hr('Kitty Shop', level=1)
+        logger.hr('喵喵商店', level=1)
         for trial in range(3):
             try:
                 self._select_kitty()
@@ -55,7 +60,11 @@ class ScriptTask(GameUi, ActivityShikigamiAssets, KittyShopAssets):
 
         self.ui_click(self.I_START_ENSURE, stop=self.I_MAIN_FLAG)
         logger.info('Start farming')
+        farm_timer = Timer(180).start()
         while 1:
+            if farm_timer.reached():
+                logger.warning('KittyShop farming timeout (180s)')
+                break
             # 哪里亮了点哪里
             self.screenshot()
             if self.appear(self.I_MAIN_SHARE):
@@ -79,7 +88,11 @@ class ScriptTask(GameUi, ActivityShikigamiAssets, KittyShopAssets):
                 continue
 
         logger.info('Farming done')
+        done_timer = Timer(30).start()
         while 1:
+            if done_timer.reached():
+                logger.warning('Return to KittyShop start page timeout')
+                break
             self.screenshot()
             if self.appear(self.I_START_FARMING):
                 break

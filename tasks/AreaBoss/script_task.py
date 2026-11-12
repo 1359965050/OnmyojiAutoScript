@@ -13,6 +13,7 @@ from tasks.GameUi.page import page_area_boss, page_shikigami_records, page_main
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.AreaBoss.assets import AreaBossAssets
 from tasks.AreaBoss.config_boss import AreaBossFloor
+from module.base.timer import Timer
 from module.logger import logger
 from module.exception import TaskEnd
 from module.atom.image import RuleImage
@@ -101,7 +102,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
 
         # 点击右上角的鬼王选择
         logger.info("Script filter")
+        filter_timer = Timer(20).start()
         while 1:
+            if filter_timer.reached():
+                logger.warning("Open area boss filter timeout")
+                return
             self.screenshot()
             # 如果筛选界面已经打开 点击热门按钮
             if self.appear(self.I_AB_FILTER_OPENED):
@@ -121,7 +126,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         self.ui_click(battle, self.I_AB_CLOSE_RED)
         # 点击挑战
         logger.info("Script fire ")
+        fire_timer = Timer(20).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning("Area boss fire timeout")
+                break
             self.screenshot()
             if self.appear_then_click(self.I_FIRE, interval=1):
                 continue
@@ -188,7 +197,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
 
     def start_fight(self) -> bool:
         self.check_can_run()
+        fire_timer = Timer(20).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning("Area boss start_fight fire timeout")
+                return False
             self.screenshot()
             if self.appear_then_click(self.I_FIRE, interval=1):
                 continue
@@ -233,7 +246,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         return True
     
     def switch_to_level_60(self):
+        timer = Timer(25).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to level 60 timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_LEVEL_60):
                 break
@@ -261,7 +278,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         """
         _from = self.I_AB_DIFFICULTY_NORMAL if ultra else self.I_AB_DIFFICULTY_JI
         _to = self.I_AB_DIFFICULTY_JI if ultra else self.I_AB_DIFFICULTY_NORMAL
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning(f"Switch difficulty(ultra={ultra}) timeout")
+                break
             self.screenshot()
             if self.appear(_to):
                 break
@@ -276,7 +297,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         # _Floor = ["壹星", "贰星", "叁星", "肆星", "伍星", "陆星", "柒星", "捌星", "玖星", "拾星"]
         # 打开选择列表
         self.ui_click(self.C_AB_JI_FLOOR_SELECTED, self.I_AB_JI_FLOOR_LIST_CHECK, interval=3)
+        timer = Timer(25).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to floor 1 timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_JI_FLOOR_ONE):
                 self.click(self.I_AB_JI_FLOOR_ONE)
@@ -292,7 +317,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         """
         # 打开选择列表
         self.ui_click(self.C_AB_JI_FLOOR_SELECTED, self.I_AB_JI_FLOOR_LIST_CHECK, interval=3)
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to floor 10 timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_JI_FLOOR_TEN):
                 self.click(self.I_AB_JI_FLOOR_TEN)
@@ -462,7 +491,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         self.ui_click(self.I_FILTER, self.I_AB_FILTER_OPENED, interval=3)
 
     def switch_to_collect(self):
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to collect tab timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_FILTER_TITLE_COLLECTION):
                 break
@@ -471,7 +504,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
                 continue
 
     def switch_to_famous(self):
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to famous tab timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_FILTER_TITLE_FAMOUS):
                 break
@@ -481,7 +518,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
 
     def switch_to_reward(self):
         self.open_filter()
+        timer = Timer(20).start()
         while 1:
+            if timer.reached():
+                logger.warning("Switch to reward tab timeout")
+                break
             self.screenshot()
             if self.appear(self.I_AB_FILTER_TITLE_REWARD):
                 break

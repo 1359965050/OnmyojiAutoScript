@@ -138,7 +138,7 @@
     "itemName": "ms_skill_unlock",
     "imageName": "ms_ms_skill_unlock.png",
     "roiFront": "538,137,211,50",
-    "roiBack": "1029,190,105,152",
+    "roiBack": "480,100,330,130",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "技能解锁标志"

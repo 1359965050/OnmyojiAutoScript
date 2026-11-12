@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 from datetime import datetime, timedelta
 
+from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
@@ -92,7 +93,11 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
                         self.I_ETERNITYSEA_UNLOCK)
         # 创建队伍
         logger.info('Create team')
+        create_timer = Timer(15).start()
         while 1:
+            if create_timer.reached():
+                logger.warning('EternitySea create team timeout')
+                break
             self.screenshot()
             if self.appear(self.I_CHECK_TEAM):
                 break
@@ -200,7 +205,11 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
                 logger.info("EternitySea time limit out")
                 break
             # 点击挑战
+            fire_timer = Timer(15).start()
             while 1:
+                if fire_timer.reached():
+                    logger.warning('EternitySea click fire timeout')
+                    break
                 self.screenshot()
                 if self.appear_then_click(self.I_ETERNITY_SEA_FIRE, interval=1):
                     pass
@@ -224,7 +233,11 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
 
     def _enter_eternity_sea(self) -> bool:
         logger.info("Enter eternity_sea")
+        enter_timer = Timer(20).start()
         while True:
+            if enter_timer.reached():
+                logger.warning("Enter eternity_sea timeout")
+                return False
             self.screenshot()
             if self.appear(self.I_FORM_TEAM, interval=1):
                 return True

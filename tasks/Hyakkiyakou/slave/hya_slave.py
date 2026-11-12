@@ -1,4 +1,4 @@
-from cached_property import cached_property
+from functools import cached_property
 from pathlib import Path
 from enum import Enum
 
@@ -213,7 +213,7 @@ class HyaSlave(HyaDevice, HyaColor, HyakkiyakouAssets):
     # ------------------------------------------------------------------------------------------------------------------
 
     def invite_friend(self):
-        logger.hr('Invite friend', 2)
+        logger.hr('邀请百鬼好友', 2)
         self.ui_click(self.I_HINVITE, self.I_CHECK_INVITATION, interval=4)
         logger.info('Entry check invitation')
         self.screenshot()  # 回归活动标志后出现会导致上一帧截图可能并不包含召回活动标志

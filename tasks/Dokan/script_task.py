@@ -5,10 +5,8 @@
 import time
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from time import sleep
-
-from future.backports.datetime import datetime
 
 from module.base.timer import Timer
 from module.exception import TaskEnd
@@ -91,7 +89,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
             综上,点击左上角退出按钮区域
         """
         logger.info("try to quit battle...")
+        exit_timer = Timer(20).start()
         while True:
+            if exit_timer.reached():
+                logger.warning("Dokan quit battle timeout")
+                return False
             self.screenshot()
             if self.appear(self.I_RYOU_DOKAN_CENTER_TOP):
                 return True
@@ -319,7 +321,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
                 # 获取赏金金额
                 self.O_DOKAN_RIGHTPAD_BOUNTY.roi = position_offset(item, (0, 0, 100, 0))
                 bounty = self.O_DOKAN_RIGHTPAD_BOUNTY.ocr(self.device.image)
-                tmp = re.search(r'(\d+)', bounty)
+                tmp = re.search(r'(\d+)', str(bounty))
                 if not tmp:
                     logger.warning(f"can't find bounty,item = {item},ocr bounty={bounty}")
                     continue
@@ -346,6 +348,9 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
                     logger.warning(f"can't find people number in ocr result,item={item}, p_num={p_num}")
                     continue
                 p_num = float(tmp.group())
+                if p_num <= 0:
+                    logger.warning(f"invalid people num={p_num}, item={item}")
+                    continue
                 logger.info(f"bounty:{bounty},people_num:{p_num},score:{bounty / p_num}")
                 item_score = bounty / p_num
                 if item_score < min_score:
@@ -368,8 +373,15 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
                 return True
             # 在所有列表中都没有符合的,且忽略系数限制,那么就选择最低分数的那个,点击显示挑战按钮
             if ignore_score:
+                if not bounty_list or idx_selected < 0 or idx_selected >= len(bounty_list):
+                    logger.warning("can't find any dokan item when ignore_score=True")
+                    return False
                 x, y, w, h = bounty_list[idx_selected]
+                select_timer = Timer(10).start()
                 while 1:
+                    if select_timer.reached():
+                        logger.warning('Select fallback dokan timeout')
+                        return False
                     self.screenshot()
                     if self.appear(self.I_CENTER_CHALLENGE):
                         return True
@@ -404,7 +416,9 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
             self.ui_click_until_disappear(self.I_CHALLENGE_ENSURE, interval=1)
             # 更新可挑战次数
             self.config.dokan.attack_count_config.del_attack_count(1, self.config.save)
+            restore_roi()
             return True
+        restore_roi()
         return False
 
     def creat_dokan(self):
@@ -442,7 +456,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
         返回一个包含所有匹配项目信息的列表。
         """
         res_list = []
-        while 1:
+        for _ in range(50):
             if (item.roi_back[0] + item.roi_back[2] > (1280 + offset[2])) or (
                     item.roi_back[1] + item.roi_back[3] > (720 + offset[3])):
                 break
@@ -452,7 +466,10 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
                 item.roi_back = position_offset(item.roi_back, (
                     0, item.roi_front[1] + item.roi_front[3] - item.roi_back[1], 0,
                     item.roi_front[3] - item.roi_back[3]))
-            item.roi_back = position_offset(item.roi_back, offset)
+            next_roi = position_offset(item.roi_back, offset)
+            if next_roi == item.roi_back:
+                break
+            item.roi_back = next_roi
         return res_list
 
     def start_cheering(self):
@@ -569,14 +586,13 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
         switch_soul_done = getattr(self, f'switch_{switch_type}_soul_done', False)
         if switch_soul_done:
             return
-        logger.hr('Start switch soul', 2)
+        logger.hr('开始切换御魂', 2)
         switch_soul = getattr(self.config.dokan, f'dokan_{switch_type}_switch_soul', None)
-        switch_soul_by_name = getattr(self.config.dokan, f'dokan_{switch_type}_switch_soul_by_name', None)
         if switch_soul is not None and switch_soul.enable:
             self.goto_page(pages.page_shikigami_records)
             self.run_switch_soul(switch_soul_dict[switch_type]['group_team'])
             self.goto_page(pages.page_dokan)
-        elif switch_soul_by_name is not None and switch_soul_by_name.enable:
+        elif switch_soul is not None and getattr(switch_soul, 'enable_switch_by_name', False):
             self.goto_page(pages.page_shikigami_records)
             self.run_switch_soul_by_name(switch_soul_dict[switch_type]['group_team_name'][0],
                                          switch_soul_dict[switch_type]['group_team_name'][1])

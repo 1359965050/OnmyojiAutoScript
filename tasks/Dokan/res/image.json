@@ -254,8 +254,8 @@
   {
     "itemName": "ryou_dokan_fighting",
     "imageName": "res_ryou_dokan_fighting.png",
-    "roiFront": "232,36,42,19",
-    "roiBack": "232,36,42,19",
+    "roiFront": "232,36,74,19",
+    "roiBack": "210,25,120,40",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "状态：战斗中，左上角的加油图标"

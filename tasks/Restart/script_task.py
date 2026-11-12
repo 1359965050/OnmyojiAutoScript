@@ -36,24 +36,24 @@ class ScriptTask(BaseTask):
         raise TaskEnd
 
     def restart_emulator(self):
-        logger.hr('Restart emulator')
+        logger.hr('重启模拟器')
         if not self.device.emulator_restart():
             logger.error('Failed to restart emulator during scheduled restart')
             raise RequestHumanTakeover
 
 
     def app_stop(self):
-        logger.hr('App stop')
+        logger.hr('停止游戏应用')
         self.device.app_stop()
 
     def app_start(self):
-        logger.hr('App start')
+        logger.hr('启动游戏应用')
         self.device.app_start()
         self.device.wait_app_start_ready()
         LoginService(config=self.config, device=self.device).app_handle_login()
 
     def app_restart(self):
-        logger.hr('App restart')
+        logger.hr('重启游戏应用')
         self.device.app_stop()
         self.app_start()
 

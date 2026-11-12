@@ -6,6 +6,7 @@ import time
 import random
 from datetime import datetime
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
@@ -70,6 +71,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
     def run(self):
         self.before_run()
         self.goto_page(ipages.page_meta_demon_boss)
+        unknown_timer = Timer(30).start()
         while True:
             self.update_global_state()
             if self.State.done:
@@ -78,22 +80,35 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
             current_page = self.get_current_page()
             match current_page:
                 case ipages.page_meta_demon:
+                    unknown_timer.reset()
                     self.goto_page(ipages.page_meta_demon_boss)
                 case ipages.page_meta_demon_boss:
+                    unknown_timer.reset()
                     if self.check_and_prepare_battle():
                         self.start_battle()
                 case ipages.page_battle:
+                    unknown_timer.reset()
                     self.battle_wait(self.conf.general_battle.random_click_swipt_enable)
                 case ipages.page_reward | ipages.page_battle_result:
+                    unknown_timer.reset()
                     self.click(ipages.random_click(), interval=0.6)
                 case _:
+                    if unknown_timer.reached():
+                        logger.warning('MetaDemon unknown page timeout, returning to boss page')
+                        self.goto_page(ipages.page_meta_demon_boss)
+                        unknown_timer.reset()
+                        continue
                     time.sleep(random.uniform(0.7, 1.4))
         self.set_next_run(task="MetaDemon", success=True)
         self.finish_task()
 
     def start_battle(self):
-        logger.hr('Click fire, start battle')
+        logger.hr('点击挑战，开始战斗')
+        fire_timer = Timer(20).start()
         while True:
+            if fire_timer.reached():
+                logger.warning('MetaDemon start_battle timeout')
+                break
             self.screenshot()
             if self.is_in_battle(False):
                 self.total_count += 1
@@ -118,7 +133,11 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         self.device.click_record_clear()
         logger.info(f"Start battle process on {self.cur_boss_type.name if self.cur_boss_type else 'None'}")
         win = False
+        wait_timer = Timer(600).start()
         while True:
+            if wait_timer.reached():
+                logger.warning('MetaDemon battle_wait timeout (600s)')
+                break
             self.screenshot()
             if self.appear(self.I_MD_SUMMON_BOSS, interval=0.8) or \
                     self.appear(self.I_MD_SWITCH_TICKET, interval=0.8) or \
@@ -151,7 +170,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         """检查并做战斗前的准备工作
         :return: True可以战斗, False不能战斗
         """
-        logger.hr('battle prepare', 2)
+        logger.hr('超鬼王战前准备', 2)
         if not self.check_fatigue():
             return False
         self.synthesis_boss_ticket()
@@ -161,7 +180,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         """合成鬼王"""
         if self.State.synthesis_done:
             return
-        logger.hr('synthesis boss ticket')
+        logger.hr('合成超鬼王门票')
         self.State.synthesis_done = True
         if len(self.conf.meta_demon_config.synthesis_list_v) <= 0:
             return
@@ -210,7 +229,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         logger.info(f'{target_boss_ticket} synthesis done')
 
     def check_fatigue(self):
-        logger.hr('Check fatigue')
+        logger.hr('检查超鬼王疲劳度')
         current, remain, total = self.O_MD_FATIGUE.ocr_digit_counter(self.device.image)
         # 不喝茶且当前疲劳度已满
         if not self.conf.meta_demon_config.auto_tea and (current > total or remain < 0):
@@ -220,9 +239,13 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
 
     def check_and_switch_ticket(self):
         """切换鬼王门票并更新当前鬼王级别"""
-        logger.hr('Summon boss')
+        logger.hr('召唤超鬼王')
         # 打开切换门票弹窗
+        open_timer = Timer(15).start()
         while True:
+            if open_timer.reached():
+                logger.warning('MetaDemon open switch ticket modal timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_MD_FIRE, interval=1.2):  # 可以直接挑战鬼王则退出
                 return True
@@ -267,7 +290,11 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         target_ticket_rule_image = type_ticket_dict[self.cur_boss_type]
         selected = False
         logger.info(f'Summon {self.cur_boss_type.name.lower()} boss')
+        summon_timer = Timer(15).start()
         while True:
+            if summon_timer.reached():
+                logger.warning('MetaDemon summon boss timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_MD_FIRE):  # 可以挑战鬼王则退出
                 return True
@@ -284,7 +311,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
 
     def check_and_switch_powerful(self) -> bool:
         """检查并切换是否开启强力"""
-        logger.hr('process power fire')
+        logger.hr('执行强力追击')
         if not self.appear(self.I_MD_FIRE):
             self.goto_page(ipages.page_meta_demon_boss)
             self.screenshot()
@@ -303,7 +330,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, MetaDemonAssets):
         """切换御魂"""
         if self.State.switch_soul_done:
             return True
-        logger.hr('Switch soul')
+        logger.hr('切换御魂')
         self.State.switch_soul_done = True
         self.goto_page(ipages.page_shikigami_records)
         if self.conf.switch_soul.switch_once:  # 只切换一次则将配置的鬼王御魂全部切换

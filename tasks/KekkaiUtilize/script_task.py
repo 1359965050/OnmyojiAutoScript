@@ -3,7 +3,7 @@
 # github https://github.com/runhey
 import re
 import time
-from cached_property import cached_property
+from functools import cached_property
 from datetime import timedelta, datetime
 
 from module.base.timer import Timer
@@ -229,7 +229,7 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
                 self.device.click_record_clear()
                 continue
             # 抽奖
-            if self.appear(self.I_GUILD_LOTTERY, interval=1):
+            if getattr(self, 'I_GUILD_LOTTERY', None) is not None and self.appear(self.I_GUILD_LOTTERY, interval=1):
                 self.guild_lottery()
                 harvest_dict['lottery'] = True
                 timer_check.reset()
@@ -241,6 +241,16 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
 
     def guild_lottery(self):
         """寮抽奖"""
+        required_assets = (
+            'I_GUILD_LOTTERY',
+            'I_CHECK_GUILD_LOTTERY',
+            'I_GUILD_LOTTERY_SPECIAL_REWARD',
+            'I_KU_CHECK_CAN_LOTTERY',
+            'S_GUILD_LOTTERY',
+        )
+        if not all(getattr(self, attr, None) is not None for attr in required_assets):
+            logger.warning('Guild lottery assets are not defined, skip guild_lottery')
+            return
         timeout_timer = Timer(4).start()
         while not timeout_timer.reached():  # 进入抽奖界面
             self.screenshot()
@@ -578,7 +588,7 @@ class ScriptTask(GameUi, ReplaceShikigami, KekkaiUtilizeAssets):
         :param rule:
         :return:
         """
-        logger.hr('Start utilize')
+        logger.hr('开始结界寄养')
         fallback_friend = (
             SelectFriendList.DIFFERENT_SERVER
             if friend == SelectFriendList.SAME_SERVER

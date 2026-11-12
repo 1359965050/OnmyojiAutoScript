@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from cached_property import cached_property
+from functools import cached_property
 from dataclasses import dataclass
 from enum import Enum
 from module.atom.image import RuleImage

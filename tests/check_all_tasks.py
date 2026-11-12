@@ -3,9 +3,11 @@ import sys
 import os
 import io
 import importlib
+import inspect
 import traceback
 from pathlib import Path
 from unittest.mock import MagicMock
+import cv2
 import numpy as np
 
 # 避免 Windows 编码问题
@@ -16,31 +18,73 @@ if sys.platform == 'win32':
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from module.atom.image import RuleImage
 from module.config.config import Config
 from module.device.device import Device
 from tasks.base_task import BaseTask
 
 
 def check_assets_exist(task_dir: Path):
-    """检查任务目录下的 assets.py 中引用的图片路径是否存在"""
-    assets_file = task_dir / "assets.py"
-    if not assets_file.exists():
+    """检查指定目录树下所有 assets.py 中的规则图片路径与 roi_back 尺寸合法性"""
+    assets_files = sorted(
+        p for p in task_dir.rglob("assets.py")
+        if "__pycache__" not in p.parts
+    )
+    if not assets_files:
         return []
-    
+
     missing = []
-    try:
-        mod_name = f"tasks.{task_dir.name}.assets"
-        mod = importlib.import_module(mod_name)
-        for attr_name in dir(mod):
-            obj = getattr(mod, attr_name)
-            if hasattr(obj, "file") and getattr(obj, "file", None):
-                file_path = getattr(obj, "file")
-                if isinstance(file_path, str):
-                    p = PROJECT_ROOT / file_path.lstrip("./\\")
-                    if not p.exists():
-                        missing.append((attr_name, file_path))
-    except Exception as e:
-        missing.append(("MODULE_ERROR", str(e)))
+    seen_targets = set()
+    for assets_file in assets_files:
+        rel_mod = assets_file.relative_to(PROJECT_ROOT).with_suffix("")
+        mod_name = ".".join(rel_mod.parts)
+        try:
+            mod = importlib.import_module(mod_name)
+        except Exception as e:
+            missing.append((mod_name, f"MODULE_ERROR: {e}"))
+            continue
+
+        candidates = list(vars(mod).items())
+        for name, val in list(candidates):
+            if inspect.isclass(val) and getattr(val, "__module__", None) == mod_name:
+                for cls_attr, cls_val in vars(val).items():
+                    candidates.append((f"{name}.{cls_attr}", cls_val))
+
+        for attr_name, obj in candidates:
+            items = []
+            if hasattr(obj, "file") and isinstance(getattr(obj, "file", None), str):
+                items.append((attr_name, obj))
+            if hasattr(obj, "image_list") and isinstance(getattr(obj, "image_list", None), (list, tuple)):
+                for idx, sub in enumerate(getattr(obj, "image_list", ())):
+                    if hasattr(sub, "file") and isinstance(getattr(sub, "file", None), str):
+                        items.append((f"{attr_name}[{idx}]", sub))
+
+            for item_name, item_obj in items:
+                file_path = getattr(item_obj, "file", None)
+                if not isinstance(file_path, str) or not file_path:
+                    continue
+                dedup_key = (mod_name, item_name, file_path)
+                if dedup_key in seen_targets:
+                    continue
+                seen_targets.add(dedup_key)
+
+                p = PROJECT_ROOT / file_path.lstrip("./\\")
+                if not p.exists():
+                    missing.append((f"{mod_name}:{item_name}", file_path))
+                    continue
+
+                if isinstance(item_obj, RuleImage):
+                    img = cv2.imdecode(np.fromfile(str(p), dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+                    if img is None:
+                        missing.append((f"{mod_name}:{item_name}", f"{file_path} (unreadable image)"))
+                        continue
+                    ih, iw = img.shape[:2]
+                    bx, by, bw, bh = item_obj.roi_back
+                    if bw < iw or bh < ih:
+                        missing.append((
+                            f"{mod_name}:{item_name}",
+                            f"{file_path} (roi_back=({bw},{bh}) < img=({iw},{ih}))"
+                        ))
     return missing
 
 
@@ -156,6 +200,7 @@ def test_all_tasks():
         print("\nALL TASKS ARE HEALTHY AND CAN START PROPERLY!")
     else:
         print(f"\nFOUND {total_issues} ISSUES TO INVESTIGATE.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     test_all_tasks()

@@ -54,7 +54,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run_simple_tidy(self):
         """简易整理：贪吃鬼 + 奉纳"""
-        logger.hr('Simple tidy', 2)
+        logger.hr('御魂简化整理', 2)
         self.goto_page(page_shikigami_records)
         self.goto_souls()
         self.greed_maneki()
@@ -63,7 +63,11 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def goto_souls(self):
         """进入到御魂的主界面"""
+        goto_timer = Timer(20).start()
         while 1:
+            if goto_timer.reached():
+                logger.warning('goto_souls timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_ST_GREED) and self.appear(self.I_ST_TIDY):
                 break
@@ -87,7 +91,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
         simple_tidy_con = self.config.daily_trifles.simple_tidy
         # 先是贪吃鬼
         if simple_tidy_con.enable_greed:
-            logger.hr('Greed Ghost')
+            logger.hr('贪吃鬼')
             self.ui_click(self.I_ST_GREED, self.I_ST_GREED_HABIT)
             self.ui_click(self.I_ST_GREED_HABIT, self.I_ST_FEED_NOW)
             logger.info('Feed greed ghost')
@@ -106,7 +110,11 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                     continue
             logger.info('Feed greed ghost done')
         # 关闭贪吃鬼, 进入奉纳
+        cat_timer = Timer(20).start()
         while 1:
+            if cat_timer.reached():
+                logger.warning('greed_maneki enter maneki timeout')
+                break
             self.screenshot()
             if self.appear(self.I_ST_CAT):
                 break
@@ -120,9 +128,13 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
             if self.appear_then_click(self.I_ST_BONGNA, interval=1, threshold=0.6):
                 continue
         if simple_tidy_con.enable_maneki:
-            logger.hr('Enter bongna')
+            logger.hr('进入御魂奉纳')
             # 确保已弃置界面
+            abandon_timer = Timer(15).start()
             while 1:
+                if abandon_timer.reached():
+                    logger.warning('greed_maneki select abandoned tab timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_ST_ABANDONED_SELECTED):
                     break
@@ -131,7 +143,11 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                     continue
                 self.click(self.I_ST_ABANDONED_SELECTED, interval=1.5)
             # 确保是按照等级来排序的
+            sort_timer = Timer(20).start()
             while 1:
+                if sort_timer.reached():
+                    logger.warning('greed_maneki sort by level timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_UI_BACK_RED):
                     self.click(self.I_UI_BACK_RED, interval=0.8)
@@ -148,7 +164,10 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                     continue
             logger.info('Sort by level')
             # 开始奉纳
-            while 1:
+            donate_round = 0
+            empty_ocr_retries = 0
+            while donate_round < 200:
+                donate_round += 1
                 if self.wait_until_appear(self.I_ST_SOUL_STACK, wait_time=2):
                     logger.info('Soul stack')
                 else:
@@ -160,7 +179,12 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                     firvel = self.O_ST_FIRSET_LEVEL.ocr(self.device.image)
                     if firvel is None or firvel == '':
                         logger.info('ocr result is Null')
+                        empty_ocr_retries += 1
+                        if empty_ocr_retries >= 10:
+                            logger.warning('OCR first level failed too many times, quit bongna')
+                            break
                         continue
+                    empty_ocr_retries = 0
                     if (firvel != '古') and (firvel != '+0'):
                         # 避免 OCR 把 +0 识别成 古 时误退，同时支持准确识别 +0
                         logger.info('No zero level, bongna done')
@@ -181,7 +205,11 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
                     logger.warning('Donate button not appear, skip')
                     continue
                 # 点击奉纳 及收取奖励
+                donate_timer = Timer(20).start()
                 while 1:
+                    if donate_timer.reached():
+                        logger.warning('greed_maneki donate reward timeout')
+                        break
                     self.screenshot()
                     if self.appear_then_click(self.I_UI_CONFIRM, interval=0.5):
                         continue
@@ -202,7 +230,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run_pets_feed(self):
         """宠物喂养"""
-        logger.hr('Pets feed', 2)
+        logger.hr('喂养宠物', 2)
         if self.config.daily_trifles.trifles_config.courtyard_affairs and self.config.daily_trifles.today_is_done('courtyard_affairs'):
             logger.info('Pets feed already completed by courtyard affairs today, skip')
             return
@@ -212,7 +240,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def _feed(self):
         """快速喂养"""
-        logger.hr('Feed', 3)
+        logger.hr('喂食互动', 3)
         self.ui_click(self.I_PET_FEAST, self.I_PET_FEED)
         number = self.O_PET_FEED_AP.ocr(self.device.image)
         if number == 0:
@@ -225,7 +253,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run_orochi_ten_once(self):
         """运行一次御魂十层"""
-        logger.hr('Run Orochi', 3)
+        logger.hr('挑战八岐大蛇', 3)
         conf = self.config.daily_trifles.pets_config
         self.config.orochi.orochi_config.layer = Layer.TEN
         self.limit_count = 1
@@ -240,7 +268,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
         self.run_alone()
 
     def run_luck_msg(self):
-        logger.hr('luck msg', 2)
+        logger.hr('收取吉闻与友情点', 2)
         if self.config.daily_trifles.today_is_done('luck_msg'):
             logger.info('Today is done, skip')
             return
@@ -275,7 +303,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
         self.goto_page(page_main)
 
     def run_store_sign(self):
-        logger.hr('store sign', 2)
+        logger.hr('商店每日签到', 2)
         if self.config.daily_trifles.today_is_done('store_sign'):
             logger.info('Today is done, skip')
             return
@@ -295,7 +323,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run_courtyard_affairs(self):
         """庭院事务"""
-        logger.hr('courtyard affairs', 2)
+        logger.hr('庭院事务', 2)
         if self.config.daily_trifles.today_is_done('courtyard_affairs'):
             logger.info('Today is done, skip')
             return
@@ -311,7 +339,11 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
             logger.info('Not have courtyard affairs (already done today), exit')
             self.config.daily_trifles.done_record.courtyard_affairs_dt = datetime.now()
             return
+        affairs_timer = Timer(15).start()
         while True:
+            if affairs_timer.reached():
+                logger.warning('run_courtyard_affairs open daily timeout')
+                return
             self.screenshot()
             if self.appear(self.I_CHECK_IN_DAILY, interval=0.5):
                 break
@@ -364,7 +396,7 @@ class ScriptTask(OrochiScriptTask, DailyTriflesAssets):
 
     def run_pickup_email(self):
         """领取邮件"""
-        logger.hr('pick up email', 2)
+        logger.hr('收取邮件', 2)
         if self.config.daily_trifles.today_is_done('pickup_email'):
             logger.info('Today is done, skip')
             return

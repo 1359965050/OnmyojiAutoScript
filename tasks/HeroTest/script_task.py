@@ -175,7 +175,11 @@ class ScriptTask(GeneralBattle, GameUi, HeroTestAssets, SwitchSoul):
             Layer.MENGXU: (self.I_CHECK_HERO2, self.I_SWITCH_HERO2),  # 藤原道长
         }
         check_hero_img, switch_hero_img = switch_hero_dict[layer]
+        switch_timer = Timer(15).start()
         while True:
+            if switch_timer.reached():
+                logger.warning('HeroTest switch_hero timeout')
+                break
             self.screenshot()
             if self.appear_then_click(switch_hero_img, interval=1):
                 continue

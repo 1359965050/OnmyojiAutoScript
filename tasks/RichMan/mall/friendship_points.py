@@ -41,7 +41,7 @@ class FriendshipPoints(Special):
         :param buy_money: 买这一个花多少
         :return:
         """
-        logger.hr(buy_button.name, 3)
+        logger.hr(f'兑换物品: {buy_button.name}', 3)
         self.screenshot()
         # 检查是否出现了购买按钮
         if not self.appear(buy_button):
@@ -76,7 +76,7 @@ class FriendshipPoints(Special):
         :param buy_money:
         :return:
         """
-        logger.hr(buy_button.name, 3)
+        logger.hr(f'兑换物品: {buy_button.name}', 3)
         if buy_number == 0:
             logger.info('Buy number is 0')
             return

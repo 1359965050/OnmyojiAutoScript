@@ -48,7 +48,7 @@ class ScriptTask(OrochiScriptTask, TrueOrochiAssets):
             self.check_times(battle)
             raise TaskEnd('TrueOrochi')
         # 如果有真蛇，那么就开始战斗
-        logger.hr('True Orochi Battle')
+        logger.hr('真八岐大蛇战斗')
         # 御魂切换方式一
         if self.config.true_orochi.switch_soul.enable:
             self.goto_page(page_shikigami_records)
@@ -59,7 +59,11 @@ class ScriptTask(OrochiScriptTask, TrueOrochiAssets):
             self.run_switch_soul_by_name(self.config.true_orochi.switch_soul.group_name,
                                          self.config.true_orochi.switch_soul.team_name)
         self.goto_page(page_orochi)
+        enter_timer = Timer(20).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('TrueOrochi create room wait timeout')
+                raise GameStuckError('TrueOrochi create room wait timeout')
             self.screenshot()
             if self.appear(self.I_ST_CREATE_ROOM):
                 break
@@ -70,7 +74,11 @@ class ScriptTask(OrochiScriptTask, TrueOrochiAssets):
             if self.appear_then_click(self.I_FIND_TS, interval=1):
                 continue
         self.ensure_private()
+        fire_timer = Timer(20).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning('TrueOrochi fire prepare wait timeout')
+                raise GameStuckError('TrueOrochi fire prepare wait timeout')
             self.screenshot()
             if self.appear(self.I_ST_FIRE_PREPARE):
                 break
@@ -83,7 +91,11 @@ class ScriptTask(OrochiScriptTask, TrueOrochiAssets):
         # 战斗准备
         logger.info('Battle prepare')
         self.ui_click(self.I_ST_FIRE_PREPARE, self.I_BUFF)
+        prepare_timer = Timer(20).start()
         while 1:
+            if prepare_timer.reached():
+                logger.warning('TrueOrochi wait battle buff disappear timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_BUFF):
                 break
@@ -107,7 +119,11 @@ class ScriptTask(OrochiScriptTask, TrueOrochiAssets):
                 if not self.appear(self.I_GREED_GHOST):
                     continue
                 # 左上角的贪吃鬼
+                greed_timer = Timer(20).start()
                 while 1:
+                    if greed_timer.reached():
+                        logger.warning('TrueOrochi greed ghost click timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_GREED_GHOST):
                         break

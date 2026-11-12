@@ -2,6 +2,7 @@ import time
 
 import random
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 from tasks.SixRealms.moon_sea.base_moon_sea import BaseMoonSea
@@ -43,13 +44,20 @@ class MoonSea(BaseMoonSea):
 
     def run(self):
         self.before_run()
-        logger.hr('Moon Sea', 1)
+        logger.hr('月之海', 1)
+        unknown_page_timer = Timer(30).start()
         while True:
             self.screenshot()
             current_page = self.get_current_page()
             if current_page is None:
+                if unknown_page_timer.reached():
+                    logger.warning('MoonSea unknown page timeout, returning to moon_sea page')
+                    self.goto_page(pages.page_moon_sea)
+                    unknown_page_timer.reset()
+                    continue
                 time.sleep(0.5)
                 continue
+            unknown_page_timer.reset()
             handle = self.ms_page_handle_dict.get(current_page, None)
             if handle is None:
                 self.goto_page(pages.page_moon_sea)
@@ -107,7 +115,7 @@ class MoonSea(BaseMoonSea):
 
     def run_on_ms_store(self):
         """宁息商店"""
-        logger.hr('shop land')
+        logger.hr('商店秘境')
         if self.cnt_skill101 >= 5:
             logger.info('Skill level is enough, skip shopping')
             self.goto_page(pages.page_ms_main)
@@ -120,7 +128,7 @@ class MoonSea(BaseMoonSea):
 
     def run_on_ms_mistery(self):
         """神秘之屿 转换/仿造"""
-        logger.hr('mistery land')
+        logger.hr('神秘秘境')
         if not self.appear(self.I_MISTERY_IMITATE):
             logger.info('Do not transfer skill')
             self.goto_page(pages.page_ms_main)
@@ -158,7 +166,7 @@ class MoonSea(BaseMoonSea):
 
     def run_on_ms_chaos(self):
         """混沌之屿 宝箱/精英"""
-        logger.hr('chaos land')
+        logger.hr('混乱秘境')
         is_box: bool = self.appear(self.I_CHAOS_BOX_EXIT)
         if is_box:
             logger.info('Do not get box')
@@ -171,7 +179,7 @@ class MoonSea(BaseMoonSea):
 
     def run_on_ms_star(self):
         """星之屿 红蛋/星之子"""
-        logger.hr('star land')
+        logger.hr('星辰秘境')
         self.ui_click(self.C_NPC_FIRE_LEFT, self.I_BATTLE_FIRE, interval=0.8)
         if self.enter_battle(self.I_BATTLE_FIRE):
             logger.info('Start star red egg battle')
@@ -179,7 +187,7 @@ class MoonSea(BaseMoonSea):
 
     def run_on_ms_battle(self):
         """鏖战之屿 普通怪"""
-        logger.hr('fire land')
+        logger.hr('战斗秘境')
         self.ui_click(self.C_NPC_FIRE_RIGHT, self.I_BATTLE_FIRE, interval=0.8)
         if self.enter_battle(self.I_BATTLE_FIRE):
             logger.info('Start normal battle')

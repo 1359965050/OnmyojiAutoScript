@@ -3,7 +3,7 @@
 # github https://github.com/runhey
 import re
 from datetime import timedelta, datetime, time
-from cached_property import cached_property
+from functools import cached_property
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.default_pages import page_shikigami_records
 
@@ -112,7 +112,11 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
 
             if check_timer.reached():
                 logger.warning('Nian match timeout')
+                exit_wait_timer = Timer(15).start()
                 while 1:
+                    if exit_wait_timer.reached():
+                        logger.warning('Nian exit waiting timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_N_WAITING):
                         break

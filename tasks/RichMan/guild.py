@@ -28,7 +28,7 @@ class Guild(Buy, GameUi, RichManAssets):
     def execute_guild(self, con: GuildStore = None):
         if not con.enable:
             return
-        logger.hr('Start guild', 1)
+        logger.hr('阴阳寮商店', 1)
         self.goto_page(page_guild_store)
         logger.info('Enter guild store success')
         time.sleep(0.5)
@@ -82,7 +82,7 @@ class Guild(Buy, GameUi, RichManAssets):
 
     def _guild_honor_gift(self):
         # 功勋礼包
-        logger.hr('Guild honor gift', 2)
+        logger.hr('购买功勋礼盒', 2)
         self.screenshot()
         if not self.buy_check_money(self.O_GUILD_TOTAL, 210):
             return False
@@ -96,7 +96,7 @@ class Guild(Buy, GameUi, RichManAssets):
 
     def _guild_mystery_amulet(self):
         # 蓝票
-        logger.hr('Guild mystery amulet', 2)
+        logger.hr('购买神秘符咒', 2)
         self.screenshot()
         if not self.buy_check_money(self.O_GUILD_TOTAL, 240):
             return False
@@ -110,7 +110,7 @@ class Guild(Buy, GameUi, RichManAssets):
 
     def _guild_black_daruma_scrap(self):
         # 黑碎
-        logger.hr('Guild black daruma scrap', 2)
+        logger.hr('购买御行达摩碎片', 2)
         self.screenshot()
         if not self.buy_check_money(self.O_GUILD_TOTAL, 200):
             return False
@@ -124,7 +124,7 @@ class Guild(Buy, GameUi, RichManAssets):
 
     def _guild_skin_ticket(self, num: int = 0):
         # 皮肤券
-        logger.hr('Guild skin ticket', 2)
+        logger.hr('购买皮肤券', 2)
         if num == 0:
             logger.warning('No buy skin ticket')
             return False

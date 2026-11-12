@@ -3,14 +3,14 @@
 # github https://github.com/runhey
 import time
 import re
-from cached_property import cached_property
+from functools import cached_property
 from tasks.GameUi.default_pages import page_exploration
 
 from tasks.base_task import BaseTask
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.Component.GeneralBattle.general_battle import BattleAction, BattleContext, ExitMatcher, GeneralBattle
 from tasks.GameUi.game_ui import GameUi
-from tasks.GameUi.page import page_realm_raid
+from tasks.GameUi.page import page_battle_result, page_realm_raid, page_reward
 from tasks.RealmRaid.assets import RealmRaidAssets
 from tasks.RealmRaid.config import RealmRaid, AttackNumber, WhenAttackFail
 from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
@@ -80,7 +80,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         self.screenshot()
         if self.appear(self.I_FROG_RAID):
             logger.info(f'Click {self.I_FROG_RAID.name}')
+            frog_timer = Timer(20).start()
             while 1:
+                if frog_timer.reached():
+                    logger.warning('Close frog raid popup timeout')
+                    break
                 self.screenshot()
                 if not self.appear(self.I_FROG_RAID):
                     break
@@ -96,8 +100,15 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         # 开始循环
         success = True
         last_battle = True  # 记录上一次战斗的结果
+        max_raid_rounds = 150
+        raid_rounds = 0
         # 更改循环顺序
         while 1:
+            raid_rounds += 1
+            if raid_rounds > max_raid_rounds:
+                logger.warning('RealmRaid max rounds limit reached')
+                success = False
+                break
             self.screenshot()
             # 检查票数
             if not self.check_ticket(con.raid_config.number_base):
@@ -197,14 +208,22 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         # 点击勋章的挑战 和挑战
         time.sleep(0.2)
         is_click = False
+        medal_timer = Timer(25).start()
         while 1:
+            if medal_timer.reached():
+                logger.warning('Medal fire wait I_FIRE timeout')
+                return False
             self.screenshot()
 
             if self.appear(self.I_FIRE, threshold=0.8):
                 break
 
             if self.appear_then_click(self.I_SOUL_RAID, interval=1.5):
+                soul_timer = Timer(15).start()
                 while 1:
+                    if soul_timer.reached():
+                        logger.warning('Wait I_SOUL_RAID disappear timeout')
+                        break
                     self.screenshot()
                     if self.appear_then_click(self.I_SOUL_RAID, interval=1.5):
                         continue
@@ -223,13 +242,18 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
 
         # 点击挑战
         self.wait_until_appear(self.I_FIRE)
+        fire_timer = Timer(20).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning('Click medal I_FIRE timeout')
+                return False
             self.screenshot()
             if self.appear_then_click(self.I_FIRE, interval=2):
                 continue
             if not self.appear(self.I_FIRE, threshold=0.8):
                 break
         logger.info(f'Click {self.I_FIRE.name}')
+        return True
 
     # ----------------------------------------------------------------------------------------------------------------------
     # 2023.7.21 改版个人突破
@@ -422,7 +446,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         text = self.O_TEXT.ocr(self.device.image)
         # 识别突破卷区域，如果识别到了且其中含有文字，即有聊天框遮挡则进入循环，等待三胜奖励出现并点击，循环退出条件为识别到票（即*/*的形式）
         if text != "" and re.search(r'[\u4e00-\u9fff]', text):
+            frog_timer = Timer(25).start()
             while 1:
+                if frog_timer.reached():
+                    logger.warning('Wait soul raid reward clear timeout')
+                    return False
                 self.screenshot()
                 result = self.O_TEXT.ocr(self.device.image)
                 if not re.search(r'[\u4e00-\u9fff]', result) and re.search(r'(\d+)/(\d+)', result):
@@ -443,13 +471,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         if not self.appear(self.I_FRESH):
             logger.info(f'No find refresh button and it is in CD')
             return False
+        refresh_timer = Timer(20).start()
         while 1:
+            if refresh_timer.reached():
+                logger.warning('Open refresh confirm popup timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_FRESH_ENSURE):
                 break
             if self.appear_then_click(self.I_FRESH, interval=1):
                 continue
+        ensure_timer = Timer(20).start()
         while 1:
+            if ensure_timer.reached():
+                logger.warning('Confirm refresh timeout')
+                return False
             self.screenshot()
             if not self.appear(self.I_FRESH_ENSURE):
                 return True
@@ -466,7 +502,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         click = self.partition[order - 1]
         self.wait_until_appear(self.I_RR_PERSON)
         self.device.click_record_clear()
+        fire_timer = Timer(25).start()
         while True:
+            if fire_timer.reached():
+                logger.warning(f'RealmRaid fire({order}) timeout')
+                return False
             self.screenshot()
             if not self.appear(self.I_RR_PERSON):
                 return True
@@ -483,7 +523,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         :return: 是否再战成功
         """
         self.wait_until_appear(self.I_FIRE_AGAIN)
+        again_timer = Timer(25).start()
         while True:
+            if again_timer.reached():
+                logger.warning('RealmRaid fire_again timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_EXIT):
                 logger.info(f'Click fire again success')

@@ -6,7 +6,7 @@ from time import sleep
 
 import random
 import re
-from cached_property import cached_property
+from functools import cached_property
 from enum import Enum
 from datetime import timedelta
 from module.atom.image import RuleImage
@@ -143,10 +143,16 @@ class ScriptTask(GameUi, CollectiveMissionsAssets):
     def _soul(self):
         """提交御魂"""
         self.ui_click(self.C_CM_1, self.I_SL_SUBMIT)
+        soul_timer = Timer(20).start()
         while 1:
+            if soul_timer.reached():
+                logger.warning('CollectiveMissions submit soul timeout')
+                self.ui_click(self.I_UI_BACK_RED, self.I_CM_RECORDS)
+                return False
             self.screenshot()
-            number_text = self.O_SL_NUMBER.ocr(self.device.image)
-            submit_number = int(re.findall(r'\d+', number_text)[-1])
+            number_text = self.O_SL_NUMBER.ocr(self.device.image) or ''
+            matches = re.findall(r'\d+', str(number_text))
+            submit_number = int(matches[-1]) if matches else 0
             if submit_number > 0:
                 break
             if self.ocr_appear(self.O_SL_LEVEL):
@@ -168,7 +174,11 @@ class ScriptTask(GameUi, CollectiveMissionsAssets):
         self.ui_click(self.C_CM_1, self.I_FEED_HEAP)
         logger.info('Submit to feed N')
         click_list = random.sample([self.L_FEED_CLICK_1, self.L_FEED_CLICK_2, self.L_FEED_CLICK_3, self.L_FEED_CLICK_4], 2)
+        feed_timer = Timer(15).start()
         while 1:
+            if feed_timer.reached():
+                logger.warning('CollectiveMissions feed N timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_FEED_SUBMIT):
                 break

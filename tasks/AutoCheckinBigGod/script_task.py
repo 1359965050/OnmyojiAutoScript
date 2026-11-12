@@ -69,7 +69,7 @@ class ScriptTask(ManualClaimMixin):
         self.session = requests.Session()
         self.session.verify = False
 
-        logger.hr('AutoCheckinBigGod', level=1)
+        logger.hr('网易大神自动签到', level=1)
 
         # 手动领取模式：纯UI操作，不依赖Frida
         if self.config.auto_checkin_big_god.checkin_config.manual_claim:
@@ -134,8 +134,8 @@ class ScriptTask(ManualClaimMixin):
         # Token已获取，将大神APP切到后台，减少对用户的干扰
         try:
             self._adb_shell(['input', 'keyevent', 'KEYCODE_HOME'])
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'切回后台按键失败(可忽略): {e}')
 
         # 通过API获取角色信息
         logger.info('通过API获取角色信息...')
@@ -177,18 +177,18 @@ class ScriptTask(ManualClaimMixin):
         try:
             if self._frida_session is not None:
                 self._frida_session.kill()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'关闭 Frida REPL 进程异常(可忽略): {e}')
         self._frida_session = None
         self._frida_attached_pid = None
         try:
             self._adb_shell(['am', 'force-stop', GL_PACKAGE])
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'停止大神APP异常(可忽略): {e}')
         try:
             self._adb_root_shell('killall frida-server')
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'停止 frida-server 异常(可忽略): {e}')
 
     # ======================== ADB 操作 ========================
 
@@ -306,8 +306,8 @@ class ScriptTask(ManualClaimMixin):
                     # 立即按 HOME 键切到后台
                     try:
                         self._adb_shell(['input', 'keyevent', 'KEYCODE_HOME'])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f'启动后切回后台失败(可忽略): {e}')
                     return pid
             return None
         except Exception as e:
@@ -380,17 +380,19 @@ class ScriptTask(ManualClaimMixin):
             logger.warning('Frida Server未以root运行，正在重启...')
             try:
                 self._adb_root_shell('killall frida-server')
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'重启 frida-server 清理失败: {e}')
             return False
-        except Exception:
+        except Exception as e:
+            logger.debug(f'检查 frida-server 状态异常: {e}')
             return False
 
     def _is_frida_server_installed(self):
         try:
             output = self._adb_shell(['ls', '-l', FRIDA_SERVER_REMOTE])
             return output != '' and 'No such file' not in output and FRIDA_SERVER_REMOTE in output
-        except Exception:
+        except Exception as e:
+            logger.debug(f'检查 frida-server 安装状态异常: {e}')
             return False
 
     def _ensure_frida_local(self):
@@ -519,8 +521,8 @@ class ScriptTask(ManualClaimMixin):
                 logger.info(f'目标PID变更 ({self._frida_attached_pid} -> {pid})，重新attach...')
                 try:
                     self._frida_session.kill()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f'终止旧 Frida REPL 失败: {e}')
             else:
                 logger.warning('Frida REPL 进程已退出，重新启动...')
             self._frida_session = None
@@ -563,8 +565,8 @@ class ScriptTask(ManualClaimMixin):
             logger.warning('Frida REPL 启动超时')
             try:
                 proc.kill()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'终止超时 Frida REPL 失败: {e}')
             self._frida_session = None
             return None
         except Exception as e:
@@ -587,11 +589,14 @@ class ScriptTask(ManualClaimMixin):
             return False
 
         got_ready = False
+        timed_out = threading.Event()
 
         def _read():
             nonlocal got_ready
             try:
-                while True:
+                for _ in range(1000):
+                    if timed_out.is_set():
+                        break
                     raw = proc.stdout.readline()
                     if not raw:
                         break
@@ -603,12 +608,15 @@ class ScriptTask(ManualClaimMixin):
                         got_ready = True
                     if '__DONE__' in line:
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Frida REPL ping 读取异常: {e}')
 
         reader = threading.Thread(target=_read, daemon=True)
         reader.start()
         reader.join(timeout=timeout)
+        if reader.is_alive():
+            timed_out.set()
+            logger.debug(f'Frida REPL ping 读取超时 ({timeout}s)')
         return got_ready
 
     def _run_frida_script(self, pid, script_content, timeout=10):
@@ -642,7 +650,7 @@ class ScriptTask(ManualClaimMixin):
 
         def _read_until_done():
             try:
-                while True:
+                for _ in range(5000):
                     if timed_out.is_set():
                         break
                     raw = proc.stdout.readline()
@@ -656,8 +664,8 @@ class ScriptTask(ManualClaimMixin):
                         break
                     if line_decoded.strip():
                         output_lines.append(line_decoded)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Frida REPL 读取异常: {e}')
 
         reader = threading.Thread(target=_read_until_done, daemon=True)
         reader.start()
@@ -757,8 +765,8 @@ class ScriptTask(ManualClaimMixin):
         finally:
             try:
                 session.detach()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Frida detach 异常(可忽略): {e}')
 
     def _try_extract_token(self, pid):
         """尝试多次从内存提取 Token（GL_UID/GL_TOKEN/GL_DEVICEID），返回 dict 或 None。"""

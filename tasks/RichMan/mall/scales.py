@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 import time
 
+from module.base.timer import Timer
 from module.logger import logger
 
 from tasks.Component.Buy.buy import Buy
@@ -29,7 +30,11 @@ class Scales(Buy, MallNavbar):
         self._scales_sea(con.picture_book_scrap, con.picture_book_rule)
 
     def _scales_buy_confirm(self, start_click, number: int = None):
+        confirm_timer = Timer(25).start()
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Scales buy confirm open timeout')
+                return
             self.screenshot()
             if self.appear(self.I_BUY_PLUS):
                 break
@@ -45,7 +50,11 @@ class Scales(Buy, MallNavbar):
         else:
             # 四次截图数字都一样，就可以退出了
             number_record = []
+            number_timer = Timer(30).start()
             while 1:
+                if number_timer.reached():
+                    logger.warning('Scales buy set number timeout')
+                    break
                 self.screenshot()
                 current = self.O_BUY_NUMBER.ocr(self.device.image)
                 if current >= number:
@@ -64,12 +73,20 @@ class Scales(Buy, MallNavbar):
         self._scales_buy_confirm(start_click, number)
 
         # 购买确认
+        buy_timer = Timer(30).start()
         while 1:
+            if buy_timer.reached():
+                logger.warning('Scales buy more timeout')
+                break
             self.screenshot()
             if self.appear(self.I_SCA_SIX_STAR) or self.appear(self.I_SCA_REWARD):
                 logger.info('Scales buy success')
                 time.sleep(1)
+                reward_timer = Timer(15).start()
                 while 1:
+                    if reward_timer.reached():
+                        logger.warning('Scales get souls timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_SCA_SIX_STAR):
                         break
@@ -84,7 +101,11 @@ class Scales(Buy, MallNavbar):
 
     def _scales_buy_sea_more(self, start_click, number: int = None):
         self._scales_buy_confirm(start_click, number)
+        wait_select_timer = Timer(20).start()
         while 1:
+            if wait_select_timer.reached():
+                logger.warning('Scales sea wait select timeout')
+                return
             self.screenshot()
             if self.appear(self.I_SCA_SELECT_1):
                 break
@@ -92,12 +113,20 @@ class Scales(Buy, MallNavbar):
                 continue
         logger.info('Scales start select souls')
         # 选择魂
+        select_timer = Timer(20).start()
         while 1:
+            if select_timer.reached():
+                logger.warning('Scales sea select souls timeout')
+                break
             self.screenshot()
             if self.appear(self.I_SCA_SIX_STAR):
                 logger.info('Scales buy success')
                 time.sleep(1.8)
+                reward_timer = Timer(15).start()
                 while 1:
+                    if reward_timer.reached():
+                        logger.warning('Scales sea get souls timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_SCA_SIX_STAR):
                         break
@@ -116,7 +145,7 @@ class Scales(Buy, MallNavbar):
         :param buy_number:
         :return:
         """
-        logger.hr('Scales orochi', 3)
+        logger.hr('兑换大蛇的逆鳞', 3)
         if buy_number == 0:
             logger.info('The purchase quantity of Scales orochi is 0')
             return
@@ -125,7 +154,14 @@ class Scales(Buy, MallNavbar):
         if not self.appear(self.I_SCA_OROCHI_SCALES):
             logger.warning('Scales orochi is not appear')
             return
+        ocr_fail_count = 0
+        round_count = 0
+        loop_timer = Timer(180).start()
         while True:
+            if loop_timer.reached() or round_count >= 50:
+                logger.warning('Scales orochi new loop limit reached')
+                return
+            round_count += 1
             self.screenshot()
             # 检查剩余数量
             remain_number = self.O_SCA_NUMBER_OROCHI.ocr(self.device.image)
@@ -135,8 +171,13 @@ class Scales(Buy, MallNavbar):
             # 检查钱是否够
             cu, res, total = self.O_SCA_RES_OROCHI.ocr(self.device.image)
             if cu + res != total:
+                ocr_fail_count += 1
                 logger.warning('OCR error')
+                if ocr_fail_count >= 10:
+                    logger.warning('Scales orochi OCR failed too many times, abort')
+                    return
                 continue
+            ocr_fail_count = 0
             if cu < 50:
                 logger.warning(f'紫色蛇皮不足,数量:{cu}')
                 return
@@ -150,7 +191,7 @@ class Scales(Buy, MallNavbar):
         :param buy_number:
         :return:
         """
-        logger.hr('Scales orochi', 3)
+        logger.hr('兑换大蛇的逆鳞', 3)
         if buy_number == 0:
             logger.info('The purchase quantity of Scales orochi is 0')
             return
@@ -194,7 +235,7 @@ class Scales(Buy, MallNavbar):
         :param buy_position:
         :return:
         """
-        logger.hr('Scales demon', 3)
+        logger.hr('兑换逢魔之魂', 3)
         if buy_number == 0:
             logger.info('The purchase quantity of Scales demon is 0')
             return
@@ -257,7 +298,11 @@ class Scales(Buy, MallNavbar):
         self.ui_click(self.I_SCA_DEMON_SOULS, target_class)
         self.ui_click(target_class, self.I_SCA_DEMON_BUY)
         # self.ui_click(target_position, self.I_SCA_DEMON_BUY)
+        pos_timer = Timer(20).start()
         while 1:
+            if pos_timer.reached():
+                logger.warning('Select demon position timeout')
+                return
             self.screenshot()
             result = self.O_SCA_DEMON_POSTION.ocr(self.device.image)
             if target_number in result:
@@ -281,7 +326,11 @@ class Scales(Buy, MallNavbar):
             time.sleep(0.5)
 
         # 回到御魂礼盒界面
+        back_timer = Timer(20).start()
         while 1:
+            if back_timer.reached():
+                logger.warning('Back to demon souls box timeout')
+                break
             self.screenshot()
             if self.appear(self.I_SCA_DEMON_SOULS):
                 break
@@ -297,7 +346,7 @@ class Scales(Buy, MallNavbar):
         :param buy_rule:
         :return:
         """
-        logger.hr('Scales sea', 3)
+        logger.hr('兑换秘魂屋/海国鳞片', 3)
         if buy_number == 0:
             logger.info('The purchase quantity of Scales sea is 0')
             return

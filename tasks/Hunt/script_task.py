@@ -3,8 +3,9 @@
 # github https://github.com/runhey
 from time import sleep
 from datetime import timedelta, datetime, time
-from cached_property import cached_property
+from functools import cached_property
 
+from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 
@@ -100,8 +101,12 @@ class ScriptTask(GeneralBattle, GeneralInvite, GameUi, SwitchSoul, HuntAssets):
             self.custom_next_run(task='Hunt', custom_time=self.con_time.netherworld_time, time_delta=1)
 
     def kirin(self):
-        logger.hr('kirin', 2)
+        logger.hr('麒麟狩猎', 2)
+        kirin_timer = Timer(30).start()
         while 1:
+            if kirin_timer.reached():
+                logger.warning('Hunt kirin enter timeout')
+                return
             self.screenshot()
             if self.appear(self.I_PREPARE_HIGHLIGHT):
                 break
@@ -122,8 +127,12 @@ class ScriptTask(GeneralBattle, GeneralInvite, GameUi, SwitchSoul, HuntAssets):
         )
 
     def netherworld(self):
-        logger.hr('netherworld', 2)
+        logger.hr('阴界之门', 2)
+        nw_timer = Timer(30).start()
         while 1:
+            if nw_timer.reached():
+                logger.warning('Hunt netherworld enter timeout')
+                return
             self.screenshot()
             if self.is_in_room(False):
                 self.screenshot()

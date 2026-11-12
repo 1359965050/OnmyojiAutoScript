@@ -2,9 +2,10 @@
 # @author runhey
 # github https://github.com/runhey
 import time
-from cached_property import cached_property
+from functools import cached_property
 from datetime import datetime
 
+from module.base.timer import Timer
 from module.exception import TaskEnd
 from module.logger import logger
 from module.atom.ocr import RuleOcr
@@ -71,6 +72,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, SecretAssets):
         # 开始
         logger.info('Start secret zone')
         first_battle = True
+        no_layer_count = 0
         while 1:
             self.screenshot()
             if not success:
@@ -88,10 +90,15 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, SecretAssets):
                     logger.warning('You have completed the weekly trifles, skip')
                     break
                 text = self.O_SE_TOTAL_TIME.ocr_single(self.device.image)
-                if '尚未' not in text:
+                if text and '尚未' not in text:
                     logger.warning('You have completed the weekly trifles, skip')
                     break
+                no_layer_count += 1
+                if no_layer_count >= 10:
+                    logger.warning('Secret find_battle exceeded max retries without finding layer, exit')
+                    break
                 continue
+            no_layer_count = 0
             if layer >= 6:
                 first_battle = False
             if first_battle and layer <= 5:
@@ -101,7 +108,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, SecretAssets):
                     buff.append(BuffClass.GOLD_50)
                 if con.secret_gold_100:
                     buff.append(BuffClass.GOLD_100)
-                if buff is []:
+                if not buff:
                     buff = None
                 self.click_battle()
                 success = self.run_general_battle(self.battle_config, buff=buff, battle_key="secret")
@@ -113,7 +120,7 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, SecretAssets):
                     buff.append(BuffClass.GOLD_50_CLOSE)
                 if con.secret_gold_100:
                     buff.append(BuffClass.GOLD_100_CLOSE)
-                if buff is []:
+                if not buff:
                     buff = None
                 self.click_battle()
                 success = self.run_general_battle(self.battle_config, buff=buff, battle_key="secret")
@@ -224,7 +231,11 @@ class ScriptTask(GeneralBattle, SwitchSoul, GameUi, SecretAssets):
                 time.sleep(2)
 
     def click_battle(self):
+        fire_timer = Timer(15).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning('Secret click_battle timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_SE_FIRE):
                 break
