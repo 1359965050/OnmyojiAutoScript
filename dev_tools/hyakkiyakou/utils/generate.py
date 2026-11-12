@@ -5,7 +5,7 @@ import cv2
 from time import time, sleep
 from random import randint
 from pathlib import Path
-from cached_property import cached_property
+from functools import cached_property
 
 from module.daemon.benchmark import Benchmark
 from module.atom.swipe import RuleSwipe

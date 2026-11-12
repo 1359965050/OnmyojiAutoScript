@@ -25,16 +25,46 @@ def run(cmd: list[str]) -> int:
     return subprocess.call(cmd, cwd=str(PROJECT_ROOT))
 
 
+def _check_generated_assets_fallback() -> int:
+    """Validate tracked `assets/i18n/zh-CN.json` against schema/menu when OASX-master is absent."""
+    sys.path.insert(0, str(PROJECT_ROOT))
+    sys.path.insert(0, str(PROJECT_ROOT / "dev_tools"))
+    from i18n_check import CONFIG_MENU, parse_config_menu_keys, parse_schema_keys
+
+    zh_json = PROJECT_ROOT / "assets" / "i18n" / "zh-CN.json"
+    if not zh_json.exists():
+        print(f"Missing generated translation asset: {zh_json}", file=sys.stderr)
+        return 1
+
+    actual_keys = set(json.loads(zh_json.read_text(encoding="utf-8")).keys())
+    menu_keys = parse_config_menu_keys(CONFIG_MENU) if CONFIG_MENU.exists() else set()
+    schema_keys: set[str] = set()
+    try:
+        from module.config.config_model import ConfigModel
+
+        schema = ConfigModel.model_json_schema()
+        schema_keys = parse_schema_keys(schema, menu_keys=menu_keys)
+    except Exception as exc:
+        print(f"Warning: skipping Pydantic schema extraction in fallback check: {exc}", file=sys.stderr)
+
+    missing = (schema_keys | menu_keys) - actual_keys
+    if missing:
+        print(f"Missing keys in {zh_json}: {sorted(missing)}", file=sys.stderr)
+        return 1
+    print(f"Fallback CI check passed: {len(actual_keys)} keys in {zh_json.name} cover schema/menu.")
+    return 0
+
+
 def main() -> int:
-    # OASX-master is gitignored in this fork, so i18n_cn.dart is not available
-    # in CI. Skip translation checks when the source file is missing.
+    # OASX-master is gitignored in this fork, so i18n_cn.dart may be absent
+    # in remote CI. Fall back to validating committed assets/i18n/zh-CN.json.
     I18N_CN_DART = PROJECT_ROOT / "OASX-master" / "lib" / "config" / "translation" / "i18n_cn.dart"
     if not I18N_CN_DART.exists():
         print(
             "OASX-master/i18n_cn.dart not found (directory is gitignored). "
-            "Skipping translation CI check."
+            "Running fallback schema/menu check against assets/i18n/zh-CN.json."
         )
-        return 0
+        return _check_generated_assets_fallback()
 
     # 1. Ensure generated files are up to date.
     result = run([sys.executable, "dev_tools/i18n_sync.py", "--check"])

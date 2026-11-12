@@ -273,7 +273,11 @@ class AssetsExtractor:
         获取所有json文件
         :return: json文件（带后缀）列表
         """
-        return [str(x) for x in self.task_path.rglob('*.json') if 'temp' not in str(x)]
+        return [
+            str(x)
+            for x in self.task_path.rglob('*.json')
+            if 'temp' not in str(x) and '__pycache__' not in x.parts
+        ]
 
     @classmethod
     def read_file(cls, file: str) -> list:
@@ -405,18 +409,24 @@ class AssetsExtractor:
 
 
 class AllAssetsExtractor:
+    @staticmethod
+    def _is_valid_task_dir(path: Path) -> bool:
+        return path.is_dir() and not path.name.startswith(('.', '_'))
+
     def __init__(self):
         """
         获取./tasks目录下的所有任务文件夹，遍历每一个任务文件夹提取assets
         """
         logger.info('All assets extract')
         self.task_path = Path.cwd() / MODULE_FOLDER
-        self.task_list = [x.name for x in self.task_path.iterdir() if x.is_dir()]
+        self.task_list = [x.name for x in self.task_path.iterdir() if self._is_valid_task_dir(x)]
 
-        self.task_paths = [str(x) for x in self.task_path.iterdir() if x.is_dir()]
+        self.task_paths = [str(x) for x in self.task_path.iterdir() if self._is_valid_task_dir(x)]
         # 删除有Component的任务, 同时将其子路径加入任务列表
-        self.task_paths = [x for x in self.task_paths if 'Component' not in x]
-        self.task_paths.extend([str(x) for x in (self.task_path / 'Component').iterdir() if x.is_dir()])
+        self.task_paths = [x for x in self.task_paths if Path(x).name != 'Component']
+        component_dir = self.task_path / 'Component'
+        if component_dir.is_dir():
+            self.task_paths.extend([str(x) for x in component_dir.iterdir() if self._is_valid_task_dir(x)])
 
         for task_path in self.task_paths:
             me = AssetsExtractor(task_path)

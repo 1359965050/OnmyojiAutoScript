@@ -1,7 +1,7 @@
 import cv2
 import time
 from datetime import timedelta, datetime
-from cached_property import cached_property
+from functools import cached_property
 from random import choice
 from pathlib import Path
 

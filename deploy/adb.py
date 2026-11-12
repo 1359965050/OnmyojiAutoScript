@@ -24,18 +24,18 @@ class AdbManager(DeployConfig):
         return self.filepath('AdbExecutable')
 
     def adb_install(self):
-        logger.hr('Start ADB service', 0)
+        logger.hr('启动 ADB 服务', 0)
 
         emulator = EmulatorConnect(adb=self.adb)
         if self.ReplaceAdb:
-            logger.hr('Replace ADB', 1)
+            logger.hr('替换 ADB', 1)
             emulator.adb_replace()
         elif self.AutoConnect:
-            logger.hr('ADB Connect', 1)
+            logger.hr('连接 ADB', 1)
             emulator.brute_force_connect()
 
         if self.InstallUiautomator2:
-            logger.hr('Uiautomator2 Init', 1)
+            logger.hr('初始化 Uiautomator2', 1)
             try:
                 import adbutils
                 from uiautomator2 import init

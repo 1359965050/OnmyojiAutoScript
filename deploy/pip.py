@@ -50,8 +50,8 @@ class PipManager(DeployConfig):
             except Exception:
                 pass
 
-        logger.hr('Update Dependencies', 0)
-        logger.hr('Check Python', 1)
+        logger.hr('更新依赖库', 0)
+        logger.hr('检查 Python 环境', 1)
         self.execute(f'"{self.python}" --version')
 
         arg = []
@@ -70,7 +70,7 @@ class PipManager(DeployConfig):
         # self.execute(f'"{self.pip}" install --upgrade pip{arg}')
         arg += ['--disable-pip-version-check']
 
-        logger.hr('Update Dependencies', 1)
+        logger.hr('安装依赖库', 1)
         arg = ' ' + ' '.join(arg) if arg else ''
         self.execute(f'{self.pip} install -r {self.requirements_file}{arg}')
 

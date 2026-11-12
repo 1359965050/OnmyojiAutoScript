@@ -1,5 +1,5 @@
 # docker build -t qwerty/oas:latest .
-# docker run -v ${PWD}:/app/OnmyojiAutoScript -p 22288:22288 --name oas -it --rm qwerty/oas
+# docker run -v ${PWD}:/app/OnmyojiAutoScript -p 7788:7788 --name oas -it --rm qwerty/oas
 
 
 FROM python:3.10-slim-bookworm

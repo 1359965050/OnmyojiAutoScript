@@ -66,8 +66,6 @@ def ensure_model_weights(model_name: str) -> str:
         import urllib.request
         import ssl
         ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
 
         for url in mirrors:
             try:

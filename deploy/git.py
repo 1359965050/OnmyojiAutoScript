@@ -145,7 +145,7 @@ class GitManager(DeployConfig):
             self, repo, source='origin', branch='master',
             proxy='', ssl_verify=True, keep_changes=False
     ):
-        logger.hr('Pre-update Check', 1)
+        logger.hr('更新前检查', 1)
         conflict_files = self._check_working_tree_conflicts()
         if conflict_files:
             logger.error('Unresolved Git conflict markers detected, abort update to prevent syntax errors:')
@@ -154,14 +154,14 @@ class GitManager(DeployConfig):
             logger.error('Please resolve conflicts manually before updating.')
             return
 
-        logger.hr('Git Init', 1)
+        logger.hr('Git 初始化', 1)
         if not self.execute(f'"{self.git}" init', allow_failure=True):
             self.remove('./.git/config')
             self.remove('./.git/index')
             self.remove('./.git/HEAD')
             self.execute(f'"{self.git}" init')
 
-        logger.hr('Set Git Proxy', 1)
+        logger.hr('设置 Git 代理', 1)
         if proxy:
             self.execute(f'"{self.git}" config --local http.proxy {proxy}')
             self.execute(f'"{self.git}" config --local https.proxy {proxy}')
@@ -174,14 +174,14 @@ class GitManager(DeployConfig):
         else:
             self.execute(f'"{self.git}" config --local http.sslVerify false', allow_failure=True)
 
-        logger.hr('Set Git Repository', 1)
+        logger.hr('设置 Git 仓库', 1)
         if not self.execute(f'"{self.git}" remote set-url {source} {repo}', allow_failure=True):
             self.execute(f'"{self.git}" remote add {source} {repo}')
 
-        logger.hr('Fetch Repository Branch', 1)
+        logger.hr('拉取仓库分支信息', 1)
         self.execute(f'"{self.git}" fetch {source} {branch}')
 
-        logger.hr('Pull Repository Branch', 1)
+        logger.hr('同步仓库分支代码', 1)
         # Remove git lock
         for lock_file in [
             './.git/index.lock',
@@ -217,11 +217,11 @@ class GitManager(DeployConfig):
             logger.info('If you want to force update, please resolve local changes manually first')
             return
 
-        logger.hr('Show Version', 1)
+        logger.hr('显示当前版本', 1)
         self.execute(f'"{self.git}" --no-pager log --no-merges -1')
 
     def git_install(self):
-        logger.hr('Update OAS', 0)
+        logger.hr('更新 OAS', 0)
 
         if not self.AutoUpdate:
             logger.info('AutoUpdate is disabled, skip')

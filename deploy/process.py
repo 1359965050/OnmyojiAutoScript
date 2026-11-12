@@ -55,13 +55,13 @@ class ProcessManager(DeployConfig):
         Args:
             name (str): Process name
         """
-        logger.hr(f'Kill {name}', 1)
+        logger.hr(f'终止进程 {name}', 1)
         for row in self.iter_process_by_name(name):
             logger.info(' '.join(map(str, row)))
             self.execute(f'taskkill /f /pid {row[2]}', allow_failure=True, output=False)
 
     def process_kill(self):
-        logger.hr(f'Kill existing OAS', 0)
+        logger.hr('终止已有 OAS 进程', 0)
         self.kill_by_name('oas.exe')
         self.kill_by_name('python.exe')
         self.kill_by_name('pythonw.exe')

@@ -140,20 +140,32 @@ def parse_config_menu_keys(file_path: Path) -> Set[str]:
 
     The menu structure uses English identifiers like 'Orochi' and 'Soul Zones'.
     These identifiers are used as translation keys in i18n_cn.dart.
+    Uses AST parsing so multi-line list definitions are captured completely.
     """
+    import ast
+
     keys: Set[str] = set()
     text = file_path.read_text(encoding="utf-8")
+    tree = ast.parse(text, filename=str(file_path))
 
-    # Match lines like: self.menu["Soul Zones"] = ['Orochi', 'Sougenbi', ...]
-    for line in text.splitlines():
-        match = re.search(r'self\.menu\[["\']([^"\']+)["\']\]\s*=\s*(.+)', line)
-        if not match:
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
             continue
-        menu_name = match.group(1)
-        keys.add(menu_name)
-        rest = match.group(2)
-        for task in re.findall(r'[\"\']([^"\']+)[\"\']', rest):
-            keys.add(task)
+        for target in node.targets:
+            if (
+                isinstance(target, ast.Subscript)
+                and isinstance(target.value, ast.Attribute)
+                and isinstance(target.value.value, ast.Name)
+                and target.value.value.id == "self"
+                and target.value.attr == "menu"
+                and isinstance(target.slice, ast.Constant)
+                and isinstance(target.slice.value, str)
+            ):
+                keys.add(target.slice.value)
+                if isinstance(node.value, (ast.List, ast.Tuple, ast.Set)):
+                    for elt in node.value.elts:
+                        if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                            keys.add(elt.value)
 
     return keys
 

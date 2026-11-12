@@ -65,7 +65,7 @@ class ConfigModel:
 
     # Webui
     WebuiHost: str = "0.0.0.0"
-    WebuiPort: int = 22267
+    WebuiPort: int = 7788
     Language: str = "en-US"
     Theme: str = "default"
     DpiScaling: bool = True
@@ -87,7 +87,7 @@ class DeployConfig(ConfigModel):
         self.show_config()
 
     def show_config(self):
-        logger.hr("Show deploy config", 1)
+        logger.hr("显示部署配置", 1)
         for k, v in self.config.items():
             if k in ("Password", "SSHUser"):
                 continue
@@ -170,7 +170,7 @@ class DeployConfig(ConfigModel):
             return True
 
     def show_error(self, command=None):
-        logger.hr("Update failed", 0)
+        logger.hr("更新失败", 0)
         self.show_config()
         logger.info("")
         logger.info(f"Last command: {command}")

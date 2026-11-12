@@ -27,7 +27,6 @@ from i18n_check import (
     CONFIG_MENU,
     I18N_CN_DART,
     I18N_CONTENT_DART,
-    SCHEMA_DEFAULT,
     parse_config_menu_keys,
     parse_i18n_content_constants,
     parse_schema_keys,
@@ -84,7 +83,7 @@ def collect_schema_titles(schema: dict, menu_keys: Set[str]) -> Dict[str, str]:
     return suggestions
 
 
-def collect_missing_keys() -> Tuple[Set[str], Dict[str, str], Set[str], Dict[str, str]]:
+def collect_missing_keys(schema_path: Path | None = None) -> Tuple[Set[str], Dict[str, str], Set[str], Dict[str, str]]:
     """Return (missing_keys, titles, all_constants, i18n_content_constants)."""
     constants = parse_i18n_content_constants(I18N_CONTENT_DART)
     merged, _entries, _warnings = parse_i18n_cn(I18N_CN_DART, constants)
@@ -93,8 +92,11 @@ def collect_missing_keys() -> Tuple[Set[str], Dict[str, str], Set[str], Dict[str
     menu_keys = parse_config_menu_keys(CONFIG_MENU) if CONFIG_MENU.exists() else set()
 
     schema: dict = {}
-    if SCHEMA_DEFAULT.exists():
-        schema = json.loads(SCHEMA_DEFAULT.read_text(encoding="utf-8"))
+    if schema_path and schema_path.exists():
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    else:
+        from module.config.config_model import ConfigModel
+        schema = ConfigModel.model_json_schema()
 
     schema_keys = parse_schema_keys(schema, menu_keys=menu_keys)
     constant_keys: Set[str] = set(constants.values())
@@ -105,28 +107,62 @@ def collect_missing_keys() -> Tuple[Set[str], Dict[str, str], Set[str], Dict[str
     return missing, titles, constant_keys, constants
 
 
+def _format_entry_lines(missing: Set[str], titles: Dict[str, str], constants: Dict[str, str]) -> List[str]:
+    entries: List[str] = []
+    const_by_val = {const_value: name for name, const_value in constants.items()}
+    for key in sorted(missing):
+        value = str(titles.get(key, key))
+        if "\n" in value:
+            safe_val = value.replace("'''", r"\'\'\'")
+            val_literal = f"'''{safe_val}'''"
+        else:
+            safe_val = value.replace("\\", "\\\\").replace("'", "\\'")
+            val_literal = f"'{safe_val}'"
+        const_name = const_by_val.get(key)
+        key_literal = f"I18n.{const_name}" if const_name else f"'{key}'"
+        entries.append(f"  {key_literal}: {val_literal},")
+    return entries
+
+
 def build_fallbacks_map(missing: Set[str], titles: Dict[str, str], constants: Dict[str, str]) -> List[str]:
     """Return the Dart lines for a new _cn_schema_fallbacks map."""
-    lines = ["\nfinal Map<String, String> _cn_schema_fallbacks = {"]
-    for key in sorted(missing):
-        value = titles.get(key, key)
-        # Escape single quotes for Dart.
-        value = value.replace("'", "\\'")
-        # Use I18n constant if one exists for this key, otherwise string literal.
-        const_name = None
-        for name, const_value in constants.items():
-            if const_value == key:
-                const_name = name
-                break
-        key_literal = f"I18n.{const_name}" if const_name else f"'{key}'"
-        lines.append(f"  {key_literal}: '{value}',")
-    lines.append("};")
-    return lines
+    return [
+        "\nfinal Map<String, String> _cn_schema_fallbacks = {",
+        *_format_entry_lines(missing, titles, constants),
+        "};",
+    ]
+
+
+def merge_fallbacks_into_dart(
+    text: str, missing: Set[str], titles: Dict[str, str], constants: Dict[str, str]
+) -> str:
+    """Insert missing keys into existing `_cn_schema_fallbacks` map if present, avoiding duplicate declarations."""
+    entry_lines = _format_entry_lines(missing, titles, constants)
+    pattern = re.compile(
+        r"(final Map<String, String> _cn_schema_fallbacks = \{)(.*?)(\n\};)",
+        re.DOTALL,
+    )
+    match = pattern.search(text)
+    if match:
+        existing_body = match.group(2).rstrip()
+        if existing_body and not existing_body.endswith(","):
+            existing_body += ","
+        merged_body = existing_body + "\n" + "\n".join(entry_lines)
+        return text[: match.start(2)] + merged_body + text[match.start(3) :]
+
+    cleaned = text.rstrip() + "\n"
+    return cleaned + "\n".join(build_fallbacks_map(missing, titles, constants)) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Backfill missing schema/menu translation keys into i18n_cn.dart."
+    )
+    parser.add_argument(
+        "--schema",
+        type=Path,
+        default=None,
+        help="Optional path to Pydantic JSON schema (default: generate in memory from ConfigModel).",
     )
     parser.add_argument(
         "--dry-run",
@@ -140,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    missing, titles, _constant_keys, constants = collect_missing_keys()
+    missing, titles, _constant_keys, constants = collect_missing_keys(schema_path=args.schema)
 
     if not missing:
         print("No missing keys.")
@@ -165,12 +201,9 @@ def main(argv: list[str] | None = None) -> int:
             print("Aborted.")
             return 1
 
-    # Append the new map before the final blank line / end of file.
     text = I18N_CN_DART.read_text(encoding="utf-8")
-    # Remove trailing whitespace and ensure one trailing newline.
-    text = text.rstrip() + "\n"
-    text += "\n".join(lines) + "\n"
-    I18N_CN_DART.write_text(text, encoding="utf-8")
+    updated = merge_fallbacks_into_dart(text, missing, titles, constants)
+    I18N_CN_DART.write_text(updated, encoding="utf-8")
 
     print(f"Added {len(missing)} missing keys to {I18N_CN_DART}")
     print("Run `python dev_tools/i18n_sync.py` to regenerate JSON/XML artifacts.")
