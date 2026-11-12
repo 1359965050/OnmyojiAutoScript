@@ -719,8 +719,9 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         if context.reward_no_battle_ts is None:
             context.reward_no_battle_ts = time.time()
             return BattleAction.CONTINUE
-        # 若超时则认为战斗已经结束
-        if time.time() - context.reward_no_battle_ts >= 2.5:
+        # 若超时则认为战斗已经结束; 从结算过渡到奖励弹窗的动画常需 2.5~4s, 放宽该段等待避免提前退出漏点奖励页
+        no_battle_timeout = 5.0 if context.last_page == page_battle_result else 2.5
+        if time.time() - context.reward_no_battle_ts >= no_battle_timeout:
             return BattleAction.EXIT_WIN if context.is_win else BattleAction.EXIT_LOSE
         return BattleAction.CONTINUE
 
@@ -863,7 +864,11 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             self.screenshot()
         if not self.appear(self.I_EXIT):
             return False
+        exit_timer = Timer(20).start()
         while True:
+            if exit_timer.reached():
+                logger.warning('Exit battle timeout')
+                return False
             self.screenshot()
             if self.appear_then_click(self.I_EXIT_ENSURE, interval=0.8):
                 continue
@@ -923,7 +928,11 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             case GreenMarkType.GREEN_MAIN:
                 x, y = self.C_GREEN_MAIN.coord()
                 logger.info("Green main")
+        wait_timer = Timer(15).start()
         while True:
+            if wait_timer.reached():
+                logger.warning("Wait prepare highlight disappear timeout")
+                break
             self.screenshot()
             if not self.appear(self.I_PREPARE_HIGHLIGHT):
                 break
@@ -994,7 +1003,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                 continue
         logger.info("Click preset button")
 
-        tmp = self.__getattribute__("C_PRESET_GROUP_" + str(preset_group))
+        tmp = getattr(self, "C_PRESET_GROUP_" + str(preset_group), None)
         if tmp is None:
             tmp = self.C_PRESET_GROUP_1
         color_size = [self.C_PRESET_GROUP_1.roi_back[2], self.C_PRESET_GROUP_1.roi_back[3]]
@@ -1016,9 +1025,10 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             break
 
         time.sleep(0.5)
-        tmp = self.__getattribute__("C_PRESET_TEAM_" + str(preset_team))
+        tmp = getattr(self, "C_PRESET_TEAM_" + str(preset_team), None)
         if tmp is None:
-            tmp = self.C_PRESET_TEAM_1
+            logger.warning(f"Preset team rule C_PRESET_TEAM_{preset_team} not defined, use current team")
+            return
         color_size = [5, 5]
         unselected_color = (216.8, 185.0, 146.8)
         logger.info("Select preset team")
@@ -1101,7 +1111,11 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         """
         if enable:
             logger.info("Lock team")
+            lock_timer = Timer(15).start()
             while 1:
+                if lock_timer.reached():
+                    logger.warning("Lock team timeout")
+                    break
                 self.screenshot()
                 if self.appear(lock_image):
                     break
@@ -1109,7 +1123,11 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                     continue
         else:
             logger.info("Unlock team")
+            lock_timer = Timer(15).start()
             while 1:
+                if lock_timer.reached():
+                    logger.warning("Unlock team timeout")
+                    break
                 self.screenshot()
                 if self.appear(unlock_image):
                     break
@@ -1153,7 +1171,11 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             func(is_open)
             time.sleep(0.1)
         logger.info("Open buff success")
+        close_timer = Timer(15).start()
         while 1:
+            if close_timer.reached():
+                logger.warning("Close buff timeout")
+                break
             self.screenshot()
             if not self.appear(self.I_CLOUD):
                 break

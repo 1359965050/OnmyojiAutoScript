@@ -49,20 +49,25 @@ class UsedTicketsCount(BaseTask):
         """
         return self.app_used_count.get(climb_type, 0)
 
-    def record_ticket_used(self, climb_type: str, count: int = 1, target_limit: int = 0) -> int:
+    def record_ticket_used(self, climb_type: str, count: int = 1, target_limit: Optional[int] = None) -> int:
         """记录应用成功消耗门票/完成战斗，将应用运行计数精准递增。
 
         Args:
             climb_type: 爬塔类型
             count: 本次消耗数量（默认 1）
-            target_limit: 目标配置限额（仅用于格式化日志）
+            target_limit: 目标配置限额（仅用于格式化日志，<= 0 表示不运行该模式）
 
         Returns:
             int: 递增后的应用运行已使用门票总数。
         """
         current = self.get_app_used_count(climb_type) + count
         self.app_used_count[climb_type] = current
-        limit_desc = f"{target_limit}" if target_limit > 0 else "无限制"
+        if target_limit is None:
+            limit_desc = "未指定"
+        elif target_limit > 0:
+            limit_desc = f"{target_limit}"
+        else:
+            limit_desc = "0(不运行该模式)"
         logger.info(f"[{climb_type}] 应用运行已使用门票: {current} / 目标限额: {limit_desc}")
         return current
 
@@ -71,13 +76,13 @@ class UsedTicketsCount(BaseTask):
 
         Args:
             climb_type: 爬塔类型
-            target_limit: 用户配置的限制次数（<= 0 表示不运行该类型）
+            target_limit: 用户配置的限制次数（<= 0 表示不运行该模式）
 
         Returns:
-            bool: True 表示已达到或超过限制，应停止该模式；False 表示尚未达到。
+            bool: True 表示已达到上限或不运行该模式；False 表示尚未达到。
         """
         if target_limit <= 0:
-            logger.info(f"[{climb_type}] 目标配置限额为 {target_limit}，视为达到上限或不执行")
+            logger.info(f"[{climb_type}] 目标配置限额为 {target_limit}（<= 0 表示不运行该模式），跳过执行")
             return True
         used = self.get_app_used_count(climb_type)
         if used >= target_limit:

@@ -165,7 +165,7 @@
     "itemName": "st_souls_2",
     "imageName": "sk2_st_souls_2.png",
     "roiFront": "1176,227,70,80",
-    "roiBack": "1181,234,58,69",
+    "roiBack": "1176,227,70,80",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "点击御魂"
@@ -174,7 +174,7 @@
     "itemName": "st_replace_2",
     "imageName": "sk2_st_replace_2.png",
     "roiFront": "861,150,100,100",
-    "roiBack": "872,169,78,63",
+    "roiBack": "861,150,100,100",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "更换"

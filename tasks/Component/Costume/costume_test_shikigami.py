@@ -44,7 +44,7 @@ class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, DailyTriflesAssets):
             [self.I_ST_GREED, 0],
         ]
 
-        logger.hr('Shikigami Costume Test Start')
+        logger.hr('式神录皮肤测试开始')
         timer = Timer(5)
         timer.start()
         while 1:
@@ -80,7 +80,7 @@ class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, DailyTriflesAssets):
         """
         测试御魂切换功能：测试1-7组，每组1-4切换
         """
-        logger.hr('Switch Soul Test - All Groups')
+        logger.hr('全分组御魂切换测试')
         
         # 进入式神录
         self.goto_page(page_shikigami_records)
@@ -106,7 +106,7 @@ class ScriptTask(GameUi, SwitchSoul, SwitchSoulAssets, DailyTriflesAssets):
         """
         测试御魂奉纳功能
         """
-        logger.hr('Souls Tidy Donation Test')
+        logger.hr('御魂整理奉纳测试')
         
         # 进入式神录
         self.goto_page(page_shikigami_records)

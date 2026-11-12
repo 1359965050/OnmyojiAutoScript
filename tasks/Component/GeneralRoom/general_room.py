@@ -27,7 +27,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
             logger.warning('No create room button')
             return False
         click_number = 0
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Create room timeout')
+                return False
             self.screenshot()
             if click_number > 3:
                 logger.warning('Create room button do not take effect')
@@ -48,7 +52,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
         :return:
         """
         logger.info('Ensure private')
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Ensure private timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_ENSURE_PRIVATE):
                 return True
@@ -66,7 +74,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
         :return:
         """
         logger.info('Ensure public')
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Ensure public timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_ENSURE_PUBLIC):
                 return True
@@ -76,6 +88,7 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
                 continue
             if self.appear_then_click(self.I_ENSURE_PUBLIC_FALSE_2, interval=1):
                 continue
+        return False
 
     def create_ensure(self) -> bool:
         """
@@ -94,7 +107,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
             logger.warning('No create ensure button')
             return False
 
+        wait_timer = Timer(15).start()
         while True:
+            if wait_timer.reached():
+                logger.warning('Create ensure timeout')
+                return False
             self.screenshot()
             if self.appear_then_click(target, interval=1.5):
                 continue
@@ -109,7 +126,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
         """
         if self.appear(self.I_CHECK_TEAM):
             logger.info('Exit team ui')
+            wait_timer = Timer(15).start()
             while 1:
+                if wait_timer.reached():
+                    logger.warning('Exit team ui timeout')
+                    return False
                 self.screenshot()
                 if not self.appear(self.I_CHECK_TEAM):
                     return True
@@ -131,7 +152,11 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
         self.O_GR_ZONES_NAME.keyword = name
         click_timer = Timer(1.1)
         click_timer.start()
+        zone_timer = Timer(20).start()
         while 1:
+            if zone_timer.reached():
+                logger.warning(f'Check zone {name} timeout')
+                return False
             self.screenshot()
 
             if self.ocr_appear(self.O_GR_ZONES_NAME):

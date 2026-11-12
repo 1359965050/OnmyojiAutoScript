@@ -81,7 +81,17 @@ courtyard_affair_model = {
 }
 
 
+# 各皮肤模块涉及替换的资源键集合（用于切换回默认主题或更换皮肤前清理旧皮肤残留）
+_MAIN_ASSET_KEYS = tuple({k for m in main_costume_model.values() for k in m})
+_BATTLE_ASSET_KEYS = tuple({k for m in battle_theme_model.values() for k in m})
+_SHIKIGAMI_ASSET_KEYS = tuple({k for m in shikigami_costume_model.values() for k in m})
+_COURTYARD_AFFAIR_ASSET_KEYS = tuple({k for m in courtyard_affair_model.values() for k in m})
+
+
 class CostumeBase:
+    # 全局按 RuleImage 对象 id 记录首次替换前的默认属性快照，便于切回默认皮肤时完整还原
+    _original_snapshots: dict[int, tuple] = {}
+
     def check_costume(self, config: CostumeConfig=None):
         if config is None:
             config: CostumeConfig = self.config.model.global_game.costume_config
@@ -89,6 +99,49 @@ class CostumeBase:
         self.check_costume_battle(config.costume_battle_type)
         self.check_costume_shikigami(config.costume_shikigami_type)
         self.check_custom_courtyard_affair(config.custom_courtyard_affair)
+
+    @classmethod
+    def _snapshot_original(cls, asset_object: RuleImage) -> None:
+        obj_id = id(asset_object)
+        if obj_id not in cls._original_snapshots:
+            cls._original_snapshots[obj_id] = (
+                list(asset_object.roi_front),
+                asset_object.roi_back,
+                asset_object.threshold,
+                asset_object.method,
+                asset_object.scale_range,
+                asset_object.scale_step,
+                asset_object.file,
+            )
+
+    @staticmethod
+    def _reset_image_cache(asset_object: RuleImage) -> None:
+        asset_object._image = None
+        asset_object._mask_loaded = False
+        asset_object._mask = None
+        asset_object._kp = None
+        asset_object._des = None
+
+    def restore_img(self, asset_before: str) -> None:
+        if not hasattr(self, asset_before):
+            return
+        asset_before_object: RuleImage = getattr(self, asset_before)
+        snapshot = self._original_snapshots.get(id(asset_before_object))
+        if snapshot is None:
+            return
+        roi_front, roi_back, threshold, method, scale_range, scale_step, file_path = snapshot
+        asset_before_object.roi_front = list(roi_front)
+        asset_before_object.roi_back = roi_back
+        asset_before_object.threshold = threshold
+        asset_before_object.method = method
+        asset_before_object.scale_range = scale_range
+        asset_before_object.scale_step = scale_step
+        asset_before_object.file = file_path
+        self._reset_image_cache(asset_before_object)
+
+    def _restore_assets(self, asset_keys: tuple[str, ...]) -> None:
+        for key in asset_keys:
+            self.restore_img(key)
 
     def replace_img(self,
                     asset_before: str,
@@ -98,13 +151,23 @@ class CostumeBase:
             return
         # setattr(self, asset_before, asset_after)
         asset_before_object: RuleImage = getattr(self, asset_before)
+        self._snapshot_original(asset_before_object)
         asset_before_object.roi_front = asset_after.roi_front
         if rp_roi_back:
             asset_before_object.roi_back = asset_after.roi_back
         asset_before_object.threshold = asset_after.threshold
+        asset_before_object.method = asset_after.method
+        asset_before_object.scale_range = asset_after.scale_range
+        asset_before_object.scale_step = asset_after.scale_step
         asset_before_object.file = asset_after.file
+        asset_before_object._image = None
+        asset_before_object._mask_loaded = False
+        asset_before_object._mask = None
+        asset_before_object._kp = None
+        asset_before_object._des = None
 
     def check_costume_main(self, main_type: MainType):
+        self._restore_assets(_MAIN_ASSET_KEYS)
         if main_type == MainType.COSTUME_MAIN:
             return
         logger.info(f'Switch main costume to {main_type} ({I18n.trans_zh_cn(main_type)})')
@@ -116,6 +179,7 @@ class CostumeBase:
             self.replace_img(key, assert_value)
 
     def check_costume_battle(self, battle_type: BattleType):
+        self._restore_assets(_BATTLE_ASSET_KEYS)
         if battle_type == BattleType.COSTUME_BATTLE_DEFAULT:
             return
         logger.info(f'Switch battle theme {battle_type} ({I18n.trans_zh_cn(battle_type)})')
@@ -129,6 +193,7 @@ class CostumeBase:
                 self.replace_img(key, assert_value)
 
     def check_costume_shikigami(self, shikigami_type: ShikigamiType):
+        self._restore_assets(_SHIKIGAMI_ASSET_KEYS)
         if shikigami_type == ShikigamiType.COSTUME_SHIKIGAMI_DEFAULT:
             return
         logger.info(f'Switch shikigami theme {shikigami_type} ({I18n.trans_zh_cn(shikigami_type)})')
@@ -143,6 +208,7 @@ class CostumeBase:
             self.replace_img(key, assert_value)
 
     def check_custom_courtyard_affair(self, courtyard_affair_type: CourtyardAffairType):
+        self._restore_assets(_COURTYARD_AFFAIR_ASSET_KEYS)
         if courtyard_affair_type == CourtyardAffairType.CUSTOM_COURTYARD_AFFAIR_DEFAULT:
             return
         logger.info(f'Switch courtyard affair {courtyard_affair_type} ({I18n.trans_zh_cn(courtyard_affair_type)})')

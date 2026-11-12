@@ -76,6 +76,23 @@ class TestGenericModeSwitch(unittest.TestCase):
         self.assertTrue(self.activity.is_climb_mode_pass())
         self.assertFalse(self.activity.is_climb_mode_ap())
 
+    def test_get_current_climb_mode_modern_rgb_roe_detection(self):
+        """验证 RGB 截图中现代爬塔切换开关与橙红鱼子(ap) / 蓝色图标(pass)的 HSV 色彩识别正确性。"""
+        with patch.object(self.activity, 'O_GENERIC_FIRE') as mock_ocr:
+            mock_ocr.detect_and_ocr.return_value = []
+
+            # 1) RGB 橙红鱼子像素 (235, 85, 25) -> 应判定为 'ap'
+            img_ap = np.zeros((720, 1280, 3), dtype=np.uint8)
+            img_ap[535:585, 1210:1265] = (255, 255, 255)  # ⇄ 白色高亮切换图标
+            img_ap[545:560, 1090:1110] = (235, 85, 25)    # 20x15=300 像素 RGB 橙红鱼子
+            self.assertEqual(self.activity.get_current_climb_mode(image=img_ap), 'ap')
+
+            # 2) RGB 纯蓝图标 (25, 85, 235) -> 修复前误按 BGR2HSV 解析会撞入 H 5~14 误判为 ap，修复后应判定为 'pass'
+            img_pass = np.zeros((720, 1280, 3), dtype=np.uint8)
+            img_pass[535:585, 1210:1265] = (255, 255, 255)
+            img_pass[545:560, 1090:1110] = (25, 85, 235)
+            self.assertEqual(self.activity.get_current_climb_mode(image=img_pass), 'pass')
+
     def test_toggle_climb_mode_clicks_generic_pill(self):
         """测试 toggle_climb_mode 在无专有图标时点击 C_GENERIC_MODE_SWITCH。"""
         with patch.object(self.activity, 'click') as mock_click, \

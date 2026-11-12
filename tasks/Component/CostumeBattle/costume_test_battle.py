@@ -36,7 +36,11 @@ class ScriptTask(ScriptTaskBase):
 
         rcl = area_map[index].get("rule_click")
         click_failure_count = 0
+        attack_timer = Timer(30).start()
         while True:
+            if attack_timer.reached():
+                logger.warning("Costume battle test attack timeout")
+                return False
             self.screenshot()
             if click_failure_count >= 3:
                 logger.warning("Click failure, check your click position")

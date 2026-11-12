@@ -5,6 +5,7 @@ import time
 
 import random
 
+from module.base.timer import Timer
 from tasks.Component.Summon.assets import SummonAssets
 from tasks.base_task import BaseTask
 from module.logger import logger
@@ -84,7 +85,11 @@ class Summon(BaseTask, SummonAssets):
         """
         logger.info('Summon one')
         self.wait_until_appear(self.I_BLUE_TICKET)
+        failed_attempts = 0
         while True:
+            if failed_attempts >= 3:
+                logger.warning('Summon one failed too many consecutive attempts, aborting')
+                return False
             ticket_info = self.O_ONE_TICKET.ocr(self.device.image)
             # 处理 None 和空字符串
             if ticket_info is None or ticket_info == '':
@@ -108,22 +113,39 @@ class Summon(BaseTask, SummonAssets):
             self.S_RANDOM_SWIPE_2.name = 'S_RANDOM_SWIPE'
             self.S_RANDOM_SWIPE_3.name = 'S_RANDOM_SWIPE'
             self.S_RANDOM_SWIPE_4.name = 'S_RANDOM_SWIPE'
+            ticket_timer = Timer(15).start()
+            ticket_ready = False
             while 1:
+                if ticket_timer.reached():
+                    logger.warning('Summon wait I_ONE_TICKET timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_ONE_TICKET):
+                    ticket_ready = True
                     break
                 if self.appear_then_click(self.I_BLUE_TICKET, interval=1):
                     continue
+            if not ticket_ready:
+                failed_attempts += 1
+                self.screenshot()
+                continue
 
             # 画一张票
             time.sleep(0.5)
+            draw_timer = Timer(30).start()
+            draw_done = False
             while 1:
+                if draw_timer.reached():
+                    logger.warning('Summon one draw pattern timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_SM_CONFIRM, interval=0.6):
                     self.ui_click_until_disappear(self.I_SM_CONFIRM)
+                    draw_done = True
                     break
                 if self.appear(self.I_SM_CONFIRM_2, interval=0.6):
                     self.ui_click_until_disappear(self.I_SM_CONFIRM_2)
+                    draw_done = True
                     break
                 if self.appear(self.I_ONE_TICKET, interval=1):
                     # 某些时候会点击到 “语言召唤”
@@ -134,6 +156,10 @@ class Summon(BaseTask, SummonAssets):
                     else:
                         self.summon()
                     continue
+            if not draw_done:
+                failed_attempts += 1
+                continue
+            failed_attempts = 0
             logger.info('Summon one success')
 
 
@@ -142,7 +168,11 @@ class Summon(BaseTask, SummonAssets):
         返回召唤主界面
         :return:
         """
+        back_timer = Timer(15).start()
         while 1:
+            if back_timer.reached():
+                logger.warning('Back summon main timeout')
+                break
             self.screenshot()
             if self.appear(self.I_BLUE_TICKET):
                 break

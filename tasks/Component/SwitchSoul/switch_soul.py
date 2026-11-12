@@ -7,6 +7,7 @@ from typing import Union
 from module.atom.click import RuleClick
 from module.atom.long_click import RuleLongClick
 from module.atom.ocr import RuleOcr
+from module.base.timer import Timer
 from tasks.base_task import BaseTask
 from tasks.Component.SwitchSoul.assets import SwitchSoulAssets
 from tasks.GameUi.assets import GameUiAssets
@@ -26,7 +27,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         """
         进入式神录
         """
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Goto shikigami records timeout')
+                return
             self.screenshot()
             if self.appear(GameUiAssets.I_CHECK_RECORDS):
                 break
@@ -53,7 +58,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         点击预设
         :return:
         """
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Click preset timeout')
+                return
             self.screenshot()
             if self.appear(self.I_SOU_SWITCH_1):
                 break
@@ -100,7 +109,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
 
         # 滑动至分组最上层(分組過多, 导致第一个分组显示不全)
         cur_text = ""
+        swipe_timer = Timer(15).start()
         while 1:
+            if swipe_timer.reached():
+                logger.warning('Switch soul swipe to top timeout')
+                break
             self.screenshot()
             compare1 = self.O_SS_GROUP_NAME.detect_and_ocr(self.device.image)
             ocr_text = str([result.ocr_text for result in compare1])
@@ -135,7 +148,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             sleep(0.8)
             self.screenshot()
             if self.appear(self.I_SOU_SWITCH_SURE):
+                confirm_timer = Timer(15).start()
                 while 1:
+                    if confirm_timer.reached():
+                        logger.warning('Switch soul confirm timeout')
+                        break
                     self.click(self.I_SOU_SWITCH_SURE, 3)
                     self.screenshot()
                     if self.appear_then_click(self.I_CHECK_BLOCK, 3):
@@ -167,7 +184,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         退出式神录的界面
         :return:
         """
+        exit_timer = Timer(15).start()
         while 1:
+            if exit_timer.reached():
+                logger.warning('Exit shikigami records timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_SOU_CHECK_IN):
                 break
@@ -192,7 +213,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         logger.hr('按名称切换御魂', 2)
         # 滑动至分组最上层
         last_group_text = ''
+        swipe_top_timer = Timer(20).start()
         while 1:
+            if swipe_top_timer.reached():
+                logger.warning('Swipe to top of group timeout')
+                break
             self.screenshot()
             compare1 = self.O_SS_GROUP_NAME.detect_and_ocr(self.device.image)
             now_group_text = str([result.ocr_text for result in compare1])
@@ -204,7 +229,14 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         logger.info('Swipe to top of group')
 
         # 判断有无目标分组
+        find_group_timer = Timer(25).start()
+        last_seen_groups = None
+        same_group_count = 0
+        group_found = False
         while 1:
+            if find_group_timer.reached():
+                logger.warning(f'Swipe down to find group [{groupName}] timeout')
+                break
             self.screenshot()
             # 获取当前分组名
             results = self.O_SS_GROUP_NAME.detect_and_ocr(self.device.image)
@@ -213,13 +245,28 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             result = set(text1).intersection({groupName})
             # 有则跳出检测
             if result and len(result) > 0:
+                group_found = True
                 break
+            if text1 == last_seen_groups:
+                same_group_count += 1
+                if same_group_count >= 2:
+                    logger.warning(f'Group [{groupName}] not found after reaching bottom of list')
+                    break
+            else:
+                same_group_count = 0
+                last_seen_groups = text1
             self.swipe(self.S_SS_GROUP_SWIPE_DOWN)
             sleep(1.5)
+        if not group_found:
+            return False
         logger.info('Swipe down to find target group')
 
         # 选中分组
+        select_group_timer = Timer(10).start()
         while 1:
+            if select_group_timer.reached():
+                logger.warning(f'Select group [{groupName}] timeout')
+                return False
             self.screenshot()
             self.O_SS_GROUP_NAME.keyword = groupName
             if self.ocr_appear_click(self.O_SS_GROUP_NAME):
@@ -228,7 +275,11 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
 
         # 滑动至阵容最上层
         last_team_text = ''
+        swipe_team_top_timer = Timer(20).start()
         while 1:
+            if swipe_team_top_timer.reached():
+                logger.warning('Swipe to top of team timeout')
+                break
             self.screenshot()
             compare1 = self.O_SS_TEAM_NAME.detect_and_ocr(self.device.image)
             now_team_text = str([result.ocr_text for result in compare1])
@@ -241,7 +292,14 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
         logger.info('Swipe to top of team')
 
         # 判断当前分组有无目标阵容
+        find_team_timer = Timer(25).start()
+        last_seen_teams = None
+        same_team_count = 0
+        team_found = False
         while 1:
+            if find_team_timer.reached():
+                logger.warning(f'Swipe up to find team [{teamName}] timeout')
+                break
             self.screenshot()
             # 获取当前阵容名
             results = self.O_SS_TEAM_NAME.detect_and_ocr(self.device.image)
@@ -250,16 +308,31 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             result = set(text1).intersection({teamName})
             # 有则跳出检测
             if result and len(result) > 0:
+                team_found = True
                 break
+            if text1 == last_seen_teams:
+                same_team_count += 1
+                if same_team_count >= 2:
+                    logger.warning(f'Team [{teamName}] not found in group [{groupName}]')
+                    break
+            else:
+                same_team_count = 0
+                last_seen_teams = text1
             self.swipe(self.S_SS_TEAM_SWIPE_UP, 0.3)
+        if not team_found:
+            return False
         logger.info('Swipe up to find target team')
 
         # 选中分组
         logger.info(f'Select team {teamName}')
         # 切换御魂
         cnt_click: int = 0
+        apply_timer = Timer(15).start()
         self.O_SS_TEAM_NAME.keyword = teamName
         while 1:
+            if apply_timer.reached():
+                logger.warning(f'Apply team [{teamName}] soul preset timeout')
+                break
             self.screenshot()
             if cnt_click >= 4:
                 break

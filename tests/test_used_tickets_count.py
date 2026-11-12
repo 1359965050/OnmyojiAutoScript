@@ -112,6 +112,12 @@ class TestUsedTicketsCount(unittest.TestCase):
         counter.reset_app_counter()
         self.assertEqual(counter.get_app_used_count('ap'), 0)
 
+    def test_zero_and_negative_limit_disabled(self):
+        """测试限额 <= 0（含 0）时视为不运行该模式。"""
+        counter = UsedTicketsCount(None, None)
+        self.assertTrue(counter.is_app_limit_reached('pass', target_limit=0))
+        self.assertTrue(counter.is_app_limit_reached('ap', target_limit=-1))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,5 @@
 import ast
+import unittest
 from pathlib import Path
 
 
@@ -37,25 +38,33 @@ def _load_pure_helpers():
     return namespace['QuickLoadout']
 
 
-def test_custom_preset_parser_supports_multiple_entries():
-    quick = _load_pure_helpers()
-    assert quick._parse_custom_presets('ALL:(1,1);雷麒麟:(2,3)；') == {
-        'ALL': ('1', '1'),
-        '雷麒麟': ('2', '3'),
-    }
+class TestQuickLoadoutComponent(unittest.TestCase):
+    def test_custom_preset_parser_supports_multiple_entries(self):
+        quick = _load_pure_helpers()
+        self.assertEqual(
+            quick._parse_custom_presets('ALL:(1,1);雷麒麟:(2,3)；'),
+            {
+                'ALL': ('1', '1'),
+                '雷麒麟': ('2', '3'),
+            },
+        )
+
+    def test_explicit_stage_has_priority_over_all(self):
+        quick = _load_pure_helpers()
+        presets = {'ALL': ('1', '1'), '雷麒麟': ('2', '3')}
+        self.assertEqual(
+            quick._match_custom_preset('雷 麒麟', presets)[:2],
+            ('雷麒麟', ('2', '3')),
+        )
+
+    def test_all_matches_stage_without_explicit_entry(self):
+        quick = _load_pure_helpers()
+        presets = {'ALL': ('1', '1'), '雷麒麟': ('2', '3')}
+        self.assertEqual(
+            quick._match_custom_preset('水麒麟', presets),
+            ('ALL', ('1', '1'), 1.0),
+        )
 
 
-def test_explicit_stage_has_priority_over_all():
-    quick = _load_pure_helpers()
-    presets = {'ALL': ('1', '1'), '雷麒麟': ('2', '3')}
-    assert quick._match_custom_preset('雷 麒麟', presets)[:2] == (
-        '雷麒麟', ('2', '3')
-    )
-
-
-def test_all_matches_stage_without_explicit_entry():
-    quick = _load_pure_helpers()
-    presets = {'ALL': ('1', '1'), '雷麒麟': ('2', '3')}
-    assert quick._match_custom_preset('水麒麟', presets) == (
-        'ALL', ('1', '1'), 1.0
-    )
+if __name__ == '__main__':
+    unittest.main()

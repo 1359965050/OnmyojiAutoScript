@@ -15,6 +15,8 @@ from typing_extensions import Annotated
 
 
 def format_timedelta(tdelta: timedelta):
+    if isinstance(tdelta, str):
+        return tdelta
     days = tdelta.days
     hours, rem = divmod(tdelta.seconds, 3600)
     minutes, seconds = divmod(rem, 60)

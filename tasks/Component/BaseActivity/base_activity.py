@@ -144,7 +144,7 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
         switch_crop = image[535:585, 1210:1265]
         has_switch = False
         if switch_crop.size > 0:
-            gray_switch = cv2.cvtColor(switch_crop, cv2.COLOR_BGR2GRAY) if len(switch_crop.shape) == 3 else switch_crop
+            gray_switch = cv2.cvtColor(switch_crop, cv2.COLOR_RGB2GRAY) if len(switch_crop.shape) == 3 else switch_crop
             # ⇄ 切换图标由白色高亮像素构成 (>175)
             has_switch = bool(np.sum(gray_switch > 175) >= 20)
 
@@ -153,7 +153,7 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
         if has_switch:
             icon_crop = image[535:580, 1070:1165]
             if icon_crop.size > 0:
-                hsv = cv2.cvtColor(icon_crop, cv2.COLOR_BGR2HSV)
+                hsv = cv2.cvtColor(icon_crop, cv2.COLOR_RGB2HSV)
                 roe_mask = (hsv[:, :, 0] >= 5) & (hsv[:, :, 0] <= 14) & (hsv[:, :, 1] >= 140) & (hsv[:, :, 2] >= 130)
                 roe_pixels = int(np.sum(roe_mask))
                 if roe_pixels >= 15:
@@ -164,7 +164,7 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
         x, y, w, h = 845, 555, 145, 45
         crop = image[y:y+h, x:x+w]
         if crop.size > 0:
-            gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY) if len(crop.shape) == 3 else crop
+            gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY) if len(crop.shape) == 3 else crop
             mid_x = w // 2
             left_brightness = float(np.mean(gray[:, :mid_x]))
             right_brightness = float(np.mean(gray[:, mid_x:]))
@@ -306,6 +306,7 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
             group_team = getattr(conf, f"{climb_type}_group_team")
             self.run_switch_soul(group_team)
 
+        self.exit_shikigami_records()
         self._switch_souled_map[climb_type] = True
 
     def lock_team(self, battle_conf: GeneralBattleConfig):
@@ -399,6 +400,7 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
         c_confirm_small = confirm_small_image if confirm_small_image is not None else GlobalGameAssets.I_UI_CONFIRM_SAMLL
         c_no_tickets = no_tickets_image if no_tickets_image is not None else GlobalGameAssets.I_UI_BACK_RED
 
+        wait_timer = Timer(max_clicks * 15 + 15).start()
         click_times = 0
         while True:
             self.screenshot()
@@ -408,6 +410,10 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
             # 门票不足购买弹窗前置检测：若已弹出购买弹窗，绝不重试，直接关闭并切换
             if self.is_ticket_buy_window():
                 self.handle_ticket_buy_window(self.current_climb_type)
+
+            if wait_timer.reached():
+                logger.warning(f"[{self.current_climb_type}] 等待进入战斗超时，可能无法找到挑战按钮或门票不足")
+                raise TicketsNotEnough
 
             if click_times >= max_clicks:
                 logger.warning(f"[{self.current_climb_type}] 点击挑战达到上限 [{max_clicks}] 次，可能无法进入战斗")
@@ -536,29 +542,32 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
             return True
 
         # 0.1 若当前已经在活动总览界面，则直接跳到选项卡与前往步骤
+        def _remaining(cap: float) -> float:
+            return max(0.5, min(cap, timeout - start_timer.current()))
+
         if not self._is_in_activity_overview():
             # 阶段 1：展开庭院侧边栏并点击“活动”图标
-            if not self._step_click_sidebar_activity(timeout=min(6.0, timeout)):
+            if start_timer.reached() or not self._step_click_sidebar_activity(timeout=_remaining(6.0)):
                 logger.warning("未能成功点击庭院侧边栏『活动』图标")
                 return False
 
             # 阶段 2：等待进入『活动总览』界面
-            if not self._step_wait_activity_overview(timeout=min(6.0, timeout)):
+            if start_timer.reached() or not self._step_wait_activity_overview(timeout=_remaining(6.0)):
                 logger.warning("未能成功进入『活动总览』界面")
                 return False
 
         # 阶段 3：确保选中左侧『版本活动』选项卡
-        if not self._step_select_version_activity(timeout=min(5.0, timeout)):
+        if start_timer.reached() or not self._step_select_version_activity(timeout=_remaining(5.0)):
             logger.warning("未能在活动总览中定位/选中『版本活动』选项卡")
             return False
 
         # 阶段 4：点击右下角『前往活动』按钮
-        if not self._step_click_goto_activity(timeout=min(5.0, timeout)):
+        if start_timer.reached() or not self._step_click_goto_activity(timeout=_remaining(5.0)):
             logger.warning("未能在活动总览中点击『前往活动』按钮")
             return False
 
         # 阶段 5：确认离开活动总览并成功进入当期活动主界面
-        if not self._step_confirm_entered_activity(timeout=min(7.0, timeout)):
+        if start_timer.reached() or not self._step_confirm_entered_activity(timeout=_remaining(7.0)):
             logger.warning("未能确认成功进入当期活动主界面")
             return False
 
@@ -570,13 +579,20 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
         return bool(self.ocr_appear(self.O_OVERVIEW_TITLE))
 
     def _is_in_activity_main_page(self) -> bool:
-        """判断当前是否已脱离庭院与活动总览，处于活动主界面（有黄色返回键且非总览、非庭院）。"""
+        """判断当前是否已脱离庭院、活动总览与常驻一级界面，处于活动主界面。"""
         has_yellow_back = self.appear(GlobalGameAssets.I_UI_BACK_YELLOW)
         if not has_yellow_back:
             return False
-        # 如果有黄色返回键，但同时还在活动总览，则不是活动主界面
+        # 如果还在活动总览或庭院/探索/町中等常驻一级界面，则不是活动主界面
         if self._is_in_activity_overview():
             return False
+        for non_act_asset in (
+            GameUiAssets.I_CHECK_MAIN,
+            GameUiAssets.I_CHECK_EXPLORATION,
+            GameUiAssets.I_CHECK_TOWN,
+        ):
+            if self.appear(non_act_asset):
+                return False
         return True
 
     def _step_click_sidebar_activity(self, timeout: float = 6.0) -> bool:
@@ -602,20 +618,24 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
                 time.sleep(0.5)
                 return True
 
-            # 3. 兜底点击安全区域 C_SIDEBAR_ACTIVITY
-            if self.click(self.C_SIDEBAR_ACTIVITY, interval=1.5):
-                logger.info("尝试点击侧边栏『活动』图标预设区域 (C_SIDEBAR_ACTIVITY)")
-                time.sleep(0.5)
-                return True
-
-            # 4. 若第一页未发现且尚未翻页，尝试翻页一次
+            # 3. 若当前页未发现且尚未翻页，先尝试翻页一次再使用预设区域兜底
             if not toggled and self.appear(self.I_TOGGLE_BUTTON):
                 logger.info("侧边栏当前页未发现活动图标，尝试翻页...")
                 self.toggle_sidebar()
                 toggled = True
                 time.sleep(0.5)
-            else:
-                time.sleep(0.3)
+                continue
+
+            # 4. 兜底点击安全区域 C_SIDEBAR_ACTIVITY（需在翻页尝试或无翻页按钮之后执行）
+            if self.click(self.C_SIDEBAR_ACTIVITY, interval=1.5):
+                logger.info("尝试点击侧边栏『活动』图标预设区域 (C_SIDEBAR_ACTIVITY)")
+                time.sleep(0.5)
+                self.screenshot()
+                if self._is_in_activity_overview() or not self.appear(GameUiAssets.I_CHECK_MAIN):
+                    return True
+                continue
+
+            time.sleep(0.3)
 
         return False
 
@@ -633,19 +653,22 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
     def _step_select_version_activity(self, timeout: float = 5.0) -> bool:
         """确保选中活动总览左侧的『版本活动』选项卡。"""
         timer = Timer(timeout).start()
+        tried_ocr = False
         while not timer.reached():
             self.screenshot()
-            # 单次 OCR 识别并点击
+            # 1. 优先 OCR 识别并点击
             if self.ocr_appear_click(self.O_OVERVIEW_VERSION_ACT, interval=1.0):
                 logger.info("在活动总览中检测并点击『版本活动』选项卡")
                 time.sleep(0.6)  # 等待右侧大图及前往活动按钮刷新稳定
                 return True
 
-            # 点击预设选项卡区域 C_OVERVIEW_VERSION_ACT 兜底
-            if self.click(self.C_OVERVIEW_VERSION_ACT, interval=1.0):
-                logger.info("通过 C_OVERVIEW_VERSION_ACT 点击『版本活动』选项卡")
-                time.sleep(0.6)
-                return True
+            # 2. 等待一次 OCR 重试后再退化为预设区域点击，避免动画未稳时误点
+            if tried_ocr and timer.current() >= 0.8:
+                if self.click(self.C_OVERVIEW_VERSION_ACT, interval=1.0):
+                    logger.info("通过 C_OVERVIEW_VERSION_ACT 点击『版本活动』选项卡")
+                    time.sleep(0.6)
+                    return True
+            tried_ocr = True
 
             time.sleep(0.3)
         return False
@@ -653,19 +676,25 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
     def _step_click_goto_activity(self, timeout: float = 5.0) -> bool:
         """点击右下角『前往活动』按钮。"""
         timer = Timer(timeout).start()
+        tried_ocr = False
         while not timer.reached():
             self.screenshot()
-            # 单次 OCR 识别并点击
+            # 1. 优先 OCR 识别并点击
             if self.ocr_appear_click(self.O_OVERVIEW_GOTO_ACT, interval=1.0):
                 logger.info("检测到并点击『前往活动』按钮")
                 time.sleep(1.0)  # 等待转场动画
                 return True
 
-            # 点击固定区域 C_OVERVIEW_GOTO_ACT 兜底
-            if self.click(self.C_OVERVIEW_GOTO_ACT, interval=1.0):
-                logger.info("通过 C_OVERVIEW_GOTO_ACT 规则区域点击『前往活动』")
-                time.sleep(1.0)
-                return True
+            # 2. OCR 未命中后再按固定区域兜底，并验证是否确实离开总览或点击生效
+            if tried_ocr and timer.current() >= 0.8:
+                if self.click(self.C_OVERVIEW_GOTO_ACT, interval=1.0):
+                    logger.info("通过 C_OVERVIEW_GOTO_ACT 规则区域点击『前往活动』")
+                    time.sleep(0.8)
+                    self.screenshot()
+                    if not self._is_in_activity_overview():
+                        return True
+                    continue
+            tried_ocr = True
 
             time.sleep(0.3)
         return False
@@ -673,15 +702,15 @@ class BaseActivity(GeneralBattle, RightActivity, SwitchSoul, UsedTicketsCount, B
     def _step_confirm_entered_activity(self, timeout: float = 6.0) -> bool:
         """确认成功脱离活动总览并进入当期活动主界面。
 
-        转场完成后直接依据通用的黄色返回键判定，彻底消除对每期变动活动标题（如『拾光永恒』）的无效 OCR。
+        转场完成后直接依据通用的黄色返回键且非总览/庭院/探索/町中判定，
+        彻底消除对每期变动活动标题（如『拾光永恒』）的无效 OCR。
         """
         # 为游戏转场动画预留过渡时间
         time.sleep(1.0)
         timer = Timer(timeout).start()
         while not timer.reached():
             self.screenshot()
-            # 只要检测到左上角黄色返回键，即可确认已成功进入当期活动主界面
-            if self.appear(GlobalGameAssets.I_UI_BACK_YELLOW):
+            if self._is_in_activity_main_page():
                 logger.info("检测到活动返回键，确认已成功到达当期活动主界面！")
                 return True
             time.sleep(0.3)

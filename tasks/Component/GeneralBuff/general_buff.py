@@ -6,6 +6,7 @@ import time
 from tasks.Component.GeneralBuff.assets import GeneralBuffAssets
 from module.atom.ocr import RuleOcr
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from tasks.base_task import BaseTask
 from module.logger import logger
 from typing import Optional
@@ -19,7 +20,11 @@ class GeneralBuff(BaseTask, GeneralBuffAssets):
         :return:
         """
         logger.info('Open buff')
+        open_timer = Timer(15).start()
         while 1:
+            if open_timer.reached():
+                logger.warning('Open buff timeout')
+                return
             self.screenshot()
             if self.appear(self.I_CLOUD):
                 break
@@ -27,7 +32,11 @@ class GeneralBuff(BaseTask, GeneralBuffAssets):
                 continue
 
         check_image = self.I_AWAKE
+        swipe_timer = Timer(20).start()
         while 1:
+            if swipe_timer.reached():
+                logger.warning('Open buff swipe to awake timeout')
+                break
             self.screenshot()
             if self.appear(check_image):
                 break
@@ -40,7 +49,11 @@ class GeneralBuff(BaseTask, GeneralBuffAssets):
         :return:
         """
         logger.info('Close buff')
+        close_timer = Timer(15).start()
         while 1:
+            if close_timer.reached():
+                logger.warning('Close buff timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_CLOUD):
                 break
@@ -249,7 +262,11 @@ class GeneralBuff(BaseTask, GeneralBuffAssets):
 
     def reject_invite(self):
         from tasks.Component.GeneralInvite.assets import GeneralInviteAssets as gia
+        reject_timer = Timer(15).start()
         while 1:
+            if reject_timer.reached():
+                logger.warning('Reject invite timeout')
+                break
             self.screenshot()
             if not (self.appear(gia.I_I_REJECT_1) or self.appear(gia.I_I_REJECT_2) or self.appear(gia.I_I_REJECT_3)):
                 break

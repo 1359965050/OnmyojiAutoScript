@@ -26,7 +26,7 @@ class ScriptTask(KekkaiActivationScriptTask):
                         [self.I_UTILIZE_EXP,   0],  # 收取寄养别人的经验
                         ]
 
-        logger.hr('Costume Test Start')
+        logger.hr('结界/庭院皮肤测试开始')
         timer = Timer(5)
         timer.start()
         while 1:

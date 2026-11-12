@@ -3,6 +3,7 @@
 # github https://github.com/runhey
 import time
 import numpy as np
+from module.atom.click import RuleClick
 from module.base.timer import Timer
 from module.exception import RequestHumanTakeover, GameTooManyClickError, GameStuckError
 from module.logger import logger
@@ -91,7 +92,7 @@ class LoginService(
         最终是在庭院界面
         :return:
         """
-        logger.hr('App login')
+        logger.hr('应用登录')
         self.device.stuck_record_add('LOGIN_CHECK')
 
         confirm_timer = Timer(1.5, count=2).start()
@@ -159,9 +160,13 @@ class LoginService(
                 skip_login_animation = False
                 continue
             if self.appear(self.I_HARVEST_ZIDU, interval=1):
-                self.I_HARVEST_ZIDU.roi_front[0] -= 200
-                self.I_HARVEST_ZIDU.roi_front[1] -= 200
-                if self.click(self.I_HARVEST_ZIDU, interval=2):
+                x, y, w, h = self.I_HARVEST_ZIDU.roi_front
+                close_click = RuleClick(
+                    roi_front=(max(0, x - 200), max(0, y - 200), w, h),
+                    roi_back=(max(0, x - 200), max(0, y - 200), w, h),
+                    name="CLOSE_ZIDU",
+                )
+                if self.click(close_click, interval=2):
                     logger.info('Close zidu')
                 continue
             if self.appear_then_click(self.I_UI_CONFIRM_SAMLL, interval=2.5):
@@ -180,7 +185,11 @@ class LoginService(
                 logger.info('Close yellow close')
                 continue
             if self.appear_then_click(self.I_LOGIN_LOGIN_GOTO_BIND_PHONE):
+                bind_timer = Timer(10).start()
                 while True:
+                    if bind_timer.reached():
+                        logger.warning("Close bind phone dialog timeout")
+                        break
                     self.screenshot()
                     if self.appear_then_click(self.I_LOGIN_LOGIN_CANCEL_BIND_PHONE):
                         logger.info("Close bind phone")
@@ -195,7 +204,11 @@ class LoginService(
                 continue
             if self.appear(self.I_LOGIN_SPECIFIC_SERVE, interval=0.6) \
                     and self.ocr_appear_click(self.O_LOGIN_SPECIFIC_SERVE, interval=0.6):
+                serve_timer = Timer(15).start()
                 while True:
+                    if serve_timer.reached():
+                        logger.warning("Wait specific serve confirm disappear timeout")
+                        break
                     self.screenshot()
                     if self.appear(self.I_LOGIN_SPECIFIC_SERVE):
                         self.click(self.C_LOGIN_ENSURE_LOGIN_CHARACTER_IN_SAME_SVR, interval=2)

@@ -25,7 +25,11 @@ class Buy(BaseTask, BuyAssets):
         :param start_click: 开始点击
         :return:
         """
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Buy_one wait check_image timeout')
+                return False
             self.screenshot()
 
             if self.appear(check_image):
@@ -40,13 +44,21 @@ class Buy(BaseTask, BuyAssets):
             elif isinstance(start_click, RuleClick):
                 if self.click(start_click, interval=1):
                     continue
+        confirm_timer = Timer(20).start()
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Buy_one confirm timeout')
+                return False
             self.screenshot()
 
             if self.appear(self.I_BUY_RMB):
                 # 用人民币购买的，就取消
                 logger.warning('OAS do not support buy with RMB')
+                cancel_timer = Timer(10).start()
                 while 1:
+                    if cancel_timer.reached():
+                        logger.warning('Buy_one cancel RMB dialog timeout')
+                        break
                     self.screenshot()
                     if not self.appear(self.I_BUY_RMB):
                         break
@@ -60,7 +72,11 @@ class Buy(BaseTask, BuyAssets):
                 break
 
             if self.ui_reward_appear_click():
+                reward_timer = Timer(15).start()
                 while 1:
+                    if reward_timer.reached():
+                        logger.warning('Buy_one reward wait timeout')
+                        break
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):
@@ -84,8 +100,12 @@ class Buy(BaseTask, BuyAssets):
         :param number: 不指定就是拉满
         :return:
         """
+        enter_timer = Timer(15).start()
         try_click_count = 0
         while 1:
+            if enter_timer.reached():
+                logger.warning('Buy_more enter dialog timeout')
+                return False
             self.screenshot()
 
             if self.appear(self.I_BUY_PLUS):
@@ -93,7 +113,7 @@ class Buy(BaseTask, BuyAssets):
             if try_click_count >= 5:
                 logger.warning(f'Buy_more failed, try_click_count: {try_click_count}')
                 logger.warning('Close the purchase')
-                return
+                return False
 
             if isinstance(start_click, RuleImage):
                 if self.appear_then_click(start_click, interval=1):
@@ -117,7 +137,11 @@ class Buy(BaseTask, BuyAssets):
             number_record = []
             ocr_timer = Timer(0.8)
             ocr_timer.start()
+            add_timer = Timer(30).start()
             while 1:
+                if add_timer.reached():
+                    logger.warning('Buy_more set quantity timeout')
+                    break
                 self.screenshot()
 
                 if self.appear_then_click(self.I_BUY_ADD, interval=0.8):
@@ -138,14 +162,22 @@ class Buy(BaseTask, BuyAssets):
                     number_record.pop(0)
 
         buy_more_mx_click = 5
+        confirm_timer = Timer(20).start()
 
         # 购买确认
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Buy_more confirm timeout')
+                return False
             self.screenshot()
 
             if self.ui_reward_appear_click():
                 time.sleep(0.5)
+                reward_timer = Timer(15).start()
                 while 1:
+                    if reward_timer.reached():
+                        logger.warning('Buy_more reward wait timeout')
+                        break
                     self.screenshot()
                     # 等待动画结束
                     if not self.appear(self.I_UI_REWARD, threshold=0.6):

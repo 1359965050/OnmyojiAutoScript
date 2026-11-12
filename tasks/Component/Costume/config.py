@@ -4,6 +4,8 @@
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
+from module.logger import logger
+
 
 # 庭院皮肤
 class MainType(str, Enum):
@@ -95,4 +97,10 @@ class CostumeConfig(BaseModel):
 
     @field_validator("costume_realm_type", mode="before")
     def convert_old_value(cls, v):
-        return RealmType.COSTUME_REALM_DEFAULT
+        if isinstance(v, RealmType):
+            return v
+        try:
+            return RealmType(v)
+        except ValueError:
+            logger.warning(f"Invalid costume_realm_type value {v!r}, fallback to default")
+            return RealmType.COSTUME_REALM_DEFAULT

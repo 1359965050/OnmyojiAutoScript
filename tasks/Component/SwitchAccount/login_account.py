@@ -5,6 +5,7 @@ from module.atom.click import RuleClick
 from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
 from module.atom.ocr import RuleOcr
+from module.base.timer import Timer
 from module.image.operators import threshold_bgr_to_inverted_rgb
 from module.logger import logger
 from tasks.Component.SwitchAccount.assets import SwitchAccountAssets
@@ -36,8 +37,12 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
 
         self.O_SA_SELECT_SVR_SVR_LIST.keyword = svrName
         found = False
-        lastSvrList: tuple = ()
+        lastSvrList: list = []
+        svr_timer = Timer(30).start()
         while 1:
+            if svr_timer.reached():
+                logger.warning(f"Switch server [{svrName}] timeout")
+                break
             self.screenshot()
             self.device.image = threshold_bgr_to_inverted_rgb(self.device.image, threshold=100)
 
@@ -85,7 +90,11 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
         self.ui_click(self.C_SA_LOGIN_FORM_SWITCH_SVR_BTN, self.O_SA_CHECK_SELECT_SVR)
         # 展开底部角色列表,显示角色所属服务器
         self.screenshot()
+        open_timer = Timer(15).start()
         while (not self.appear(self.I_SA_CHECK_SELECT_SVR_2)) and self.appear(self.I_SA_CHECK_SELECT_SVR_1):
+            if open_timer.reached():
+                logger.warning("Open server icon in switch_character timeout")
+                break
             logger.info("open svr icon")
             self.click(self.C_SA_SELECT_SVR_CHARACTER_LIST, interval=1.5)
             self.wait_until_appear(self.I_SA_CHECK_SELECT_SVR_2, False, 1)
@@ -94,7 +103,11 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
 
         self.O_SA_SELECT_SVR_CHARACTER_LIST.keyword = characterName
         lastCharacterNameList = []
+        char_timer = Timer(30).start()
         while 1:
+            if char_timer.reached():
+                logger.warning(f"Switch character [{characterName}] timeout")
+                break
             self.screenshot()
             ocrRes = self.O_SA_SELECT_SVR_CHARACTER_LIST.detect_and_ocr(self.device.image)
             # 去除角色等级数字
@@ -134,21 +147,25 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
         self.click(self.C_SA_LOGIN_FORM_CANCEL_SVR_SELECT, 1.5)
         return False
 
-    def jump2SelectAccount(self):
+    def jump2SelectAccount(self, timeout: float = 30.0) -> bool:
         """
             跳转到切换账号页面 该页面有红色登录按钮
         @return:
         @rtype:
         """
+        timer = Timer(timeout).start()
         while 1:
+            if timer.reached():
+                logger.warning('Jump to select account timeout')
+                return False
+            self.screenshot()
             if self.appear(self.I_SA_NETEASE_GAME_LOGO) and self.appear(self.I_SA_ACCOUNT_LOGIN_BTN):
-                return
+                return True
             if self.appear_then_click(self.I_SA_SWITCH_ACCOUNT_BTN, interval=1.5):
                 continue
             if self.appear(self.I_CHECK_LOGIN_FORM):
                 self.click(self.C_SA_LOGIN_FORM_USER_CENTER, 1.5)
                 continue
-        return
 
     def selectAccount(self, accountInfo: AccountInfo):
         logger.info("start selectAccount")
@@ -156,7 +173,11 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
         self.O_SA_ACCOUNT_ACCOUNT_SELECTED.keyword = accountInfo.account
         # 正常情况一次就行,但防不住OCR搞幺蛾子 保险起见 多来几次吧 反正挂机不差这点
         for i in range(3):
+            select_timer = Timer(25).start()
             while 1:
+                if select_timer.reached():
+                    logger.warning(f"Select account [{accountInfo.account}] pass {i + 1} timeout")
+                    break
                 self.screenshot()
                 if self.appear(self.I_SA_ACCOUNT_DROP_DOWN_CLOSED):
                     if self.ocr_appear(self.O_SA_ACCOUNT_ACCOUNT_SELECTED):
@@ -237,7 +258,11 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
         isCharacterSelected = False
         self.O_SA_ACCOUNT_ACCOUNT_SELECTED.keyword = accountInfo.account
         self.O_SA_LOGIN_FORM_USER_CENTER_ACCOUNT.keyword = accountInfo.account
+        login_timer = Timer(120).start()
         while 1:
+            if login_timer.reached():
+                logger.warning(f"Switch account login [{accountInfo.account}] timeout")
+                return False
             self.screenshot()
             # 处于 选择服务器界面 直接点击空白区域退出该界面 进入切换账号流程
             if self.appear(self.I_SA_CHECK_SELECT_SVR_1) or self.appear(self.I_SA_CHECK_SELECT_SVR_2):
@@ -327,7 +352,11 @@ class LoginAccount(BaseTask, SwitchAccountAssets):
         """
         if (isinstance(click, RuleImage) or isinstance(click, RuleGif)) and (stop is None):
             stop = click
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning("ui_click_until_disappear timeout")
+                return False
             self.screenshot()
             if not self.appear(stop):
                 break

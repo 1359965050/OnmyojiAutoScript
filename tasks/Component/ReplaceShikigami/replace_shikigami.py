@@ -47,7 +47,11 @@ class ReplaceShikigami(BaseTask, ReplaceShikigamiAssets):
         check_selected = match_selected[shikigami_class]
         check_click = match_click[shikigami_class]
         # 选择式神的种类
+        switch_timer = Timer(20).start()
         while 1:
+            if switch_timer.reached():
+                logger.warning('Switch shikigami class timeout: %s' % shikigami_class)
+                break
             self.screenshot()
             if self.appear(check_selected, interval=1):
                 break
@@ -65,7 +69,11 @@ class ReplaceShikigami(BaseTask, ReplaceShikigamiAssets):
         拉下满级的式神，留空位置
         :return:
         """
+        unset_timer = Timer(20).start()
         while 1:
+            if unset_timer.reached():
+                logger.warning('Unset shikigami max lv timeout')
+                break
             self.screenshot()
             if not self.appear(self.I_RS_LEVEL_MAX):
                 break
@@ -106,7 +114,9 @@ class ReplaceShikigami(BaseTask, ReplaceShikigamiAssets):
             if self.appear_then_click(self.I_U_CONFIRM_SMALL, interval=0.5):
                 clicked = False  # 点击了确认, 恢复选式神的操作
                 continue
-            if not self.appear(stop_image):
+            if stop_image is not None and not self.appear(stop_image):
+                break
+            if stop_image is None and clicked:
                 break
             # 与下方点击第7个式神操作互斥, 防止确认按钮还没有出现被下方取消掉
             if not clicked and self.click(click_match, interval=1.5):

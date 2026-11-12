@@ -5,7 +5,7 @@ from time import sleep
 import numpy as np
 
 from enum import Enum
-from cached_property import cached_property
+from functools import cached_property
 from datetime import timedelta, time
 from module.atom.image import RuleImage
 
@@ -42,6 +42,7 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
     timer_invite = None
     timer_wait = None
     timer_emoji = None  # 等待期间如果没有操作的话，可能会导致长时间无响应报错
+    default_room_type: RoomType | None = None
 
     def run_invite(self, config: InviteConfig, is_first: bool = False) -> bool:
         """
@@ -55,12 +56,22 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         if not self.ensure_enter():
             logger.warning('Not enter invite page')
             return False
+        friend_count = len(config.friend_list_v)
         if is_first:
             _ = self.room_type
             self.timer_invite = Timer(20)
             self.timer_invite.start()
-            self.ensure_room_type(len(config.friend_list.split('\n')))
-            self.invite_friends(config)
+            self.timer_emoji = Timer(20)
+            self.timer_emoji.start()
+            self.screenshot()
+            if self.room_check_can_fire(config):
+                self.click_fire()
+                return True
+            if friend_count > 0:
+                self.ensure_room_type(friend_count)
+                self.invite_friends(config)
+            else:
+                logger.info('Friend list is empty, waiting for teammate in room')
         else:
             self.timer_invite = Timer(30)
             self.timer_invite.start()
@@ -78,7 +89,7 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
                 logger.warning('Timeout, now is no room')
                 return False
 
-            if not self.is_in_room():
+            if not self.is_in_room(False):
                 continue
 
             if self.timer_emoji and self.timer_emoji.reached():
@@ -97,29 +108,41 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
                 else:
                     logger.info('Wait for 30s and invite again')
                     self.timer_invite = None
-                self.invite_friends(config)
+                if friend_count > 0:
+                    self.invite_friends(config)
         return False
 
     def room_check_can_fire(self, config: InviteConfig) -> bool:
         fire = False  # 是否开启挑战
+        friend_count = len(config.friend_list_v)
         # 如果这个房间最多只容纳两个人（意思是只可以邀请一个人），且已经邀请一个人了，那就开启挑战
         if self.room_type == RoomType.NORMAL_2 and not self.appear(self.I_ADD_2):
             logger.info('Start challenge and this room can only invite one friend')
             fire = True
+        # 三人房配置 0 人（手动组好队启动）：房间内已有至少一名队友（1号或2号加号被占用）即可开战
+        elif self.room_type == RoomType.NORMAL_3 and friend_count == 0 and (
+            not self.appear(self.I_ADD_1) or not self.appear(self.I_ADD_2)
+        ):
+            logger.info('Start challenge with existing teammate in room')
+            fire = True
         # 如果这个房间最多容纳三个人（意思是可以邀请两个人），且设定邀请一个就开启挑战，那就开启挑战
-        elif self.room_type == RoomType.NORMAL_3 and len(config.friend_list_v) == 1 and not self.appear(self.I_ADD_1):
+        elif self.room_type == RoomType.NORMAL_3 and friend_count == 1 and (
+            not self.appear(self.I_ADD_1) or not self.appear(self.I_ADD_2)
+        ):
             logger.info('Start challenge and user only invite one friend')
             fire = True
         # 如果这个房间最多容纳三个人（意思是可以邀请两个人），且设定邀请两个就开启挑战，那就开启挑战
-        elif self.room_type == RoomType.NORMAL_3 and len(config.friend_list_v) == 2 and not self.appear(self.I_ADD_2):
+        elif self.room_type == RoomType.NORMAL_3 and friend_count >= 2 and (
+            not self.appear(self.I_ADD_1) and not self.appear(self.I_ADD_2)
+        ):
             logger.info('Start challenge and user invite two friends')
             fire = True
-        # 如果这个房间是五人的，且设定邀请一个就开启挑战，那就开启挑战
-        elif self.room_type == RoomType.NORMAL_5 and len(config.friend_list_v) == 1 and not self.appear(self.I_ADD_5_1):
+        # 如果这个房间是五人的，且设定邀请一个（或手动组好队）就开启挑战，那就开启挑战
+        elif self.room_type == RoomType.NORMAL_5 and friend_count <= 1 and not self.appear(self.I_ADD_5_1):
             logger.info('Start challenge and user only invite one friend')
             fire = True
         # 如果这个房间是五人的，且设定邀请两个就开启挑战，那就开启挑战
-        elif self.room_type == RoomType.NORMAL_5 and len(config.friend_list_v) == 2 and not self.appear(self.I_ADD_5_2):
+        elif self.room_type == RoomType.NORMAL_5 and friend_count >= 2 and not self.appear(self.I_ADD_5_2):
             logger.info('Start challenge and user invite two friends')
             fire = True
         # 如果是永生之海
@@ -129,6 +152,12 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         # 契灵之境(两人间但队友在一号位)
         elif self.room_type == RoomType.BONDLING_FAIRYLAND and not self.appear(self.I_ADD_1):
             logger.info('Start challenge and this is bondling fairyland')
+            fire = True
+        # 兜底：若开房时已满员导致 room_type 未识别（None），且槽位非空并已亮起挑战按钮，允许直接开战
+        elif self.room_type is None and self.is_in_room(False) and (
+            not self.appear(self.I_ADD_1) or not self.appear(self.I_ADD_2)
+        ) and (self.appear(self.I_FIRE) or self.appear(self.I_FIRE_SEA)):
+            logger.info('Start challenge in already occupied room')
             fire = True
         return fire
 
@@ -146,7 +175,7 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
             return False
         logger.info(f'Need invite friend list: {config.friend_list_v}')
         if not self._open_invite_panel_if_needed(open_invite):
-            return True
+            return False
         friend_class = self._read_friend_classes()
         selected_set: set[str] = set()
         match config.find_mode:
@@ -162,7 +191,11 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         :return:
         """
         logger.info('Ensure enter invite page')
+        enter_timer = Timer(15).start()
         while 1:
+            if enter_timer.reached():
+                logger.warning('Ensure enter invite page timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_ADD_2):
                 return True
@@ -191,6 +224,35 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
             return True
         if self.appear(GeneralInviteAssets.I_GI_EMOJI_2):
             return True
+        if self.appear(GeneralInviteAssets.I_GI_IN_ROOM):
+            return True
+        return False
+
+    def is_in_team_session(self) -> bool:
+        """
+        判断当前是否已处于组队房间、战斗中或组队邀请/退出确认弹窗，防止启动阶段误跳回庭院拆散队伍。
+        """
+        if self.is_in_room(False):
+            return True
+        in_battle_fn = getattr(self, 'is_in_battle', None)
+        if callable(in_battle_fn) and in_battle_fn(False):
+            return True
+        if self.appear(self.I_GI_SURE):
+            return True
+        if self.appear(GeneralBattleAssets.I_GB_CHECK_TEAM_EXIT):
+            return True
+        return False
+
+    def dismiss_team_exit_prompt(self) -> bool:
+        """
+        关闭误触弹出的退出组队确认弹窗，保留当前组队房间。
+        """
+        if self.appear(GeneralBattleAssets.I_GB_CHECK_TEAM_EXIT):
+            logger.info('Dismiss unexpected team exit confirm prompt')
+            from tasks.GlobalGame.assets import GlobalGameAssets
+            cancel_rule = getattr(self, 'I_UI_CANCEL', GlobalGameAssets.I_UI_CANCEL)
+            if self.appear_then_click(cancel_rule, interval=0.8):
+                return True
         return False
 
     def exit_room(self) -> bool:
@@ -221,7 +283,11 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         return False
 
     def click_fire(self):
+        fire_timer = Timer(20).start()
         while 1:
+            if fire_timer.reached():
+                logger.warning('Click fire timeout')
+                return False
             self.screenshot()
             if not self.is_in_room(False):
                 break
@@ -238,53 +304,54 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         :return:
         """
         self.screenshot()
-        room_type = self.check_room_type(image=self.device.image)
+        pre_type = getattr(self, 'default_room_type', None)
+        room_type = self.check_room_type(image=None, pre_type=pre_type)
         logger.info(f'Room type: {room_type}')
         return room_type
 
     def check_room_type(self, image: np.array = None, pre_type: RoomType = None) -> RoomType | None:
         """
         检查房间类型
-        :param image:
+        :param image: 指定图像矩阵；传 None 时通过 self.appear 复用当前设备截图并走批量匹配缓存
         :param pre_type: 可以先指定这个类型，如果不指定，就自动检查
         :return:
         """
 
+        def _match(rule, img) -> bool:
+            if img is None:
+                return self.appear(rule)
+            return rule.match(img)
+
         def check_3(img) -> bool:
-            appear = False
-            if self.I_ADD_1.match(img) and self.I_ADD_2.match(img):
-                appear = True
-            return appear
+            return _match(self.I_ADD_1, img) and _match(self.I_ADD_2, img)
 
         def check_2(img) -> bool:
-            appear = False
-            if not self.I_ADD_1.match(img) and self.I_ADD_2.match(img):
-                appear = True
-            return appear
+            return not _match(self.I_ADD_1, img) and _match(self.I_ADD_2, img)
 
         def check_5(img) -> bool:
-            appear = False
-            if self.I_ADD_5_1.match(img) and self.I_ADD_5_2.match(img) \
-                    and self.I_ADD_5_3.match(img) and self.I_ADD_5_4.match(img):
-                appear = True
-            return appear
+            return (
+                _match(self.I_ADD_5_1, img)
+                and _match(self.I_ADD_5_2, img)
+                and _match(self.I_ADD_5_3, img)
+                and _match(self.I_ADD_5_4, img)
+            )
 
         def check_eternity_sea(img) -> bool:
-            appear = False
-            if self.I_LOCK_SEA.match(img) or self.I_UNLOCK_SEA.match(img):
-                appear = True
-            return appear
+            return _match(self.I_LOCK_SEA, img) or _match(self.I_UNLOCK_SEA, img)
 
         def check_bondling_fairyland(img) -> bool:
-            return self.I_ADD_1.match(img) and not self.I_ADD_2.match(img)
+            return _match(self.I_ADD_1, img) and not _match(self.I_ADD_2, img)
 
         room_type = None
         if pre_type is not None:
             match pre_type:
                 case RoomType.NORMAL_2:
-                    room_type = RoomType.NORMAL_2 if check_2(image) else None
+                    if not check_3(image) and not check_5(image) and not check_eternity_sea(image):
+                        room_type = RoomType.NORMAL_2
                 case RoomType.NORMAL_3:
-                    room_type = RoomType.NORMAL_3 if check_3(image) else None
+                    # 3人房间已有1~2名队友占位时，I_ADD_1/I_ADD_2 会部分或全部消失，不应误退化为两人房或 None
+                    if not check_5(image) and not check_eternity_sea(image):
+                        room_type = RoomType.NORMAL_3
                 case RoomType.NORMAL_5:
                     room_type = RoomType.NORMAL_5 if check_5(image) else None
                 case RoomType.ETERNITY_SEA:
@@ -575,14 +642,22 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         """
         logger.info('Invite again')
         # 判断是否进入界面
+        wait_timer = Timer(15).start()
         while 1:
+            if wait_timer.reached():
+                logger.warning('Invite again wait I_GI_SURE timeout')
+                return False
             self.screenshot()
             if self.appear(self.I_GI_SURE):
                 break
         # 如果勾选了默认邀请
         if default_invite:
             logger.info('Click default invite')
+            default_timer = Timer(10).start()
             while 1:
+                if default_timer.reached():
+                    logger.warning('Click default invite timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_I_DEFAULT):
                     break
@@ -590,7 +665,11 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
                     continue
         else:
             logger.info('Click no default invite')
+            default_timer = Timer(10).start()
             while 1:
+                if default_timer.reached():
+                    logger.warning('Click no default invite timeout')
+                    break
                 self.screenshot()
                 if self.appear(self.I_I_NO_DEFAULT):
                     break
@@ -599,7 +678,11 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
 
         # 点击确认
         logger.info('Click invite ensure')
+        confirm_timer = Timer(15).start()
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Click invite ensure timeout')
+                return False
             self.screenshot()
             if not self.appear(self.I_GI_SURE):
                 break
@@ -619,9 +702,13 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
             # 有可能是挑战失败的
             if self.appear(self.I_I_DEFAULT) or self.appear(self.I_I_NO_DEFAULT):
                 logger.info('Click default invite')
+                default_timer = Timer(10).start()
                 while 1:
+                    if default_timer.reached():
+                        logger.warning('Check and invite default option timeout')
+                        break
                     self.screenshot()
-                    if self.is_in_room(False):
+                    if not self.appear(self.I_GI_SURE) and self.is_in_room(False):
                         break
                     if self.appear(self.I_I_DEFAULT):
                         break
@@ -629,9 +716,13 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
                         sleep(0.8)
                         continue
         # 点击确认
+        confirm_timer = Timer(15).start()
         while 1:
+            if confirm_timer.reached():
+                logger.warning('Check and invite confirm timeout')
+                return False
             self.screenshot()
-            if self.is_in_room(False):
+            if not self.appear(self.I_GI_SURE) and self.is_in_room(False):
                 break
             if not self.appear(self.I_GI_SURE):
                 break
@@ -648,9 +739,13 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         if not self.appear_accept():
             return False
         logger.info('Click accept')
+        accept_timer = Timer(15).start()
         while True:
+            if accept_timer.reached():
+                logger.warning('Check then accept timeout')
+                return False
             self.screenshot()
-            if self.is_in_room():
+            if not self.appear(self.I_GI_SURE) and self.is_in_room():
                 return True
             # 被秒开
             # https://github.com/runhey/OnmyojiAutoScript/issues/230
