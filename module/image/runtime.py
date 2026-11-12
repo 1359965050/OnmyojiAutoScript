@@ -16,6 +16,7 @@ import numpy as np
 from numpy import fromfile, uint8
 
 from module.base.utils import is_approx_rectangle
+from module.base.utils.utils import wait_concurrent_future
 from module.logger import logger
 
 
@@ -78,6 +79,7 @@ class TemplateEntry:
     last_access_at: float
     sift_kp: Any = None
     sift_des: np.ndarray | None = None
+    sift_ready: bool = False
     mask: np.ndarray | None = None
 
     @property
@@ -370,7 +372,7 @@ class ImageRuntime:
             )
             for rule_data in rules_data
         ]
-        return [future.result() for future in futures]
+        return [wait_concurrent_future(future) for future in futures]
 
     def match_all(
         self,
@@ -431,7 +433,7 @@ class ImageRuntime:
             )
             for rule_data in rules_data
         ]
-        return [future.result() for future in futures]
+        return [wait_concurrent_future(future) for future in futures]
 
     def match_dynamic_template(
         self,
@@ -558,9 +560,13 @@ class ImageRuntime:
                 entry.last_access_at = now
                 self._cache_stats["template_hits"] += 1
                 return entry
+            self._cache_stats["template_misses"] += 1
 
-        self._cache_stats["template_misses"] += 1
-        image_rgb = self._load_template_image(normalized_path)
+        try:
+            image_rgb = self._load_template_image(normalized_path)
+        except (FileNotFoundError, OSError, cv2.error):
+            self._warn_missing_template(normalized_path)
+            return None
         image_gray = self._to_gray(image_rgb)
         mask = self._load_template_mask(normalized_path, image_rgb.shape[:2])
         entry = TemplateEntry(
@@ -743,10 +749,15 @@ class ImageRuntime:
 
     @staticmethod
     def _mean_brightness(image: np.ndarray) -> float:
-        """计算图像区域的平均亮度，用于亮度窗口匹配。"""
-        if image.size == 0:
+        """计算图像区域的平均亮度，用于亮度窗口匹配（输入为 RGB 或灰度图）。"""
+        if image is None or image.size == 0:
             return 0.0
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if image.ndim == 2:
+            gray = image
+        elif image.ndim == 3 and image.shape[2] == 4:
+            gray = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
+        else:
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         return float(gray.mean())
 
     def _template_match_image(
@@ -766,7 +777,7 @@ class ImageRuntime:
         source = self._crop(image, roi_back)
         if self._template_image_invalid(template):
             logger.error(f"Template image is invalid: {None if template is None else template.shape}")
-            return True, 1.0, [int(v) for v in roi_back]
+            return False, -1.0, None
         if source.shape[0] < template.shape[0] or source.shape[1] < template.shape[1]:
             return False, -1.0, None
         if self._template_is_degenerate(template, mask):
@@ -809,7 +820,7 @@ class ImageRuntime:
         source = self._crop(image, roi_back)
         if self._template_image_invalid(template):
             logger.error(f"Template image is invalid: {None if template is None else template.shape}")
-            return True, 1.0, [int(v) for v in roi_back]
+            return False, -1.0, None
 
         if self._template_is_degenerate(template):
             logger.error(f"{log_name} template is flat (no variance), treated as not matched")
@@ -927,9 +938,11 @@ class ImageRuntime:
         return True, float(len(good)), result_roi
 
     def _get_sift(self):
-        """延迟创建全局复用的 SIFT 实例，避免重复初始化。"""
+        """延迟创建全局复用的 SIFT 实例，避免并发初始化竞态。"""
         if self._sift is None:
-            self._sift = cv2.SIFT_create()
+            with self._lock:
+                if self._sift is None:
+                    self._sift = cv2.SIFT_create()
         return self._sift
 
     def _match_all_template(self, image: np.ndarray, rule: dict[str, Any]) -> list[tuple[float, int, int, int, int]]:
@@ -1050,16 +1063,18 @@ class ImageRuntime:
 
     def _ensure_template_sift(self, entry: TemplateEntry) -> TemplateEntry:
         """确保模板条目已经准备好 SIFT keypoints 和 descriptor。"""
-        if entry.sift_kp is not None or entry.sift_des is not None:
-            return entry
-        if self._sift is None:
-            self._sift = cv2.SIFT_create()
-        kp, des = self._sift.detectAndCompute(entry.image_rgb, None)
-        entry.sift_kp = kp
-        entry.sift_des = des
+        with self._lock:
+            if entry.sift_ready:
+                return entry
+        kp, des = self._get_sift().detectAndCompute(entry.image_rgb, None)
+        with self._lock:
+            if not entry.sift_ready:
+                entry.sift_kp = kp
+                entry.sift_des = des
+                entry.sift_ready = True
         logger.debug(
             f"Prepare template sift {entry.file_path} "
-            f"descriptor_shape={None if des is None else des.shape}"
+            f"descriptor_shape={None if entry.sift_des is None else entry.sift_des.shape}"
         )
         return entry
 
@@ -1088,6 +1103,8 @@ class ImageRuntime:
             raise FileNotFoundError(f"Template not found or unreadable: {template_path}")
         if image.ndim == 2:
             return cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        if image.ndim == 3 and image.shape[2] == 4:
+            return cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     @staticmethod

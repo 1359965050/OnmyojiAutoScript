@@ -185,7 +185,7 @@ class RuleList:
         boxed_results: list[BoxedResult] = self._target.detect_and_ocr(image)
         if not boxed_results:
             logger.warning(f'Not angy result in image')
-            return 0, 0
+            return None
 
         # 判断所有的结果，给获取的列表建立引索
         # index_list = self._target.filter(boxed_results, name)
@@ -209,6 +209,10 @@ class RuleList:
 
         # 如果没有找到，那么应该不是在当前的页面，需要获取当前的信息判断是往前滑动还是往后滑动
         else:
+            if name not in self.array:
+                logger.warning(f'{name} not in {self.array}')
+                return None
+
             keyword_list: list = [item.ocr_text for item in boxed_results if item.score > RuleOcr.score]
 
             # 判断识别处理的文字是否属于要验证识别的文字（array）
@@ -220,10 +224,6 @@ class RuleList:
 
             start_index = self.array.index(keyword_list[0])
             end_index = self.array.index(keyword_list[-1])
-            if name in keyword_list:
-                distance_start = 0
-                distance_end = 0
-
             current_index = self.array.index(name)
             distance_start = 0
             distance_end = 0

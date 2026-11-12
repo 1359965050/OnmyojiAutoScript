@@ -59,20 +59,11 @@ class RuleClick:
         :param y:
         :return:
         """
-        x, y, w, h = self.roi_front
-        x += x
-        y += y
-        if x <= 0:
-            x = 0
-        elif x >= 1280:
-            x = 1280
+        rx, ry, w, h = self.roi_front
+        rx = max(0, min(1280, rx + x))
+        ry = max(0, min(720, ry + y))
 
-        if y <= 0:
-            y = 0
-        elif y >= 720:
-            y = 720
-
-        self.roi_front = x, y, w, h
+        self.roi_front = rx, ry, w, h
 
     def __repr__(self):
         return self.name

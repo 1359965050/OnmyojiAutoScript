@@ -116,17 +116,15 @@ _UNSAFE_LOG_NAME_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 def normalize_log_name(name: str) -> str:
-    """标准化日志文件中的脚本名。
+    """标准化日志文件中的脚本名，保留名称中的合法下划线并移除路径危险字符。
 
     Args:
         name: 脚本配置名或外部传入的日志名。
 
     Returns:
-        去掉运行时后缀并移除路径危险字符后的日志名。
+        清理危险字符后的安全日志名。
     """
     name = (name or "").strip()
-    if '_' in name:
-        name = name.split('_', 1)[0]
     name = _UNSAFE_LOG_NAME_RE.sub("_", name).replace("..", "_").strip(" .")
     return name or "script"
 
@@ -479,10 +477,10 @@ def show():
     logger.debug('DEBUG')
     logger.error('ERROR')
     logger.critical('CRITICAL')
-    logger.hr('hr0', 0)
-    logger.hr('hr1', 1)
-    logger.hr('hr2', 2)
-    logger.hr('hr3', 3)
+    logger.hr('日志横幅 0 级', 0)
+    logger.hr('日志横幅 1 级', 1)
+    logger.hr('日志横幅 2 级', 2)
+    logger.hr('日志横幅 3 级', 3)
     logger.info(r'Brace { [ ( ) ] }')
     logger.info(r'True, False, None')
     logger.info(r'E:/path\\to/alas/alas.exe, /root/alas/, ./relative/path/log.txt')

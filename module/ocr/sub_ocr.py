@@ -45,13 +45,13 @@ class Full(BaseCor):
         # 如果匹配到了多个,则合并所有的坐标，返回合并后的坐标
         if len(index_list) > 1:
             area_list = [(
-                boxed_results[index].box[0, 0],  # x
-                boxed_results[index].box[0, 1],  # y
-                boxed_results[index].box[1, 0] - boxed_results[index].box[0, 0],     # width
-                boxed_results[index].box[2, 1] - boxed_results[index].box[0, 1],     # height
+                boxed_results[index].box[0, 0],  # x1
+                boxed_results[index].box[0, 1],  # y1
+                boxed_results[index].box[1, 0],  # x2
+                boxed_results[index].box[2, 1],  # y2
             ) for index in index_list]
-            area = merge_area(area_list)
-            self.area = area[0]+self.roi[0], area[1]+self.roi[1], area[2], area[3]
+            x1, y1, x2, y2 = merge_area(area_list)
+            self.area = x1 + self.roi[0], y1 + self.roi[1], x2 - x1, y2 - y1
         else:
             box = boxed_results[index_list[0]].box
             self.area = box[0, 0]+self.roi[0], box[0, 1]+self.roi[1], box[1, 0] - box[0, 0], box[2, 1] - box[0, 1]
@@ -93,7 +93,9 @@ class Single(BaseCor):
 class Digit(Single):
 
     def after_process(self, result):
-        result = super().after_process(result)
+        if result is None:
+            return ""
+        result = super().after_process(str(result))
         replacements = {
             'I': '1', 'D': '0', 'S': '5',
             'B': '8', '？': '2', '?': '2',
@@ -107,8 +109,11 @@ class Digit(Single):
         result = [char for char in result if char.isdigit()]
         result = ''.join(result)
 
+        if not result:
+            return ""
+
         prev = result
-        result = int(result) if result else 0
+        result = int(result)
         if str(result) != prev:
             logger.warning(f'OCR {self.name}: Result "{prev}" is revised to "{result}"')
 
@@ -122,7 +127,7 @@ class Digit(Single):
         """
         result = self.ocr_single(image)
 
-        if result and str(result).isdigit():
+        if result != "" and str(result).isdigit():
             return int(result)
         return 0
 
@@ -215,7 +220,11 @@ class Quantity(BaseCor):
     比如：”6.33亿“ ”1.2万“ “53万/100” -> 530,000
     """
     def after_process(self, result):
-        result = super().after_process(result)
+        if result is None:
+            return 0
+        if isinstance(result, (int, float)) and not isinstance(result, bool):
+            return int(result)
+        result = super().after_process(str(result))
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8').replace('？', '2').replace('?', '2').replace('d', '6')
         result = [char
@@ -228,11 +237,10 @@ class Quantity(BaseCor):
             result = result_split[0]
         if result == '':
             return 0
-        result = cn2an.cn2an(result, 'smart')
 
         try:
-            result = int(result)
-        except ValueError:
+            result = int(cn2an.cn2an(result, 'smart'))
+        except (ValueError, TypeError):
             logger.warning(f'[{self.name}]: Invalid quantity: {result}')
             result = 0
         return result

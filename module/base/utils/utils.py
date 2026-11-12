@@ -939,3 +939,58 @@ def is_approx_rectangle(points, tolerance=30):
     # 判断角度是否接近90度
     return all(np.isclose(a, 90, atol=tolerance) for a in angles)
 
+
+def wait_concurrent_future(future):
+    """
+    等待 concurrent.futures.Future 完成。
+
+    若当前线程存在活跃的 gevent 调度循环（如 zerorpc 服务协程），通过
+    `hub.loop.async_()` 配合 `AsyncResult` 挂起当前 greenlet，避免 `future.result()`
+    阻塞整个 gevent hub；普通 OS 线程则直接调用 `future.result()`。
+    """
+    if future.done():
+        return future.result()
+
+    gevent_mod = sys.modules.get("gevent")
+    if gevent_mod is not None:
+        import gevent.event
+        import gevent.hub
+
+        hub = gevent.hub._get_hub()
+        if hub is not None or isinstance(gevent_mod.getcurrent(), gevent_mod.Greenlet):
+            if hub is None:
+                hub = gevent_mod.get_hub()
+            if gevent_mod.getcurrent() is not hub:
+                import threading
+
+                async_watcher = hub.loop.async_()
+                async_result = gevent.event.AsyncResult()
+                state_lock = threading.Lock()
+                closed = False
+
+                def _on_wake():
+                    if future.done():
+                        try:
+                            async_result.set(future.result())
+                        except BaseException as exc:
+                            async_result.set_exception(exc)
+
+                async_watcher.start(_on_wake)
+
+                def _on_future_done(_fut):
+                    with state_lock:
+                        if not closed:
+                            async_watcher.send()
+
+                future.add_done_callback(_on_future_done)
+                try:
+                    return async_result.get()
+                finally:
+                    with state_lock:
+                        closed = True
+                        async_watcher.stop()
+                        async_watcher.close()
+
+    return future.result()
+
+

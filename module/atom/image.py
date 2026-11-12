@@ -88,7 +88,14 @@ class RuleImage:
         if self._image is not None:
             return
         img = cv2.imdecode(fromfile(self.file, dtype=uint8), -1)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if img is None:
+            raise FileNotFoundError(f"Template not found or unreadable: {self.file}")
+        if img.ndim == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        elif img.ndim == 3 and img.shape[2] == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGB)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self._image = img
 
         height, width, channels = self._image.shape
@@ -293,7 +300,8 @@ class RuleImage:
         mat = self.image
 
         if mat is None or self._template_image_invalid(mat):
-            return True  # 如果模板图像无效，直接返回 True
+            self.last_score = -1.0
+            return False
 
         if source.shape[0] < mat.shape[0] or source.shape[1] < mat.shape[1]:
             self.last_score = -1.0
@@ -351,7 +359,8 @@ class RuleImage:
         mat = self.image
 
         if mat is None or self._template_image_invalid(mat):
-            return True  # 如果模板图像无效，直接返回 True
+            self.last_score = -1.0
+            return False
 
         if self._template_is_degenerate(mat):
             logger.error(f"{self.name} template is flat (no variance), treated as not matched")

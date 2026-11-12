@@ -35,7 +35,7 @@ class Benchmark(DaemonBase):
         Returns:
             float: Time cost on average.
         """
-        logger.hr(f'Benchmark test', level=2)
+        logger.hr('性能基准测试项', level=2)
         logger.info(f'Testing function: {func.__name__}')
         record = []
 
@@ -130,7 +130,7 @@ class Benchmark(DaemonBase):
         logger.print(table, justify='center')
 
     def benchmark(self, screenshot: t.Tuple[str] = (), click: t.Tuple[str] = ()):
-        logger.hr('Benchmark', level=1)
+        logger.hr('设备性能基准测试', level=1)
         logger.info(f'Testing screenshot methods: {screenshot}')
         logger.info(f'Testing click methods: {click}')
 
@@ -153,7 +153,7 @@ class Benchmark(DaemonBase):
             else:
                 return res
 
-        logger.hr('Benchmark Results', level=1)
+        logger.hr('基准测试结果', level=1)
         fastest_screenshot = 'ADB_nc'
         fastest_click = 'minitouch'
         if screenshot_result:

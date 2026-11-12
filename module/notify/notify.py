@@ -18,67 +18,82 @@ onepush.core.log = logger
 class Notifier:
     def __init__(self, _config: str = "", enable: bool = False) -> None:
         self.config_name: str = ""
-        self.enable: bool = enable
+        self.enable: bool = bool(enable)
+        self.config: dict = {}
+        self.provider_name: str | None = None
+        self.notifier: Provider | None = None
+        self.required: list[str] = []
 
         if not self.enable:
             return
-        config = {}
+        config: dict = {}
         try:
-            for item in yaml.safe_load_all(_config):
-                config.update(item)
-        except Exception as e:
+            for item in yaml.safe_load_all(_config or ""):
+                if isinstance(item, dict):
+                    config.update(item)
+        except Exception:
             logger.error("Fail to load onepush config, skip sending")
+            self.enable = False
+            return
+        if not config:
+            logger.info("Empty onepush config, skip sending")
+            self.enable = False
             return
         self.config = config
         try:
             # 获取provider
-            self.provider_name: str = self.config.pop("provider", None)
-            if self.provider_name is None:
+            self.provider_name = self.config.pop("provider", None)
+            if not self.provider_name:
                 logger.info("No provider specified, skip sending")
+                self.enable = False
                 return
             # 获取notifier
-            self.notifier: Provider = get_notifier(self.provider_name)
+            self.notifier = get_notifier(self.provider_name)
             # 获取notifier的必填参数
-            self.required: list[str] = self.notifier.params["required"]
+            self.required = list(self.notifier.params.get("required", []))
         except OnePushException:
             logger.exception("Init notifier failed")
+            self.enable = False
             return
         except Exception as e:
             logger.exception(e)
+            self.enable = False
             return
 
     def push(self, **kwargs) -> bool:
-        if not self.enable:
+        if not self.enable or self.notifier is None:
             return False
-        # 更新配置
-        kwargs["title"] = f"{self.config_name} {kwargs['title']}"
-        self.config.update(kwargs)
+        payload = dict(self.config)
+        # 更新本次推送标题与内容，不污染长期保存的 self.config
+        req_kwargs = dict(kwargs)
+        raw_title = str(req_kwargs.get("title", "") or "")
+        req_kwargs["title"] = f"{self.config_name} {raw_title}".strip() if self.config_name else raw_title
+        payload.update(req_kwargs)
         # pre check
         for key in self.required:
-            if key not in self.config:
+            if key not in payload:
                 logger.warning(
                     f"Notifier {self.notifier} require param '{key}' but not provided"
                 )
 
-
         if isinstance(self.notifier, Custom):
-            if "method" not in self.config or self.config["method"] == "post":
-                self.config["datatype"] = "json"
-            if not ("data" in self.config or isinstance(self.config["data"], dict)):
-                self.config["data"] = {}
-            if "title" in kwargs:
-                self.config["data"]["title"] = kwargs["title"]
-            if "content" in kwargs:
-                self.config["data"]["content"] = kwargs["content"]
+            if "method" not in payload or payload["method"] == "post":
+                payload["datatype"] = "json"
+            existing_data = payload.get("data")
+            custom_data = dict(existing_data) if isinstance(existing_data, dict) else {}
+            if "title" in req_kwargs:
+                custom_data["title"] = req_kwargs["title"]
+            if "content" in req_kwargs:
+                custom_data["content"] = req_kwargs["content"]
+            payload["data"] = custom_data
 
-        if self.provider_name.lower() == "gocqhttp":
-            access_token = self.config.get("access_token")
+        if self.provider_name and self.provider_name.lower() == "gocqhttp":
+            access_token = payload.get("access_token")
             if access_token:
-                self.config["token"] = access_token
-
+                payload["token"] = access_token
 
         try:
-            resp = self.notifier.notify(**self.config)
+            resp = self.notifier.notify(**payload)
             if isinstance(resp, Response):
                 if resp.status_code != 200:
                     logger.warning("Push notify failed!")

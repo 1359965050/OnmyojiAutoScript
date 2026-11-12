@@ -31,8 +31,13 @@ def handle_sensitive_text(text):
     Returns:
         str:
     """
-    text = re.sub('File \"(.*?)AzurLaneAutoScript', 'File \"C:\\\\fakepath\\\\AzurLaneAutoScript', text)
-    text = re.sub('\[Adb_binary\] (.*?)AzurLaneAutoScript', '[Adb_binary] C:\\\\fakepath\\\\AzurLaneAutoScript', text)
+    if not text:
+        return text
+    text = re.sub(r'File "(.*?)OnmyojiAutoScript', r'File "C:\\fakepath\\OnmyojiAutoScript', text)
+    text = re.sub(r'File "(.*?)AzurLaneAutoScript', r'File "C:\\fakepath\\AzurLaneAutoScript', text)
+    text = re.sub(r'File "([A-Za-z]:\\Users\\[^\\"]+|/(?:Users|home)/[^/"]+)', r'File "<USER_HOME>', text)
+    text = re.sub(r'\[Adb_binary\] (.*?)OnmyojiAutoScript', r'[Adb_binary] C:\\fakepath\\OnmyojiAutoScript', text)
+    text = re.sub(r'\[Adb_binary\] (.*?)AzurLaneAutoScript', r'[Adb_binary] C:\\fakepath\\AzurLaneAutoScript', text)
     return text
 
 

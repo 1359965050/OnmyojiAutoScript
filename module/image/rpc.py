@@ -127,11 +127,15 @@ def ensure_image_server_started() -> bool:
     )
     _IMAGE_SERVER_PROCESS.start()
     logger.info(f"Start image server on {host}:{port}")
-    for _ in range(100):
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
         if _is_port_in_use("127.0.0.1", port):
             return True
-        time.sleep(0.015)
-    logger.error(f"Image server is not ready on port {port}")
+        if not _IMAGE_SERVER_PROCESS.is_alive():
+            logger.error(f"Image server process exited prematurely with code {_IMAGE_SERVER_PROCESS.exitcode}")
+            return False
+        time.sleep(0.02)
+    logger.error(f"Image server is not ready on port {port} after 10.0s")
     return False
 
 
@@ -193,6 +197,8 @@ def shutdown_image_server(timeout: float = 2.0) -> bool:
         return False
     finally:
         _IMAGE_SERVER_PROCESS = None
+        for client in list(_IMAGE_CLIENT_CACHE.values()):
+            client.close()
         _IMAGE_CLIENT_CACHE.clear()
 
 
@@ -230,7 +236,19 @@ class ImageClient:
             self.client.connect(self.address)
             self.client.ping()
         except Exception as exc:
+            self.close()
             raise ScriptError(f"Image server connection failed: {self.address}") from exc
+
+    def close(self) -> None:
+        """关闭底层 zerorpc 客户端连接并释放 ZeroMQ 套接字资源。"""
+        client = getattr(self, "client", None)
+        if client is None:
+            return
+        self.client = None
+        try:
+            client.close()
+        except Exception:
+            pass
 
     def ping(self) -> bool:
         """探测远程图像服务是否在线。"""
@@ -426,6 +444,9 @@ def get_image_client(address: str | None = None, refresh: bool = False) -> Image
 
     resolved_address = address or State.deploy_config.ImageClientAddress or "127.0.0.1:22269"
     if refresh or resolved_address not in _IMAGE_CLIENT_CACHE:
+        old_client = _IMAGE_CLIENT_CACHE.pop(resolved_address, None)
+        if old_client is not None:
+            old_client.close()
         _IMAGE_CLIENT_CACHE[resolved_address] = ImageClient(resolved_address)
     return _IMAGE_CLIENT_CACHE[resolved_address]
 

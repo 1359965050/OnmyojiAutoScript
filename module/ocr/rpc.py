@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import zerorpc
 
+from module.base.utils.utils import wait_concurrent_future
 from module.exception import ScriptError
 from module.logger import logger
 from module.ocr.ppocr import TextSystem
@@ -105,6 +106,7 @@ class OcrRuntime:
         self._thread_local = threading.local()
         self._lock = threading.Lock()
         self._loaded_workers: set[str] = set()
+        self._loaded_models: dict[int, TextSystem] = {}
         self._request_stats = {
             "requests_total": 0,
             "requests_succeeded": 0,
@@ -163,6 +165,17 @@ class OcrRuntime:
 
     def shutdown(self) -> bool:
         self._scheduler.shutdown()
+        with self._lock:
+            models = list(self._loaded_models.values())
+            self._loaded_models.clear()
+            self._loaded_workers.clear()
+        for model in models:
+            for attr in ("text_detector", "text_recognizer", "text_classifier"):
+                component = getattr(model, attr, None)
+                if component is not None and hasattr(component, "session"):
+                    component.session = None
+        if hasattr(self._thread_local, "model"):
+            self._thread_local.model = None
         return True
 
     def _run_request(self, func, *args, **kwargs):
@@ -170,7 +183,7 @@ class OcrRuntime:
             self._request_stats["requests_total"] += 1
         future = self._scheduler.submit(func, *args, **kwargs)
         try:
-            result = future.result()
+            result = wait_concurrent_future(future)
         except Exception:
             with self._lock:
                 self._request_stats["requests_failed"] += 1
@@ -201,8 +214,10 @@ class OcrRuntime:
             model = TextSystem()
             self._thread_local.model = model
             worker_name = threading.current_thread().name
+            thread_id = threading.get_ident()
             with self._lock:
                 self._loaded_workers.add(worker_name)
+                self._loaded_models[thread_id] = model
             logger.info(f"OCR worker model loaded: {worker_name}")
         return model
 
@@ -305,11 +320,15 @@ def ensure_ocr_server_started() -> bool:
     )
     _OCR_SERVER_PROCESS.start()
     logger.info(f"Start OCR server on {host}:{port}")
-    for _ in range(100):
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
         if _is_port_in_use("127.0.0.1", port):
             return True
-        time.sleep(0.015)
-    logger.error(f"OCR server is not ready on port {port}")
+        if not _OCR_SERVER_PROCESS.is_alive():
+            logger.error(f"OCR server process exited prematurely with code {_OCR_SERVER_PROCESS.exitcode}")
+            return False
+        time.sleep(0.02)
+    logger.error(f"OCR server is not ready on port {port} after 10.0s")
     return False
 
 
@@ -357,6 +376,8 @@ def shutdown_ocr_server(timeout: float = 2.0) -> bool:
         return False
     finally:
         _OCR_SERVER_PROCESS = None
+        for client in list(_OCR_CLIENT_CACHE.values()):
+            client.close()
         _OCR_CLIENT_CACHE.clear()
 
 
@@ -378,7 +399,19 @@ class ModelProxy:
             self.client.connect(self.address)
             self.client.ping()
         except Exception as e:
+            self.close()
             raise ScriptError(f"OCR server connection failed: {self.address}") from e
+
+    def close(self) -> None:
+        """关闭底层 zerorpc 客户端连接并释放 ZeroMQ 套接字资源。"""
+        client = getattr(self, "client", None)
+        if client is None:
+            return
+        self.client = None
+        try:
+            client.close()
+        except Exception:
+            pass
 
     def ping(self) -> bool:
         return bool(self.client.ping())
@@ -419,6 +452,9 @@ def get_ocr_client(address: str | None = None, refresh: bool = False) -> ModelPr
 
     resolved_address = address or State.deploy_config.OcrClientAddress or "127.0.0.1:22268"
     if refresh or resolved_address not in _OCR_CLIENT_CACHE:
+        old_client = _OCR_CLIENT_CACHE.pop(resolved_address, None)
+        if old_client is not None:
+            old_client.close()
         _OCR_CLIENT_CACHE[resolved_address] = ModelProxy(resolved_address)
     return _OCR_CLIENT_CACHE[resolved_address]
 
