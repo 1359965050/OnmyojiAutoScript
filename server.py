@@ -82,7 +82,7 @@ def fun(ev: threading.Event):
     host = args.host or State.deploy_config.WebuiHost or "0.0.0.0"
     port = args.port or int(State.deploy_config.WebuiPort) or 7788
 
-    logger.hr("Launcher config")
+    logger.hr("启动器配置")
     logger.attr("Host", host)
     logger.attr("Port", port)
     logger.attr("Reload", ev is not None)
@@ -90,7 +90,7 @@ def fun(ev: threading.Event):
     # 并发预热核心后台服务（图像服务 + OCR 服务与权重预热）
     from concurrent.futures import ThreadPoolExecutor, wait
     t_start = time.perf_counter()
-    logger.hr("Pre-warming background services", 1)
+    logger.hr("预热后台服务", 1)
 
     def _warmup_image():
         t0 = time.perf_counter()
@@ -109,16 +109,27 @@ def fun(ev: threading.Event):
 
     logger.info(f"All core background services fully pre-warmed in {time.perf_counter() - t_start:.3f}s")
 
+    config = uvicorn.Config("module.server.app:fastapi_app",
+                             host=host,
+                             port=port,
+                             factory=True,
+                             log_config=None,
+                             timeout_graceful_shutdown=5)
+    uv_server = uvicorn.Server(config=config)
+    State.uvicorn_server = uv_server
     try:
-        uvicorn.run("module.server.app:fastapi_app",
-                    host=host,
-                    port=port,
-                    factory=True,
-                    log_config=None)
+        uv_server.run()
+    except KeyboardInterrupt:
+        pass
     finally:
+        State.uvicorn_server = None
         shutdown_image_server()
         shutdown_ocr_server()
 
 
 if __name__ == "__main__":
-    fun(None)
+    try:
+        fun(None)
+    except Exception:
+        logger.exception("Server startup failed")
+        raise

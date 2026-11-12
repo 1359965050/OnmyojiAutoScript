@@ -4,14 +4,18 @@
 import copy
 import datetime
 import operator
+import os
+import re
 import threading
 import random
 
+from contextlib import contextmanager
 from typing import Any
 from datetime import datetime, timedelta
 from functools import cached_property
 from threading import Lock
 
+from module.base.decorator import del_cached_property
 from module.base.filter import Filter
 from module.config.config_updater import ConfigUpdater
 from module.config.config_manual import ConfigManual
@@ -104,22 +108,53 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         super(ConfigManual, self).__init__()
         super(ConfigWatcher, self).__init__()
         super(ConfigMenu, self).__init__()
+        self._running_task: str = ''
         self.model = ConfigModel(config_name=config_name)
+        self._loaded_file_signature: tuple[int, int] | None = self._read_file_signature()
         self.scheduler_update_dt = None  # 调度器更新时间
 
     def __getattr__(self, name: str) -> Any:
         """
-        一开始是打算直接继承ConfigModel的，但是pydantic会接管所有的变量
-        故而选择持有ConfigModel
-        :param name:
-        :return:
+        将任务与配置段访问代理至持有的 ConfigModel；不存在的属性正常抛出 AttributeError，避免掩盖拼写错误。
         """
+        model = self.__dict__.get('model')
+        if model is None:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        return getattr(model, name)
+
+    @staticmethod
+    def _parse_timedelta_interval(interval: Any) -> timedelta:
+        if isinstance(interval, timedelta):
+            return interval
+        if isinstance(interval, (int, float)):
+            return timedelta(seconds=interval)
+        text = str(interval or '').strip()
+        match_dhms = re.fullmatch(r'(\d+)\s+(\d{1,2}):(\d{1,2}):(\d{1,2})', text)
+        if match_dhms:
+            days, hours, minutes, seconds = map(int, match_dhms.groups())
+            return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        match_hms = re.fullmatch(r'(\d{1,2}):(\d{1,2}):(\d{1,2})', text)
+        if match_hms:
+            hours, minutes, seconds = map(int, match_hms.groups())
+            return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        logger.warning(f'Invalid interval string {interval!r}, fallback to 1 day')
+        return timedelta(days=1)
+
+    def _read_file_signature(self) -> tuple[int, int] | None:
+        config_name = self.__dict__.get('config_name') or getattr(self, 'config_name', None)
+        if not config_name:
+            return None
         try:
-            return getattr(self.model, name)
-        except AttributeError:
-            # 这个导致 大量的无用log
-            # logger.error(f'can not ask this variable {name}')
-            return None  # 或者抛出异常，或者返回其他默认值
+            st = os.stat(filepath_config(config_name))
+            return (st.st_mtime_ns, st.st_size)
+        except OSError:
+            return None
+
+    @contextmanager
+    def multi_set(self):
+        """批量修改配置时的上下文锁保护。"""
+        with self.lock_config:
+            yield
 
     @cached_property
     def lock_config(self) -> Lock:
@@ -127,7 +162,12 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
 
     @cached_property
     def notifier(self):
-        return Notifier("", enable=False)
+        error_cfg = getattr(getattr(self.model, 'script', None), 'error', None)
+        enable = bool(getattr(error_cfg, 'notify_enable', False))
+        notify_config = str(getattr(error_cfg, 'notify_config', '') or '')
+        notifier = Notifier(notify_config, enable=enable)
+        notifier.config_name = getattr(self, 'config_name', '')
+        return notifier
 
     def gui_args(self, task: str) -> str:
         """
@@ -164,7 +204,26 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             logger.exception(f'have no arg {task}.{group}.{argument}')
 
     def reload(self):
+        running_task = (
+            self.model.running_task
+            if getattr(self, 'model', None) is not None
+            else getattr(self, '_running_task', '')
+        )
         self.model = ConfigModel(config_name=self.config_name)
+        self._running_task = running_task
+        if running_task:
+            self.model.running_task = running_task
+        self._loaded_file_signature = self._read_file_signature()
+        del_cached_property(self, 'notifier')
+
+    def reload_if_changed(self) -> bool:
+        """仅当磁盘配置文件的 mtime/size 发生变化时才重新读取并校验全量 JSON。"""
+        current_sig = self._read_file_signature()
+        last_sig = getattr(self, '_loaded_file_signature', None)
+        if last_sig is not None and current_sig is not None and current_sig == last_sig:
+            return False
+        self.reload()
+        return True
 
     def save(self) -> None:
         """
@@ -172,6 +231,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         :return:
         """
         self.model.write_json(self.config_name, self.model.dict())
+        self._loaded_file_signature = self._read_file_signature()
 
     def update_scheduler(self) -> None:
         """
@@ -302,8 +362,8 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         :param finish: 是完成任务后的时间为基准还是开始任务的时间为基准
         :return:
         """
-        # 加载配置文件
-        self.reload()
+        # 仅在磁盘文件被外部修改时按需重载，避免每次 task_delay 无谓反序列化全量配置
+        self.reload_if_changed()
         # 任务预处理
         if not task:
             task = self.task.command
@@ -329,8 +389,8 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
                 if success
                 else scheduler.failure_interval
             )
-            if isinstance(interval, str):
-                interval = timedelta(interval)
+            if not isinstance(interval, timedelta):
+                interval = self._parse_timedelta_interval(interval)
             run.append(start_time + interval)
         # if server is not None:
         #     if server:

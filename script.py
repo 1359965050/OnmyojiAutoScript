@@ -21,7 +21,7 @@ from module.device.device import Device
 from typing import Any, Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from cached_property import cached_property
+from functools import cached_property
 from pydantic import BaseModel, ValidationError
 from threading import Thread
 from multiprocessing.queues import Queue
@@ -46,7 +46,7 @@ _log_switch_lock = threading.Lock()#线程锁
 
 class Script:
     def __init__(self, config_name: str ='oas') -> None:
-        logger.hr('Start', level=0)
+        logger.hr('启动', level=0)
         self.server = None
         self.state_queue: Queue = None
         self._emulator_down = False
@@ -63,7 +63,16 @@ class Script:
         self.task_hoarding_released = False
         # 运行loop的线程
         self.loop_thread: Thread = None
-        self.anti_ban_guard: AntiBanGuard = AntiBanGuard()
+        self.anti_ban_guard: AntiBanGuard = AntiBanGuard(config_name=self.config_name)
+
+    def _reload_config(self) -> Config:
+        """重新加载配置并同步更新已初始化设备的 config 引用。"""
+        del_cached_property(self, 'config')
+        new_config = self.config
+        dev = self.__dict__.get('device')
+        if dev is not None:
+            dev.config = new_config
+        return new_config
 
     @cached_property
     def config(self) -> "Config":
@@ -118,35 +127,41 @@ class Script:
                                                    handle_sensitive_logs)
         import traceback
         if self.config.script.error.save_error:
-            if not os.path.exists('./log/error'):
-                os.mkdir('./log/error')
             folder_name = build_error_log_dir_name(self.config_name, int(time.time() * 1000))
             folder = f'./log/error/{folder_name}'
             logger.warning(f'Saving error: {folder}')
-            os.mkdir(folder)
+            os.makedirs(folder, exist_ok=True)
 
-            for data in self.device.screenshot_deque:
-                image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
-                image = handle_sensitive_image(data['image'])
-                save_image(image, f'{folder}/{image_time}.png')
+            dev = self.__dict__.get('device')
+            if dev is not None:
+                try:
+                    for data in getattr(dev, 'screenshot_deque', ()):
+                        image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
+                        image = handle_sensitive_image(data['image'])
+                        save_image(image, f'{folder}/{image_time}.png')
+                except Exception:
+                    pass
 
-            try:
-                latest = self.device.screenshot()
-                image_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S-%f')
-                image = handle_sensitive_image(latest)
-                save_image(image, f'{folder}/{image_time}.png')
-            except Exception:
-                pass
+                try:
+                    latest = dev.screenshot()
+                    image_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S-%f')
+                    image = handle_sensitive_image(latest)
+                    save_image(image, f'{folder}/{image_time}.png')
+                except Exception:
+                    pass
 
-            with open(logger.log_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                start = 0
-                for index, line in enumerate(lines):
-                    line = line.strip(' \r\t\n')
-                    if re.match('^═{15,}$', line):
+            lines = []
+            log_file = getattr(logger, 'log_file', None)
+            if log_file and os.path.exists(log_file):
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    raw_lines = f.readlines()
+                start = None
+                for index, line in enumerate(raw_lines):
+                    stripped = line.strip(' \r\t\n')
+                    if re.match('^═{15,}$', stripped):
                         start = index
-                lines = lines[start - 2:]
-                lines = handle_sensitive_logs(lines)
+                sliced = raw_lines[-200:] if start is None else raw_lines[max(0, start - 2):]
+                lines = handle_sensitive_logs(sliced)
 
             context_lines = []
             context_lines.append('=' * 60 + '\n')
@@ -157,15 +172,16 @@ class Script:
             context_lines.append(f'Running Task: {self.config.model.running_task}\n')
             context_lines.append(f'Next Task: {self.config.task.command if self.config.task else "None"}\n')
             try:
-                context_lines.append(f'Device: {self.device.__class__.__name__}\n')
+                context_lines.append(f'Device: {dev.__class__.__name__ if dev is not None else "Uninitialized"}\n')
             except Exception:
                 context_lines.append('Device: Unknown\n')
             try:
-                context_lines.append(f'Package: {self.device.package}\n')
+                context_lines.append(f'Package: {getattr(dev, "package", "Unknown") if dev is not None else "Unknown"}\n')
             except Exception:
                 context_lines.append('Package: Unknown\n')
             try:
-                context_lines.append(f'Screen Size: {getattr(self.device, "screen_size", getattr(self.device, "screenshot_size", "Unknown"))}\n')
+                screen_size = getattr(dev, "screen_size", getattr(dev, "screenshot_size", "Unknown")) if dev is not None else "Unknown"
+                context_lines.append(f'Screen Size: {screen_size}\n')
             except Exception:
                 context_lines.append('Screen Size: Unknown\n')
             try:
@@ -425,15 +441,16 @@ class Script:
             decision = self.runtime.handle_wait_during_idle(wait_until)
             if decision == ScriptRuntimeDecision.RESCHEDULE:
                 logger.info('Idle wait requested scheduler refresh, reload config and reschedule')
-                del_cached_property(self, "config")
+                self._reload_config()
             elif decision == ScriptRuntimeDecision.FAILED:
                 logger.warning('Idle wait preparation failed, reload config and retry scheduling')
-                del_cached_property(self, "config")
+                self._reload_config()
 
     def exception_handler(self, e: Exception, command: str) -> None:
         # 处理御魂溢出
         from tasks.Utils.post_diagnotor import PostDiagnotor, AnalyzeType
-        image = getattr(self.device, 'image', None)
+        dev = self.__dict__.get('device')
+        image = getattr(dev, 'image', None) if dev is not None else None
         # image为None则不做处理
         if image is None:
             return
@@ -499,6 +516,8 @@ class Script:
             if command == 'Restart':
                 logger.info('Skip screenshot before Restart task')
             else:
+                if getattr(self.device, 'is_windows_client', False) and hasattr(self.device, 'desktop_window_set_size'):
+                    self.device.desktop_window_set_size(1280, 720, log_if_matched=False)
                 self.device.screenshot()
             module_name = 'script_task'
             module_path = str(Path.cwd() / 'tasks' / command / (module_name + '.py'))
@@ -508,6 +527,30 @@ class Script:
         except Exception as e:
             return self._handle_task_exception(e, command)
         return False
+
+    @staticmethod
+    def _resolve_target_window_name(raw_handle, is_win_client: bool = False, resolved_title: str = '') -> str:
+        """
+        解析用于置顶或最小化的目标窗口名称，避免将 'auto' 或数字句柄直接传入标题查找。
+        """
+        target = '' if raw_handle is None else str(raw_handle).strip()
+        title = str(resolved_title or '').strip()
+        is_placeholder = (
+            not target
+            or target.lower() == 'auto'
+            or target.isdigit()
+            or (
+                is_win_client
+                and 'mumu' in target.lower()
+                and '阴阳师' not in target
+                and 'onmyoji' not in target.lower()
+            )
+        )
+        if is_placeholder:
+            if title:
+                return title
+            return '阴阳师' if is_win_client else ''
+        return target
 
     def loop(self):
         """
@@ -519,15 +562,19 @@ class Script:
         start_day = date.today()
         logger.info(f'Start scheduler loop: {self.config_name}')
         self.config.model.running_task = ''
-        self.anti_ban_guard.reset()
 
         # Update GUI 防呆, 读取设置并立刻显示后台模拟器到前台
         if not self.config.script.device.run_background_only and IS_WINDOWS:
             from module.device.platform2.platform_windows import minimize_by_name, show_window_by_name
-            target_window_name = self.config.script.device.handle  # 在这里输入你的具体窗口名称
-            is_win_client = getattr(self.device, 'is_windows_client', False) if hasattr(self, 'device') else False
-            if is_win_client and (not target_window_name or target_window_name == 'auto' or 'mumu' in str(target_window_name).lower()):
-                target_window_name = '阴阳师'
+            raw_handle = self.config.script.device.handle  # 在这里输入你的具体窗口名称
+            has_device = hasattr(self, 'device')
+            is_win_client = getattr(self.device, 'is_windows_client', False) if has_device else False
+            resolved_title = getattr(self.device, 'root_handle_title', '') if has_device else ''
+            target_window_name = self._resolve_target_window_name(
+                raw_handle,
+                is_win_client=is_win_client,
+                resolved_title=resolved_title,
+            )
             if target_window_name:
                 if self.config.script.device.emulator_window_minimize:
                     minimize_by_name(target_window_name)
@@ -549,29 +596,30 @@ class Script:
                 if self.is_first_task and task == 'Restart':
                     logger.info('Skip task `Restart` at scheduler start')
                     self.config.task_delay(task='Restart', success=True, server=True)
-                    del_cached_property(self, 'config')
+                    self._reload_config()
                     continue
                 decision = self.runtime.prepare_task_execution(task)
             except Exception as e:
                 self._handle_task_exception(e, task)
                 # 本轮 prepare 失败,重新调度
-                del_cached_property(self, 'config')
+                self._reload_config()
                 continue
 
             if decision == ScriptRuntimeDecision.RESCHEDULE:
                 logger.info(f'Runtime preparation for `{task}` requested reschedule, reload config and retry scheduling')
-                del_cached_property(self, 'config')
+                self._reload_config()
                 continue
             if decision == ScriptRuntimeDecision.FAILED:
                 logger.warning(f'Runtime preparation for `{task}` failed, reload config and retry scheduling')
-                del_cached_property(self, 'config')
+                self._reload_config()
                 continue
 
             # Run
             logger.info(f'Scheduler: Start task `{task}`')
             self.device.stuck_record_clear()
             self.device.click_record_clear()
-            logger.hr(task, level=0)
+            task_cn = I18n.trans_zh_cn(task)
+            logger.hr(f'{task_cn} [{task}]' if task_cn != task else task, level=0)
             self.config.model.running_task = task
             _task_start = datetime.now()
             PowerManager.acquire()
@@ -605,11 +653,11 @@ class Script:
                 exit(1)
 
             if success:
-                del_cached_property(self, 'config')
+                self._reload_config()
                 continue
             elif self.config.script.error.handle_error:
                 # self.config.task_delay(success=False)
-                del_cached_property(self, 'config')
+                self._reload_config()
                 # self.checker.check_now()
                 continue
             else:
@@ -621,9 +669,8 @@ class Script:
         """
         统一处理任务执行 / 准备阶段抛出的异常。
         Returns:
-            True  -> 视为正常结束或已自动恢复 (例如已 task_call('Restart')),
-                     调度器继续推进
-            False -> 视为失败,脚本继续运行
+            True  -> 视为正常结束, 调度器继续推进
+            False -> 视为失败（触发失败计数累积）, 脚本继续尝试重启恢复
         对致命异常 (ScriptError / RequestHumanTakeover / 未识别 Exception)
         在内部直接 exit(1)。
         """
@@ -631,22 +678,26 @@ class Script:
             self._capture_task_runtime_outcome(command)
             return True
 
+        dev = self.__dict__.get('device')
+        pkg_name = getattr(dev, 'package', 'Unknown') if dev is not None else 'Unknown'
+        sleep_fn = dev.sleep if dev is not None else time.sleep
+
         if isinstance(e, GameNotRunningError):
             logger.warning(e)
             self.exception_handler(e=e, command=command)
             self.config.task_call('Restart')
-            return True
+            return False
 
         if isinstance(e, (GameStuckError, GameTooManyClickError)):
             logger.error(e)
             self.save_error_log(e=e)
             self.exception_handler(e=e, command=command)
-            logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
+            logger.warning(f'Game stuck, {pkg_name} will be restarted in 10 seconds')
             logger.warning('If you are playing by hand, please stop Alas')
             self.config.notifier.push(title=f'{I18n.trans_zh_cn(command)}{command}',
                                       content=f"<{self.config_name}> GameStuckError or GameTooManyClickError")
             self.config.task_call('Restart')
-            self.device.sleep(10)
+            sleep_fn(10)
             return False
 
         if isinstance(e, GameBugError):
@@ -654,9 +705,9 @@ class Script:
             self.save_error_log(e=e)
             self.exception_handler(e=e, command=command)
             logger.warning('An error has occurred in Azur Lane game client, Alas is unable to handle')
-            logger.warning(f'Restarting {self.device.package} to fix it')
+            logger.warning(f'Restarting {pkg_name} to fix it')
             self.config.task_call('Restart')
-            self.device.sleep(10)
+            sleep_fn(10)
             return False
 
         if isinstance(e, GamePageUnknownError):
@@ -675,7 +726,7 @@ class Script:
                 content=f"<{self.config_name}> GamePageUnknownError",
             )
             self.config.task_call('Restart')
-            self.device.sleep(10)
+            sleep_fn(10)
             return False
 
         if isinstance(e, ScriptError):

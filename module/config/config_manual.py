@@ -37,3 +37,5 @@ class ConfigManual:
     MINITOUCH_FILEPATH_REMOTE = '/data/local/tmp/minitouch'
 
     HERMIT_FILEPATH_LOCAL = './bin/hermit/hermit.apk'
+    SCRCPY_FILEPATH_LOCAL = './bin/scrcpy/scrcpy-server-v1.20.jar'
+    SCRCPY_FILEPATH_REMOTE = '/data/local/tmp/scrcpy-server-v1.20.jar'

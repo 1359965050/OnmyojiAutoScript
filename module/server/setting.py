@@ -4,7 +4,7 @@ Copy from https://github.com/LmeSzinc/AzurLaneAutoScript
 import multiprocessing
 import threading
 from multiprocessing.managers import SyncManager
-from typing import TYPE_CHECKING, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 if TYPE_CHECKING:
     from module.config.config_updater import ConfigUpdater
@@ -60,6 +60,7 @@ class State:
 
     restart_event: threading.Event = None
     manager: SyncManager = None
+    uvicorn_server: Any = None
 
     @classmethod
     def init(cls):

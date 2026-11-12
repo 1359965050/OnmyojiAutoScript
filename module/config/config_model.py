@@ -84,7 +84,7 @@ from tasks.Chess.config import Chess
 
 class ConfigModel(ConfigBase):
     config_name: str = "oas"
-    running_task: str = ''
+    running_task: str = Field(default='', exclude=True)
 
     @field_validator('running_task', mode='before')
     @classmethod
@@ -175,17 +175,20 @@ class ConfigModel(ConfigBase):
             return
         data = self.read_json(config_name)
         data["config_name"] = config_name
+        data.pop("running_task", None)
         super().__init__(**data)
 
     def __setattr__(self, key, value):
         """
-        只要修改属性就会触发这个函数 自动保存
-        :param key:
-        :param value:
-        :return:
+        修改持久化配置项时触发自动保存；运行时状态 running_task 仅保留在内存中。
         """
-        if key == 'running_task' and (not value or isinstance(value, bool)):
-            value = ''
+        if key == 'running_task':
+            if not value or isinstance(value, bool):
+                value = ''
+            else:
+                value = str(value)
+            super().__setattr__(key, value)
+            return
         super().__setattr__(key, value)
         logger.info("auto save config")
         self.save()

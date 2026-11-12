@@ -155,17 +155,15 @@ class ErrorLogInfo:
 
 
 def normalize_script_name(script_name: str) -> str:
-    """标准化脚本名, 用于日志文件名、cursor 校验和错误目录命名。
+    """标准化脚本名, 用于日志文件名、cursor 校验和错误目录命名（保留名称中的合法下划线）。
 
     Args:
         script_name: 调用方传入的脚本配置名或日志脚本名。
 
     Returns:
-        去掉运行时后缀并清理危险字符后的脚本名。
+        清理危险字符后的脚本名。
     """
     name = str(script_name or "").strip()
-    if "_" in name:
-        name = name.split("_", 1)[0]
     return sanitize_path_name(name)
 
 
@@ -390,27 +388,33 @@ class LogBrowserService:
         normalized = normalize_script_name(script_name)
         try:
             self._validate_limits(limit_lines, limit_bytes, MAX_STREAM_LIMIT_LINES, MAX_STREAM_LIMIT_BYTES)
-            state = self._build_live_state(normalized, cursor)
+            state = await asyncio.to_thread(self._build_live_state, normalized, cursor)
         except LogServiceError as exc:
             yield self.encode_sse("error", {"code": exc.code, "message": exc.message})
             return
 
+        exists = await asyncio.to_thread(state.path.exists)
         yield self.encode_sse(
             "ready",
             {
                 "script_name": normalized,
                 "file_name": state.file_name,
-                "exists": state.path.exists(),
+                "exists": exists,
                 "cursor": self.encode_cursor(normalized, "live", state.file_name, state.offset, state.line_no),
             },
         )
-        if not state.path.exists():
+        if not exists:
             yield self.encode_sse("heartbeat", self._heartbeat_payload(state))
+
+        def _check_old_file_complete(live_state: LiveState) -> bool:
+            return not live_state.path.exists() or live_state.offset >= self._complete_line_offset(live_state.path)
 
         while True:
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
             try:
-                append = self._read_live_append(state, limit_lines, limit_bytes, MAX_LINE_BYTES)
+                append = await asyncio.to_thread(
+                    self._read_live_append, state, limit_lines, limit_bytes, MAX_LINE_BYTES
+                )
                 if append["lines"]:
                     state.offset = append["next_offset"]
                     state.line_no = append["next_line_no"]
@@ -432,7 +436,7 @@ class LogBrowserService:
 
                 # 当前 tail 的文件不是今天的文件且旧文件已经没有完整新行时, 切到当天文件。
                 today_file_name = self._today_file_name(normalized)
-                old_file_complete = not state.path.exists() or state.offset >= self._complete_line_offset(state.path)
+                old_file_complete = await asyncio.to_thread(_check_old_file_complete, state)
                 if state.file_name != today_file_name and old_file_complete:
                     new_path = (LOG_ROOT / today_file_name).resolve()
                     state = LiveState(
@@ -451,11 +455,11 @@ class LogBrowserService:
                             "cursor": self.encode_cursor(normalized, "live", today_file_name, 0, 1),
                         },
                     )
-                    if not state.path.exists():
+                    if not await asyncio.to_thread(state.path.exists):
                         yield self.encode_sse("heartbeat", self._heartbeat_payload(state))
                     continue
 
-                if not state.path.exists():
+                if not await asyncio.to_thread(state.path.exists):
                     yield self.encode_sse("heartbeat", self._heartbeat_payload(state))
             except LogServiceError as exc:
                 yield self.encode_sse("error", {"code": exc.code, "message": exc.message})

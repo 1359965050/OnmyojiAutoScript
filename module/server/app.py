@@ -53,6 +53,7 @@ async def on_startup():
     :return:
     """
     ensure_api_logger()
+    mm.start_broadcast_loop()
     # 预热默认配置与菜单缓存，确保前端连接后首次读取菜单/配置 0 延迟响应
     try:
         mm.config_cache('template')
@@ -66,6 +67,7 @@ async def on_startup():
 
 
 async def on_shutdown():
+    await mm.shutdown()
     logger.info('OAS web service shutdown done')
 
 

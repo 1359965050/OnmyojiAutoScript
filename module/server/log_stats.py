@@ -21,13 +21,18 @@ _TASK_LINE_RE = re.compile(r"\[Task\]\s+(?P<task>[A-Za-z0-9_]+)\s+\(")
 _EQ_LINE_RE = re.compile(r"^═{15,}\s*$")
 _EQ_TITLE_LINE_RE = re.compile(r"^═{10,}\s+(?P<title>.*?)\s+═{10,}\s*$")
 _TITLE_LINE_RE = re.compile(r"^─{10,}\s*(?P<title>.*?)\s*─{10,}\s*$")
-_TASK_ENDED_RE = re.compile(r"^(?P<title>.+?)\s+task ended\b", re.IGNORECASE)
-_BATTLE_TITLE = "GENERAL BATTLE START"
-_START_TITLE = "START"
-_SIX_REALMS_TITLE = "SIXREALMS"
+_TASK_ENDED_RE = re.compile(r"^(?P<title>.+?)\s*(?:task ended|任务结束)\b", re.IGNORECASE)
+_TASK_SUFFIX_RE = re.compile(r"\[(?P<task>[A-Za-z0-9_]+)\]\s*$")
+_BATTLE_TITLES = {"GENERAL BATTLE START", "战斗开始", "通用战斗开始"}
+_START_TITLES = {"START", "开始", "启动"}
+_SIX_REALMS_TITLES = {"SIXREALMS", "六道之门"}
 _SIX_REALMS_TASK_NAMES = {
     "MOONSEA": "MoonSea",
+    "月之海": "MoonSea",
+    "月之海椒图": "MoonSea",
     "PEACOCKKINGDOM": "PeacockKingdom",
+    "孔雀国": "PeacockKingdom",
+    "孔雀国觉": "PeacockKingdom",
 }
 
 
@@ -167,15 +172,26 @@ class LogStatsParser:
         if not matched:
             return False
         title = matched.group("title").strip().upper()
-        return title in (_BATTLE_TITLE, "战斗开始", "通用战斗开始")
+        return title in _BATTLE_TITLES
 
     @staticmethod
     def _normalize_title(title: str) -> str:
         return re.sub(r"\s+", "", title).upper()
 
     @classmethod
+    def _extract_canonical_task_title(cls, title: str) -> str:
+        suffix = _TASK_SUFFIX_RE.search(title.strip())
+        if suffix:
+            return suffix.group("task").strip()
+        return title.strip()
+
+    @classmethod
     def _is_six_realms_title(cls, title: str) -> bool:
-        return cls._normalize_title(title) == _SIX_REALMS_TITLE
+        canonical = cls._extract_canonical_task_title(title)
+        return (
+            cls._normalize_title(canonical) in _SIX_REALMS_TITLES
+            or cls._normalize_title(title) in _SIX_REALMS_TITLES
+        )
 
     @classmethod
     def _format_six_realms_task_name(cls, title: str) -> str:
@@ -189,7 +205,7 @@ class LogStatsParser:
         self._close_active_battle()
         self._close_active_task()
         self._reset_six_realms_state()
-        if title.upper() == _START_TITLE:
+        if title.strip().upper() in _START_TITLES:
             self._handle_start_boundary()
             self._pending_task_start_name = None
             return
@@ -198,7 +214,8 @@ class LogStatsParser:
             self._pending_task_name = None
             self._pending_task_start_name = None
             return
-        self._pending_task_start_name = self._pending_task_name or title
+        canonical_title = self._extract_canonical_task_title(title)
+        self._pending_task_start_name = self._pending_task_name or canonical_title
         self._pending_task_name = None
 
     def _handle_equal_boundary(self, title: str) -> bool:
@@ -428,7 +445,7 @@ class LogStatsService:
     @staticmethod
     def _normalize_script_name(script_name: str) -> str:
         name = str(script_name or "").strip()
-        return name.split("_", 1)[0] if "_" in name else name
+        return name or "script"
 
     def build_stats(self, script_name: str, target_day: date) -> dict[str, Any]:
         normalized = self._normalize_script_name(script_name)
@@ -465,18 +482,18 @@ class LogStatsService:
 
     async def stream_events(self, script_name: str, target_day: date):
         normalized = self._normalize_script_name(script_name)
-        snapshot = self.build_stats(normalized, target_day)
+        snapshot = await asyncio.to_thread(self.build_stats, normalized, target_day)
         yield self._encode_sse("snapshot", snapshot)
 
-        last_signature = self._today_log_signature(normalized)
+        last_signature = await asyncio.to_thread(self._today_log_signature, normalized)
         last_snapshot = copy.deepcopy(snapshot)
         while True:
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
-            current_signature = self._today_log_signature(normalized)
+            current_signature = await asyncio.to_thread(self._today_log_signature, normalized)
             if current_signature == last_signature:
                 continue
             last_signature = current_signature
-            current_snapshot = self.build_stats(normalized, target_day)
+            current_snapshot = await asyncio.to_thread(self.build_stats, normalized, target_day)
             payload = self._build_update_payload(normalized, last_snapshot, current_snapshot)
             if payload is None:
                 continue

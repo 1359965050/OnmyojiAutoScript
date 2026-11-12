@@ -8,11 +8,11 @@ from fastapi import APIRouter, Body
 from pathlib import Path
 
 from module.config.utils import write_file
-from module.image.rpc import ensure_image_server_ready, get_image_client, shutdown_image_server
+from module.image.rpc import ensure_image_server_ready, get_image_client
 from module.logger import logger
 from module.server.api_logger import ApiLoggingRoute
-from module.ocr.rpc import ensure_ocr_server_ready, get_ocr_client, shutdown_ocr_server
-from module.server.main_manager import MainManager
+from module.ocr.rpc import ensure_ocr_server_ready, get_ocr_client
+from module.server.main_manager import mm
 from module.server.updater import Updater
 from module.server.i18n import I18n
 
@@ -36,19 +36,19 @@ async def home_menu():
 
 
 @home_app.get('/image_server_info')
-async def image_server_info():
+def image_server_info():
     ensure_image_server_ready()
     return get_image_client(refresh=True).get_server_info()
 
 
 @home_app.get('/ocr_server_info')
-async def ocr_server_info():
+def ocr_server_info():
     ensure_ocr_server_ready()
     return get_ocr_client(refresh=True).get_server_info()
 
 
 @home_app.post('/notify_test')
-async def notify_test(setting: str, title: str, content: str):
+def notify_test(setting: str, title: str, content: str):
     from module.notify.notify import Notifier
     try:
         notifier = Notifier(setting, True)
@@ -65,9 +65,7 @@ async def notify_test(setting: str, title: str, content: str):
 
 @home_app.get('/kill_server')
 async def kill_server():
-    shutdown_image_server()
-    shutdown_ocr_server()
-    MainManager.signal_kill_server = True
+    mm.request_server_shutdown(delay=0.2)
     return 'success'
 
 
@@ -91,14 +89,16 @@ async def execute_update():
     # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启oasx
     try:
         updater = Updater()
-        updater.execute_pull()
+        if await asyncio.to_thread(updater.execute_pull):
+            for script_p in list(mm.script_process.values()):
+                await script_p.stop()
     except Exception as e:
         logger.error(e)
     return '手动更新将会立即结束运行中的脚本服务, 最后你还需重启oasx'
 
 
 @home_app.get('/chinese_translate')
-async def get_chinese_translate() -> dict:
+def get_chinese_translate() -> dict:
     try:
         return I18n.load_zh_cn()
     except Exception as e:
@@ -107,7 +107,7 @@ async def get_chinese_translate() -> dict:
 
 
 @home_app.put('/chinese_translate')
-async def chinese_translate(data: dict = Body(...)):
+def chinese_translate(data: dict = Body(...)):
     try:
         I18n.save_zh_cn(data)
     except Exception as e:
@@ -116,7 +116,7 @@ async def chinese_translate(data: dict = Body(...)):
 
 
 @home_app.get('/additional_translate')
-async def additional_translate() -> dict:
+def additional_translate() -> dict:
     try:
         data = I18n.load_additions()
         return data
@@ -126,7 +126,7 @@ async def additional_translate() -> dict:
 
 
 @home_app.get('/export_diagnostic')
-async def export_diagnostic(config_name: str = ''):
+def export_diagnostic(config_name: str = ''):
     from module.server.diagnostic import build_diagnostic_zip
     try:
         zip_path = build_diagnostic_zip(config_name)

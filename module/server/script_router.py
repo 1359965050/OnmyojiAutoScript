@@ -6,7 +6,7 @@ import json
 from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import Response
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
 from module.config.utils import convert_to_underscore
@@ -37,24 +37,32 @@ async def script_test():
     return 'success'
 
 @script_app.get('/script_menu')
-async def script_menu():
+def script_menu():
     return mm.config_cache('template').gui_menu_list
 # ----------------------------------   配置文件管理   ----------------------------------
 @script_app.get('/config_list')
-async def config_list():
+def config_list():
     return mm.all_script_files()
 
 @script_app.post('/config_copy')
-async def config_copy(file: str, template: str = 'template'):
-    mm.copy(file, template)
+def config_copy(file: str, template: str = 'template'):
+    try:
+        file = ConfigManager.validate_config_name(file, allow_template=False)
+        template = ConfigManager.validate_config_name(template, allow_template=True)
+        mm.copy(file, template)
+    except ConfigNameError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except ConfigNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    mm.add_script_file(file)
     return mm.all_script_files()
 
 @script_app.get('/config_new_name')
-async def config_new_name():
+def config_new_name():
     return mm.generate_script_name()
 
 @script_app.get('/config_all')
-async def config_all():
+def config_all():
     return mm.all_json_file()
 
 
@@ -74,7 +82,7 @@ async def config_import(name: str = Form(...), file: UploadFile = File(...)):
         except json.JSONDecodeError as e:
             raise ConfigJsonError(f'Config JSON parse failed: {e}') from e
 
-        config_name = mm.import_config(name, data)
+        config_name = await asyncio.to_thread(mm.import_config, name, data)
         mm.add_script_file(config_name)
         return {"name": config_name, "file": f"{config_name}.json"}
     except ConfigAlreadyExistsError as e:
@@ -89,7 +97,7 @@ async def config_import(name: str = Form(...), file: UploadFile = File(...)):
 
 
 @script_app.get('/config/export')
-async def config_export(name: str):
+def config_export(name: str):
     """
     导出脱敏后的脚本配置文件。
     """
@@ -129,8 +137,13 @@ async def config_task_import(
     """
     try:
         file_content = await file.read() if file is not None else None
-        data = mm.parse_task_json_source(json_text=json_text, file_content=file_content)
-        config_name, task_key = mm.import_task_config(config_name, task_name, data)
+        data = await asyncio.to_thread(
+            mm.parse_task_json_source, json_text=json_text, file_content=file_content
+        )
+        config_name, task_key = await asyncio.to_thread(
+            mm.import_task_config, config_name, task_name, data
+        )
+        mm.invalidate_config_cache(config_name)
         return {
             "config_name": config_name,
             "task_name": task_key,
@@ -149,7 +162,7 @@ async def config_task_import(
 
 
 @script_app.get('/config/task/export')
-async def config_task_export(config_name: str, task_name: str):
+def config_task_export(config_name: str, task_name: str):
     """
     导出脱敏后的单个任务配置 JSON 文件。
     """
@@ -175,7 +188,7 @@ async def config_task_export(config_name: str, task_name: str):
 
 
 @script_app.get('/config/task/copy-json')
-async def config_task_copy_json(config_name: str, task_name: str):
+def config_task_copy_json(config_name: str, task_name: str):
     """
     复制单个任务配置 JSON，返回未脱敏普通 JSON。
     """
@@ -196,14 +209,25 @@ async def config_rename(old_name: str = '', new_name: str = ''):
     :param new_name: new config name
     :return: True or False
     """
-    if old_name == new_name or new_name == '':
+    if old_name == '' or new_name == '':
         return False
-    if old_name in mm.script_process:
-        if mm.script_process[old_name].state != ScriptState.INACTIVE:
-            await mm.script_process[old_name].stop()
-        del mm.script_process[old_name]
-    if not mm.rename(old_name, new_name):
+    try:
+        old_name = ConfigManager.validate_config_name(old_name, allow_template=False)
+        new_name = ConfigManager.validate_config_name(new_name, allow_template=False)
+    except ConfigNameError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if old_name == new_name:
+        return False
+    old_path = ConfigManager.config_path(old_name)
+    new_path = ConfigManager.config_path(new_name)
+    if not old_path.exists() or new_path.exists():
         raise HTTPException(status_code=400, detail='Rename failed')
+    await mm.remove_script_process(old_name)
+    mm.invalidate_config_cache(old_name)
+    if not await asyncio.to_thread(mm.rename, old_name, new_name):
+        raise HTTPException(status_code=400, detail='Rename failed')
+    mm.invalidate_config_cache(new_name)
+    mm.add_script_file(new_name)
     return True
 
 
@@ -214,19 +238,21 @@ async def config_delete(name: str = ''):
     :param name: config name
     :return: True or False
     """
-    if name == '' or name == 'template':
+    try:
+        name = ConfigManager.validate_config_name(name, allow_template=False)
+    except ConfigNameError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not ConfigManager.config_path(name).exists():
         raise HTTPException(status_code=400, detail='Delete failed')
-    if name in mm.script_process:
-        if mm.script_process[name].state != ScriptState.INACTIVE:
-            await mm.script_process[name].stop()
-        del mm.script_process[name]
-    if not mm.delete(name):
+    await mm.remove_script_process(name)
+    mm.invalidate_config_cache(name)
+    if not await asyncio.to_thread(mm.delete, name):
         raise HTTPException(status_code=400, detail='Delete failed')
     return True
 
 
 @script_app.put('/config/task/copy')
-async def task_copy(task_name: str, dest_config_name: str, source_config_name: str):
+def task_copy(task_name: str, dest_config_name: str, source_config_name: str):
     if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
         return False
     source_task = getattr(mm.config_cache(source_config_name).model, convert_to_underscore(task_name), None)
@@ -236,7 +262,7 @@ async def task_copy(task_name: str, dest_config_name: str, source_config_name: s
 
 
 @script_app.put('/config/task/group/copy')
-async def task_group_copy(task_name: str, group_name: str, dest_config_name: str, source_config_name: str):
+def task_group_copy(task_name: str, group_name: str, dest_config_name: str, source_config_name: str):
     if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
         return False
     source_task = getattr(mm.config_cache(source_config_name).model, convert_to_underscore(task_name), None)
@@ -248,11 +274,17 @@ async def task_group_copy(task_name: str, group_name: str, dest_config_name: str
 # ---------------------------------   脚本实例管理   ----------------------------------
 @script_app.get('/{script_name}/start')
 async def script_start(script_name: str):
-    if script_name == 'template':
-        raise HTTPException(status_code=400, detail='Cannot start template config')
+    try:
+        script_name = ConfigManager.validate_config_name(script_name, allow_template=False)
+    except ConfigNameError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if script_name not in mm.script_process:
-        mm.script_process[script_name] = ScriptProcess(script_name)
+        try:
+            mm.script_process[script_name] = await asyncio.to_thread(ScriptProcess, script_name)
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
     await mm.script_process[script_name].start()
+    mm.ensure_script_tasks(script_name)
     return
 
 @script_app.get('/{script_name}/stop')
@@ -264,11 +296,11 @@ async def script_stop(script_name: str):
     return
 
 @script_app.get('/{script_name}/{task}/args')
-async def script_task(script_name: str, task: str):
+def get_script_task(script_name: str, task: str):
     return mm.config_cache(script_name).model.script_task(task)
 
 @script_app.put('/{script_name}/{task}/{group}/{argument}/value')
-async def script_task(script_name: str, task: str, group: str, argument: str, types: str, value):
+def set_script_task(script_name: str, task: str, group: str, argument: str, types: str, value):
     try:
         match types:
             case 'integer':
@@ -276,25 +308,40 @@ async def script_task(script_name: str, task: str, group: str, argument: str, ty
             case 'number':
                 value = float(value)
             case 'boolean':
-                if isinstance(value, str):
+                if isinstance(value, bool):
+                    pass
+                elif isinstance(value, str):
                     logger.debug(f'[{script_name}] script argument {argument} value is string, try to convert to bool')
-                    if value.lower() in ['true', '1']:
+                    lower = value.strip().lower()
+                    if lower in ('true', '1'):
                         value = True
-                    elif value.lower() in ['false', '0']:
+                    elif lower in ('false', '0'):
                         value = False
-                value = bool(value)
+                    else:
+                        raise ValueError(f'Invalid boolean value: {value}')
+                elif isinstance(value, (int, float)) and value in (0, 1):
+                    value = bool(value)
+                else:
+                    raise ValueError(f'Invalid boolean value: {value}')
             case 'string':
                 pass
             case 'date_time':
                 value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
             case 'time_delta':
-                # strptime 是个好东西，但是不能解析00的天数
-                day = int(value[1])
-                date_time = datetime.strptime(value[3:], '%H:%M:%S')
+                parts = str(value).strip().split()
+                if len(parts) == 2:
+                    day = int(parts[0])
+                    date_time = datetime.strptime(parts[1], '%H:%M:%S')
+                elif len(parts) == 1:
+                    day = 0
+                    date_time = datetime.strptime(parts[0], '%H:%M:%S')
+                else:
+                    raise ValueError(f'Invalid time_delta format: {value}')
                 value = TimeDelta(days=day, hours=date_time.hour, minutes=date_time.minute, seconds=date_time.second)
             case 'time':
                 value = datetime.strptime(value, '%H:%M:%S').time()
-            case _: pass
+            case _:
+                pass
     except Exception as e:
         # 类型不正确
         raise HTTPException(status_code=400, detail=f'Argument type error: {e}')
@@ -317,61 +364,42 @@ def _safe_get_schedule_data(config) -> dict[str, dict]:
 async def sync_next_run(script_name: str, task: str, target_dt: str):
     if script_name not in mm.script_process:
         return False
-    config = mm.config_cache(script_name)
-    target = datetime.strptime(target_dt, '%Y-%m-%d %H:%M:%S') if target_dt else None
-    config.task_delay(task=task, success=True, target=target)
+
+    def _sync_and_build_schedule() -> dict[str, dict]:
+        config = mm.config_cache(script_name)
+        target = datetime.strptime(target_dt, '%Y-%m-%d %H:%M:%S') if target_dt else None
+        config.task_delay(task=task, success=True, target=target)
+        return _safe_get_schedule_data(config)
+
+    schedule_data = await asyncio.to_thread(_sync_and_build_schedule)
     script_process = mm.script_process[script_name]
-    schedule_data = _safe_get_schedule_data(config)
     await script_process.broadcast_state({"schedule": schedule_data})
     return True
 
-
-# --------------------------------------  SSE  --------------------------------------
-@script_app.get('/{script_name}/state')
-async def script_task_state(script_name: str):
-    async def state_generate_events():
-        while True:
-            # 生成 SSE 事件数据
-            event_data = "data: Hello, SSE!\n\n"
-            yield event_data
-
-            # 模拟异步操作，可以替换为您的实际处理逻辑
-            await asyncio.sleep(1)
-
-    response = StreamingResponse(state_generate_events(), media_type="text/event-stream")
-    response.headers["Cache-Control"] = "no-cache"
-    return response
-
-@script_app.get('/{script_name}/log')
-async def script_task_log(script_name: str):
-    async def log_generate_events():
-        while True:
-            # 生成 SSE 事件数据
-            event_data = "data: log\n"
-            yield event_data
-
-            # 模拟异步操作，可以替换为您的实际处理逻辑
-            await asyncio.sleep(1)
-
-    response = StreamingResponse(log_generate_events(), media_type="text/event-stream")
-    response.headers["Cache-Control"] = "no-cache"
-    return response
 
 # -------------------------------------- websocket --------------------------------------
 
 @script_app.websocket("/ws/{script_name}")
 async def websocket_endpoint(websocket: WebSocket, script_name: str):
-    if script_name not in mm.script_process:
-        mm.script_process[script_name] = ScriptProcess(script_name)
+    try:
+        script_name = ConfigManager.validate_config_name(script_name)
+        if script_name not in mm.script_process:
+            mm.script_process[script_name] = await asyncio.to_thread(ScriptProcess, script_name)
+    except (ConfigNameError, FileNotFoundError) as e:
+        await websocket.close(code=1008, reason=str(e))
+        return
     script_process = mm.script_process[script_name]
     await script_process.connect(websocket)
     log_ws_event(f"ws[{script_name}] connected")
 
+    def _load_schedule(name: str) -> dict[str, dict]:
+        config = mm.config_cache(name)
+        return _safe_get_schedule_data(config)
+
     try:
         await script_process.send_json(websocket, {"state": script_process.state})
         log_ws_event(f"ws[{script_name}] connect state: {script_process.state}")
-        config = mm.config_cache(script_name)
-        schedule_data = _safe_get_schedule_data(config)
+        schedule_data = await asyncio.to_thread(_load_schedule, script_name)
         await script_process.send_json(websocket, {"schedule": schedule_data})
         log_ws_event(f"ws[{script_name}] connect response: {schedule_data}")
         while True:
@@ -379,15 +407,15 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
             data = await websocket.receive_text()
             log_ws_event(f"ws[{script_name}] msg: {data}")
             if data == 'get_state':
-                await script_process.broadcast_state({"state": script_process.state})
+                await script_process.send_json(websocket, {"state": script_process.state})
                 log_ws_event(f"ws[{script_name}] response: {script_process.state}")
             elif data == 'get_schedule':
-                config = mm.config_cache(script_name)
-                schedule_data = _safe_get_schedule_data(config)
-                await script_process.broadcast_state({"schedule": schedule_data})
+                schedule_data = await asyncio.to_thread(_load_schedule, script_name)
+                await script_process.send_json(websocket, {"schedule": schedule_data})
                 log_ws_event(f"ws[{script_name}] response: {schedule_data}")
             elif data == 'start':
                 await script_process.start()
+                mm.ensure_script_tasks(script_name)
             elif data == 'stop':
                 await script_process.stop()
 

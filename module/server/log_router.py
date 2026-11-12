@@ -132,7 +132,7 @@ def _raise_log_error(exc: LogServiceError) -> None:
 
 
 @log_app.get("/errors", response_model=ErrorLogListResponse)
-async def get_error_logs(
+def get_error_logs(
     date_text: str | None = Query(default=None, alias="date", description="目标日期, 格式为 YYYY-MM-DD, 不传则不过滤日期"),
     script_name: str | None = Query(default=None, description="可选脚本名过滤条件"),
     limit: int = Query(default=DEFAULT_ERROR_LIMIT, ge=1, le=MAX_ERROR_LIMIT, description="单页最多返回的错误目录数量"),
@@ -154,7 +154,7 @@ async def get_error_logs(
 
 
 @log_app.get("/errors/{error_id}", response_model=ErrorDetailResponse)
-async def get_error_log_detail(
+def get_error_log_detail(
     error_id: str = Path(description="错误目录名, 支持 <script_name>_<timestamp_ms> 和旧格式 <timestamp_ms>"),
     log_limit_bytes: int = Query(
         default=262144,
@@ -171,7 +171,7 @@ async def get_error_log_detail(
 
 
 @log_app.get("/errors/{error_id}/images/{image_name}")
-async def get_error_log_image(
+def get_error_log_image(
     error_id: str = Path(description="错误目录名"),
     image_name: str = Path(description="错误目录下的 PNG 截图文件名"),
 ):
@@ -184,7 +184,7 @@ async def get_error_log_image(
 
 
 @log_app.get("/{script_name}", response_model=LogWindowResponse)
-async def get_log_window(
+def get_log_window(
     script_name: str = Path(description="脚本配置名或日志脚本名"),
     cursor: str | None = Query(default=None, description="上一页返回的 older_cursor; 不传表示打开最新窗口"),
     limit_lines: int = Query(default=500, ge=1, le=MAX_LIMIT_LINES, description="本次最多返回的日志行数"),

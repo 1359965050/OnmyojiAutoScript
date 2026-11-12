@@ -501,6 +501,17 @@ class ConfigManager:
         return result
 
     @staticmethod
+    def _sync_config_name_in_file(file_path: Path, config_name: str) -> None:
+        """同步更新落盘 JSON 中的 config_name 字段，避免复制或重命名后仍保留源配置名。"""
+        try:
+            data = read_file(file_path)
+        except json.JSONDecodeError:
+            return
+        if isinstance(data, dict) and data.get('config_name') != config_name:
+            data['config_name'] = config_name
+            write_file(file_path, data)
+
+    @staticmethod
     def copy(file: str, template: str = 'template') -> None:
         """
         复制一个配置文件
@@ -508,9 +519,12 @@ class ConfigManager:
         :param template:
         :return:
         """
-        config_path = Path.cwd() / 'config'
-        template_path = config_path / f'{template}.json'
-        file_path = config_path / f'{file}.json'
+        file = ConfigManager.validate_config_name(file, allow_template=False)
+        template = ConfigManager.validate_config_name(template, allow_template=True)
+        template_path = ConfigManager.config_path(template)
+        file_path = ConfigManager.config_path(file)
+        if not template_path.exists():
+            raise ConfigNotFoundError(f'{template}.json not found')
         if file_path.exists():
             logger.error(f'{file_path} is exists')
             return
@@ -519,6 +533,7 @@ class ConfigManager:
             template_content = f.read()
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(template_content)
+        ConfigManager._sync_config_name_in_file(file_path, file)
         logger.info(f'copy {template_path} to {file_path}')
 
 
@@ -553,9 +568,10 @@ class ConfigManager:
         :param new_name: 新的配置文件名称
         :return: True or False
         """
-        config_path = Path.cwd() / 'config'
-        old_path = config_path / f'{old_name}.json'
-        new_path = config_path / f'{new_name}.json'
+        old_name = ConfigManager.validate_config_name(old_name, allow_template=False)
+        new_name = ConfigManager.validate_config_name(new_name, allow_template=False)
+        old_path = ConfigManager.config_path(old_name)
+        new_path = ConfigManager.config_path(new_name)
         if not old_path.exists():
             logger.error(f'{old_path} is not exists')
             return False
@@ -564,6 +580,7 @@ class ConfigManager:
             return False
         try:
             old_path.rename(new_path)
+            ConfigManager._sync_config_name_in_file(new_path, new_name)
             logger.info(f'rename {old_path} to {new_path}')
             return True
         except Exception as e:
@@ -577,8 +594,8 @@ class ConfigManager:
         :param file:  不带json后缀
         :return: True or False
         """
-        config_path = Path.cwd() / 'config'
-        file_path = config_path / f'{file}.json'
+        file = ConfigManager.validate_config_name(file, allow_template=False)
+        file_path = ConfigManager.config_path(file)
         if not file_path.exists():
             logger.error(f'{file_path} is not exists')
             return False

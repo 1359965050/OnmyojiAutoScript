@@ -303,8 +303,540 @@
             <translation>设置已保存</translation>
         </message>
         <message>
-            <source>boss_limit_time</source>
-            <translation>单局Boss限制时间</translation>
+            <source>Copy all logs</source>
+            <translation>复制全部日志</translation>
+        </message>
+        <message>
+            <source>Auto-scroll: On</source>
+            <translation>自动滚屏：已开启</translation>
+        </message>
+        <message>
+            <source>Auto-scroll: Off</source>
+            <translation>自动滚屏：已关闭</translation>
+        </message>
+        <message>
+            <source>No logs yet</source>
+            <translation>暂无运行日志</translation>
+        </message>
+        <message>
+            <source>Connection failed</source>
+            <translation>连接失败</translation>
+        </message>
+        <message>
+            <source>Connection error</source>
+            <translation>连接错误</translation>
+        </message>
+        <message>
+            <source>Unable to connect to OAS service (@addr). Please verify the backend service is running.</source>
+            <translation>无法连接到 OAS 服务 (@addr)，请确保后台服务已启动</translation>
+        </message>
+        <message>
+            <source>Connection exception: @error</source>
+            <translation>连接出现异常: @error</translation>
+        </message>
+        <message>
+            <source>Desktop Automation Platform for Onmyoji</source>
+            <translation>阴阳师全自动化桌面辅助托管平台</translation>
+        </message>
+        <message>
+            <source>Backend service address</source>
+            <translation>后端服务地址</translation>
+        </message>
+        <message>
+            <source>Restore default</source>
+            <translation>恢复默认</translation>
+        </message>
+        <message>
+            <source>e.g. @addr</source>
+            <translation>例如: @addr</translation>
+        </message>
+        <message>
+            <source>Clear</source>
+            <translation>清空</translation>
+        </message>
+        <message>
+            <source>Service address cannot be empty</source>
+            <translation>服务地址不能为空</translation>
+        </message>
+        <message>
+            <source>Local service typically runs at @addr. Direct connection with no password required once backend Python service starts.</source>
+            <translation>本地服务通常运行在 @addr。免密直连，启动后端 Python 脚本后点击下方按钮即可进入。</translation>
+        </message>
+        <message>
+            <source>Connecting...</source>
+            <translation>正在连接服务...</translation>
+        </message>
+        <message>
+            <source>Connect</source>
+            <translation>立即连接</translation>
+        </message>
+        <message>
+            <source>Online Docs</source>
+            <translation>在线文档</translation>
+        </message>
+        <message>
+            <source>GitHub Repo</source>
+            <translation>GitHub 仓库</translation>
+        </message>
+        <message>
+            <source>No task menu available</source>
+            <translation>无可用任务菜单</translation>
+        </message>
+        <message>
+            <source>Refresh menu</source>
+            <translation>刷新菜单</translation>
+        </message>
+        <message>
+            <source>Close</source>
+            <translation>关闭</translation>
+        </message>
+        <message>
+            <source>Close (Esc)</source>
+            <translation>关闭 (Esc)</translation>
+        </message>
+        <message>
+            <source>Retry</source>
+            <translation>重试</translation>
+        </message>
+        <message>
+            <source>Done</source>
+            <translation>完成</translation>
+        </message>
+        <message>
+            <source>Config &quot;@name&quot; created</source>
+            <translation>配置 &quot;@name&quot; 创建成功</translation>
+        </message>
+        <message>
+            <source>Creation failed</source>
+            <translation>创建失败</translation>
+        </message>
+        <message>
+            <source>Create a new independent script configuration profile</source>
+            <translation>创建新的独立脚本配置方案</translation>
+        </message>
+        <message>
+            <source>Loading configuration templates...</source>
+            <translation>正在获取配置模板信息...</translation>
+        </message>
+        <message>
+            <source>e.g. oas2</source>
+            <translation>例如: oas2</translation>
+        </message>
+        <message>
+            <source>template (Base template)</source>
+            <translation>template (基础模板)</translation>
+        </message>
+        <message>
+            <source>New configs have independent task schedules and parameters. Right-click in the left sidebar to rename or delete.</source>
+            <translation>新配置创建后拥有独立的任务调度与参数配置。您可以在左侧导航栏右键重命名或删除已建配置。</translation>
+        </message>
+        <message>
+            <source>Creating...</source>
+            <translation>正在创建...</translation>
+        </message>
+        <message>
+            <source>No configurable options available</source>
+            <translation>无可用配置项</translation>
+        </message>
+        <message>
+            <source>Task Config</source>
+            <translation>任务配置</translation>
+        </message>
+        <message>
+            <source>Configure automation rules and parameters for @task (effective immediately)</source>
+            <translation>配置 @task 的自动化执行策略与运行参数，实时生效</translation>
+        </message>
+        <message>
+            <source>Back to Overview</source>
+            <translation>返回总览</translation>
+        </message>
+        <message>
+            <source>Reset</source>
+            <translation>重置</translation>
+        </message>
+        <message>
+            <source>Click -1 / Hold to decrement</source>
+            <translation>点击 -1 / 按住连减</translation>
+        </message>
+        <message>
+            <source>Click +1 / Hold to increment</source>
+            <translation>点击 +1 / 按住连加</translation>
+        </message>
+        <message>
+            <source>Click to type / Scroll wheel to adjust</source>
+            <translation>点击可键盘输入 / 鼠标滚轮可快速微调</translation>
+        </message>
+        <message>
+            <source>Adjust Time</source>
+            <translation>调节时间</translation>
+        </message>
+        <message>
+            <source>Adjust Interval</source>
+            <translation>调节时间间隔</translation>
+        </message>
+        <message>
+            <source>Adjust Date &amp; Time</source>
+            <translation>调节日期与时间</translation>
+        </message>
+        <message>
+            <source>Nudge</source>
+            <translation>微调</translation>
+        </message>
+        <message>
+            <source>Preset</source>
+            <translation>预设</translation>
+        </message>
+        <message>
+            <source>Quick</source>
+            <translation>快捷</translation>
+        </message>
+        <message>
+            <source>Zero</source>
+            <translation>清零</translation>
+        </message>
+        <message>
+            <source>-1m</source>
+            <translation>-1分</translation>
+        </message>
+        <message>
+            <source>+1m</source>
+            <translation>+1分</translation>
+        </message>
+        <message>
+            <source>+5m</source>
+            <translation>+5分</translation>
+        </message>
+        <message>
+            <source>2m</source>
+            <translation>2分钟</translation>
+        </message>
+        <message>
+            <source>10m</source>
+            <translation>10分钟</translation>
+        </message>
+        <message>
+            <source>30m</source>
+            <translation>30分钟</translation>
+        </message>
+        <message>
+            <source>-30m</source>
+            <translation>-30分</translation>
+        </message>
+        <message>
+            <source>+30m</source>
+            <translation>+30分</translation>
+        </message>
+        <message>
+            <source>+1h</source>
+            <translation>+1小时</translation>
+        </message>
+        <message>
+            <source>1h</source>
+            <translation>1小时</translation>
+        </message>
+        <message>
+            <source>1d</source>
+            <translation>1天</translation>
+        </message>
+        <message>
+            <source>+1d</source>
+            <translation>+1天</translation>
+        </message>
+        <message>
+            <source>Now</source>
+            <translation>当前时刻</translation>
+        </message>
+        <message>
+            <source>Today 00:00</source>
+            <translation>今日00:00</translation>
+        </message>
+        <message>
+            <source>Tomorrow same time</source>
+            <translation>明日此时</translation>
+        </message>
+        <message>
+            <source>No scheduled tasks waiting</source>
+            <translation>暂无等待调度的任务</translation>
+        </message>
+        <message>
+            <source>No queued tasks</source>
+            <translation>暂无排队中的任务</translation>
+        </message>
+        <message>
+            <source>No running task, scheduler is idle</source>
+            <translation>当前无执行中任务，调度器空闲待命</translation>
+        </message>
+        <message>
+            <source>Stop</source>
+            <translation>停止</translation>
+        </message>
+        <message>
+            <source>Start</source>
+            <translation>启动</translation>
+        </message>
+        <message>
+            <source>Idle</source>
+            <translation>待命中</translation>
+        </message>
+        <message>
+            <source>Warning (Retrying)</source>
+            <translation>异常待重试</translation>
+        </message>
+        <message>
+            <source>Updating</source>
+            <translation>更新中</translation>
+        </message>
+        <message>
+            <source>Stopping</source>
+            <translation>正在停止</translation>
+        </message>
+        <message>
+            <source>Customize appearance, language and system status</source>
+            <translation>自定义客户端外观、多语言与系统运行状态</translation>
+        </message>
+        <message>
+            <source>Light Mode</source>
+            <translation>浅色模式</translation>
+        </message>
+        <message>
+            <source>Bright and crisp for daytime</source>
+            <translation>清晰明亮，适宜日间</translation>
+        </message>
+        <message>
+            <source>Dark Mode</source>
+            <translation>深色模式</translation>
+        </message>
+        <message>
+            <source>Low-glare dark theme for eye comfort</source>
+            <translation>低噪暗黑，舒适护眼</translation>
+        </message>
+        <message>
+            <source>Service &amp; Account</source>
+            <translation>服务与账号</translation>
+        </message>
+        <message>
+            <source>Force stop backend Python process and exit client</source>
+            <translation>强制关闭后端 Python 核心进程并退出客户端</translation>
+        </message>
+        <message>
+            <source>Clear current session state and return to login screen</source>
+            <translation>清除当前会话状态并返回登录界面</translation>
+        </message>
+        <message>
+            <source>Killing the service will forcefully terminate OAS backend processes and exit the client. Continue?</source>
+            <translation>终止服务将会强制杀死 OAS 脚本进程，并直接退出关闭客户端程序。是否确定退出并关闭服务？</translation>
+        </message>
+        <message>
+            <source>Exit &amp; Kill</source>
+            <translation>退出并关闭</translation>
+        </message>
+        <message>
+            <source>Core Features</source>
+            <translation>核心功能特性</translation>
+        </message>
+        <message>
+            <source>End-to-end automation for daily, soul zones, guild and limited events</source>
+            <translation>涵盖日常、御魂、阴阳寮与限时活动的自动化闭环</translation>
+        </message>
+        <message>
+            <source>Quick Start Guide</source>
+            <translation>快速上手指南</translation>
+        </message>
+        <message>
+            <source>Get automated script hosting running in 3 simple steps</source>
+            <translation>只需 3 步，轻松开启自动化脚本托管</translation>
+        </message>
+        <message>
+            <source>OASX Desktop</source>
+            <translation>OASX 桌面版</translation>
+        </message>
+        <message>
+            <source>Desktop Automation Platform for Onmyoji - Free Your Hands</source>
+            <translation>阴阳师全自动化桌面辅助托管平台 · 释放双手 专注于生活</translation>
+        </message>
+        <message>
+            <source>Engine Ready</source>
+            <translation>自动化引擎已就绪</translation>
+        </message>
+        <message>
+            <source>Emulator Support</source>
+            <translation>主流模拟器深度适配</translation>
+        </message>
+        <message>
+            <source>Open Source &amp; Ad-Free</source>
+            <translation>开源无广告</translation>
+        </message>
+        <message>
+            <source>Manage Configs</source>
+            <translation>配置管理</translation>
+        </message>
+        <message>
+            <source>Check Updates</source>
+            <translation>检查更新</translation>
+        </message>
+        <message>
+            <source>View GitHub repository</source>
+            <translation>查看 GitHub 仓库</translation>
+        </message>
+        <message>
+            <source>Online documentation</source>
+            <translation>在线使用文档</translation>
+        </message>
+        <message>
+            <source>Profiles</source>
+            <translation>配置档案</translation>
+        </message>
+        <message>
+            <source>@count configs</source>
+            <translation>@count 份配置</translation>
+        </message>
+        <message>
+            <source>Manage multiple account setups independently</source>
+            <translation>支持多账号方案独立管理</translation>
+        </message>
+        <message>
+            <source>New Config</source>
+            <translation>新建配置</translation>
+        </message>
+        <message>
+            <source>Automation Scheduler</source>
+            <translation>自动化调度</translation>
+        </message>
+        <message>
+            <source>On-demand Queue</source>
+            <translation>按需排队执行</translation>
+        </message>
+        <message>
+            <source>Automated recognition and scheduled runs</source>
+            <translation>全自动识别与定时任务</translation>
+        </message>
+        <message>
+            <source>Configure Schedule</source>
+            <translation>配置调度</translation>
+        </message>
+        <message>
+            <source>Client Info</source>
+            <translation>客户端信息</translation>
+        </message>
+        <message>
+            <source>Desktop GUI Ready</source>
+            <translation>桌面端图形界面就绪</translation>
+        </message>
+        <message>
+            <source>System Settings</source>
+            <translation>系统设置</translation>
+        </message>
+        <message>
+            <source>Daily Automation</source>
+            <translation>日常事务托管</translation>
+        </message>
+        <message>
+            <source>Soul Zones &amp; Challenges</source>
+            <translation>御魂与高难副本</translation>
+        </message>
+        <message>
+            <source>Guild Automation</source>
+            <translation>阴阳寮全自动化</translation>
+        </message>
+        <message>
+            <source>Weekly &amp; Events</source>
+            <translation>周常与大型限时</translation>
+        </message>
+        <message>
+            <source>Configure Emulator</source>
+            <translation>配置模拟器环境</translation>
+        </message>
+        <message>
+            <source>Launch Android emulator (MuMu Player 12 recommended, 1280x720, 160 DPI).</source>
+            <translation>启动安卓模拟器（推荐 MuMu 模拟器12，分辨率设为 1280×720，160 DPI）。</translation>
+        </message>
+        <message>
+            <source>Select or Create Config</source>
+            <translation>选择或创建配置</translation>
+        </message>
+        <message>
+            <source>Pick a profile (e.g. oas1) in the sidebar or click &quot;+&quot; to create one and enable tasks.</source>
+            <translation>在左侧侧边栏选择配置（如 oas1）或点击「+」新建配置，勾选所需托管任务。</translation>
+        </message>
+        <message>
+            <source>Start with One Click</source>
+            <translation>一键启动运行</translation>
+        </message>
+        <message>
+            <source>Open Overview for the selected config and click Start to run the queue automatically.</source>
+            <translation>进入该配置的「总览」页面，点击运行开关，OAS 将全自动执行队列。</translation>
+        </message>
+        <message>
+            <source>OnmyojiAutoScript is free and open-source software licensed under GNU GPL v3.0.</source>
+            <translation>OnmyojiAutoScript 是开源免费软件，遵循 GNU General Public License v3.0 协议发布。</translation>
+        </message>
+        <message>
+            <source>Play responsibly and enjoy a balanced life.</source>
+            <translation>请合理安排游戏时间，享受健康生活。</translation>
+        </message>
+        <message>
+            <source>Manual update will pull the latest code and stop all script services. An app restart is required after updating. Continue?</source>
+            <translation>手动更新将会拉取最新代码并关闭所有脚本服务，更新完成后需要重启应用。是否确定执行更新？</translation>
+        </message>
+        <message>
+            <source>Confirm Update</source>
+            <translation>确定更新</translation>
+        </message>
+        <message>
+            <source>Pulling remote code and updating...</source>
+            <translation>正在拉取远程代码并更新...</translation>
+        </message>
+        <message>
+            <source>Update command sent</source>
+            <translation>更新指令已发送</translation>
+        </message>
+        <message>
+            <source>Update failed: @error</source>
+            <translation>更新失败: @error</translation>
+        </message>
+        <message>
+            <source>Recheck</source>
+            <translation>重新检查</translation>
+        </message>
+        <message>
+            <source>Fetching remote update info...</source>
+            <translation>正在获取远程更新信息...</translation>
+        </message>
+        <message>
+            <source>Update check failed</source>
+            <translation>检查更新出错</translation>
+        </message>
+        <message>
+            <source>New commits are available on the remote branch. Update recommended for fixes and improvements.</source>
+            <translation>远程分支有新的提交更新，建议更新以获取优化与修复</translation>
+        </message>
+        <message>
+            <source>Local branch is up to date with remote.</source>
+            <translation>本地分支代码已与远程最新版本保持一致</translation>
+        </message>
+        <message>
+            <source>Recent @count</source>
+            <translation>最近 @count 条</translation>
+        </message>
+        <message>
+            <source>Collapse All</source>
+            <translation>全部收起</translation>
+        </message>
+        <message>
+            <source>Expand All</source>
+            <translation>全部展开</translation>
+        </message>
+        <message>
+            <source>No commit history available</source>
+            <translation>暂无历史提交记录</translation>
+        </message>
+        <message>
+            <source>Updating...</source>
+            <translation>正在执行更新...</translation>
+        </message>
+        <message>
+            <source>Tip: Clicking update will pull the latest repository code</source>
+            <translation>提示: 点击更新后将拉取最新仓库代码</translation>
         </message>
         <message>
             <source>pickup_email</source>
@@ -315,16 +847,8 @@
             <translation>是否启动庭院事务</translation>
         </message>
         <message>
-            <source>hya_onmyoji_help</source>
-            <translation/>
-        </message>
-        <message>
             <source>skill_mode</source>
             <translation>技能本模式</translation>
-        </message>
-        <message>
-            <source>enable_courtyard_affairs</source>
-            <translation>庭院事务</translation>
         </message>
         <message>
             <source>AutoCheckinBigGod</source>
@@ -337,10 +861,6 @@
         <message>
             <source>checkin_config</source>
             <translation>签到配置</translation>
-        </message>
-        <message>
-            <source>Usage</source>
-            <translation>使用说明</translation>
         </message>
         <message>
             <source>checkin_big_god_usage_help</source>
@@ -434,10 +954,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>abyss_shadows_6</source>
             <translation>狭间周日运行时间</translation>
-        </message>
-        <message>
-            <source>abyss_shadows_time_help</source>
-            <translation>若当前时间未开启则会在1小时之内按照调度器失败间隔不断重试</translation>
         </message>
         <message>
             <source>dokan_run_time</source>
@@ -765,10 +1281,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>体力爬塔战斗配置</translation>
         </message>
         <message>
-            <source>mt_run_sequence</source>
-            <translation>爬塔运行顺序</translation>
-        </message>
-        <message>
             <source>mt_run_sequence_help</source>
             <translation>pass:门票爬塔,ap:体力爬塔
 逗号分隔,从左到右依次运行</translation>
@@ -977,98 +1489,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>狭间幻境</translation>
         </message>
         <message>
-            <source>home</source>
-            <translation>主页</translation>
-        </message>
-        <message>
-            <source>add</source>
-            <translation>新增</translation>
-        </message>
-        <message>
-            <source>about</source>
-            <translation>关于</translation>
-        </message>
-        <message>
-            <source>settings</source>
-            <translation>设置</translation>
-        </message>
-        <message>
-            <source>Dark Mode</source>
-            <translation>夜间模式</translation>
-        </message>
-        <message>
-            <source>System</source>
-            <translation>系统</translation>
-        </message>
-        <message>
-            <source>Light</source>
-            <translation>明亮</translation>
-        </message>
-        <message>
-            <source>Dark</source>
-            <translation>暗夜</translation>
-        </message>
-        <message>
-            <source>navigation_view_display_mode</source>
-            <translation>导航视图显示模式</translation>
-        </message>
-        <message>
-            <source>Open</source>
-            <translation>展开</translation>
-        </message>
-        <message>
-            <source>Compact</source>
-            <translation>紧凑</translation>
-        </message>
-        <message>
-            <source>Minimal</source>
-            <translation>最小化</translation>
-        </message>
-        <message>
-            <source>Auto</source>
-            <translation>自动</translation>
-        </message>
-        <message>
-            <source>Theme color</source>
-            <translation>主题颜色</translation>
-        </message>
-        <message>
-            <source>Native text rendering</source>
-            <translation>原生文本渲染</translation>
-        </message>
-        <message>
-            <source>Locale</source>
-            <translation>语言环境</translation>
-        </message>
-        <message>
-            <source>Dpi Strategy</source>
-            <translation>分辨率DPI缩放策略</translation>
-        </message>
-        <message>
-            <source>floor</source>
-            <translation>始终不缩放</translation>
-        </message>
-        <message>
-            <source>ceil</source>
-            <translation>始终缩放</translation>
-        </message>
-        <message>
-            <source>round</source>
-            <translation>设备像素比0.5及以上的，进行缩放</translation>
-        </message>
-        <message>
-            <source>round_prefer_floor</source>
-            <translation>设备像素比0.75及以上的，进行缩放</translation>
-        </message>
-        <message>
-            <source>Update</source>
-            <translation>更新</translation>
-        </message>
-        <message>
-            <source>General</source>
-            <translation>通用</translation>
-        </message>
-        <message>
             <source>Image Rule</source>
             <translation>截图规范</translation>
         </message>
@@ -1101,14 +1521,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>年兽</translation>
         </message>
         <message>
-            <source>OrochiMoans</source>
-            <translation>御魂悲鸣</translation>
-        </message>
-        <message>
-            <source>OrochiJudgement</source>
-            <translation>御魂神罚</translation>
-        </message>
-        <message>
             <source>List Rule</source>
             <translation>列表规则</translation>
         </message>
@@ -1135,10 +1547,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>CollectiveMissions</source>
             <translation>集体任务</translation>
-        </message>
-        <message>
-            <source>MysteryShop</source>
-            <translation>神秘商店</translation>
         </message>
         <message>
             <source>Duel</source>
@@ -1179,10 +1587,6 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
         <message>
             <source>collective_missions</source>
             <translation>集体任务</translation>
-        </message>
-        <message>
-            <source>mystery_shop</source>
-            <translation>神秘商店</translation>
         </message>
         <message>
             <source>duel</source>
@@ -1333,468 +1737,12 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>御灵之境</translation>
         </message>
         <message>
-            <source>Device</source>
-            <translation>模拟器</translation>
-        </message>
-        <message>
-            <source>Serial</source>
-            <translation>模拟器 Serial</translation>
-        </message>
-        <message>
-            <source>Handle</source>
-            <translation>句柄 Handle</translation>
-        </message>
-        <message>
-            <source>PackageName</source>
-            <translation>游戏客户端</translation>
-        </message>
-        <message>
-            <source>ScreenshotMethod</source>
-            <translation>模拟器截屏方案</translation>
-        </message>
-        <message>
-            <source>ControlMethod</source>
-            <translation>模拟器控制方案</translation>
-        </message>
-        <message>
-            <source>Adb Restart</source>
-            <translation>在检测不到设备的时候尝试重启adb</translation>
-        </message>
-        <message>
-            <source>Error</source>
-            <translation>出错</translation>
-        </message>
-        <message>
-            <source>Handle Error</source>
-            <translation>启用异常处理</translation>
-        </message>
-        <message>
-            <source>Save Error</source>
-            <translation>出错时，保存 Log 和截图</translation>
-        </message>
-        <message>
-            <source>Screenshot Length</source>
-            <translation>出错时，保留最后 X 张截图</translation>
-        </message>
-        <message>
-            <source>Optimization</source>
-            <translation>优化</translation>
-        </message>
-        <message>
-            <source>Screenshot Interval</source>
-            <translation>放慢截图速度至 X 秒一张</translation>
-        </message>
-        <message>
-            <source>Combat Screenshot Interval</source>
-            <translation>战斗中放慢截图速度至 X 秒一张</translation>
-        </message>
-        <message>
-            <source>Task Hoarding Duration</source>
-            <translation>囤积任务 X 分钟</translation>
-        </message>
-        <message>
-            <source>WhenTaskQueueEmpty</source>
-            <translation>当任务队列清空后</translation>
-        </message>
-        <message>
-            <source>Scheduler</source>
-            <translation>任务调度</translation>
-        </message>
-        <message>
-            <source>Enable</source>
-            <translation>启用该功能</translation>
-        </message>
-        <message>
-            <source>Next Run</source>
-            <translation>下一次运行时间</translation>
-        </message>
-        <message>
-            <source>Success Interval</source>
-            <translation>执行任务成功后设定下次执行的间隔时间</translation>
-        </message>
-        <message>
-            <source>Failure Interval</source>
-            <translation>执行任务失败后设定下次执行的间隔时间</translation>
-        </message>
-        <message>
-            <source>Server Update</source>
-            <translation>强制设定服务时间</translation>
-        </message>
-        <message>
-            <source>interval_days_help</source>
-            <translation>可取[0~7]</translation>
-        </message>
-        <message>
-            <source>interval_hours_help</source>
-            <translation>可取[0~24]</translation>
-        </message>
-        <message>
-            <source>interval_minutes_help</source>
-            <translation>可取[0~60]</translation>
-        </message>
-        <message>
-            <source>GeneralBattleConfig</source>
-            <translation>通用战斗</translation>
-        </message>
-        <message>
-            <source>Lock Team Enable</source>
-            <translation>锁定阵容</translation>
-        </message>
-        <message>
-            <source>Preset Enable</source>
-            <translation>启用切换预设队伍</translation>
-        </message>
-        <message>
-            <source>Preset Group</source>
-            <translation>第 X 个预设组</translation>
-        </message>
-        <message>
-            <source>Preset Team</source>
-            <translation>第 X 个预设队伍</translation>
-        </message>
-        <message>
-            <source>Buff Enable</source>
-            <translation>启用加成</translation>
-        </message>
-        <message>
-            <source>Buff Awake Click</source>
-            <translation>开启觉醒加成</translation>
-        </message>
-        <message>
-            <source>Buff Soul Click</source>
-            <translation>开启御魂加成</translation>
-        </message>
-        <message>
-            <source>Buff Gold 50 Click</source>
-            <translation>开启金币加成50%</translation>
-        </message>
-        <message>
-            <source>Buff Gold 100 Click</source>
-            <translation>开启金币加成100%</translation>
-        </message>
-        <message>
-            <source>Buff Exp 50 Click</source>
-            <translation>开启经验加成50%</translation>
-        </message>
-        <message>
-            <source>Buff Exp 100 Click</source>
-            <translation>开启经验加成100%</translation>
-        </message>
-        <message>
-            <source>Green Enable</source>
-            <translation>启用我方绿标</translation>
-        </message>
-        <message>
-            <source>GreenMarkType</source>
-            <translation>设置第 X 个式神为绿标</translation>
-        </message>
-        <message>
-            <source>Random Click Swipt Enable</source>
-            <translation>战斗时随机点击或者随机滑动</translation>
-        </message>
-        <message>
-            <source>buff_enable_help</source>
-            <translation>在准备阶段开启加成不太符合直觉，暂时还未实现，而且挺多的战斗是不允许准备阶段开启加成的</translation>
-        </message>
-        <message>
-            <source>Boss Number</source>
-            <translation>挑战鬼王数量</translation>
-        </message>
-        <message>
-            <source>RaidConfig</source>
-            <translation>个人突破</translation>
-        </message>
-        <message>
-            <source>RaidMode</source>
-            <translation>挑战模式</translation>
-        </message>
-        <message>
-            <source>AttackNumber</source>
-            <translation>挑战次数</translation>
-        </message>
-        <message>
-            <source>raid_mode_help</source>
-            <translation>默认为退四打九，退四打九指每次执行前都会退出四次，然后在进攻九次</translation>
-        </message>
-        <message>
-            <source>Emergency</source>
-            <translation>突发检测</translation>
-        </message>
-        <message>
-            <source>FriendInvitation</source>
-            <translation>当出现协作邀请时</translation>
-        </message>
-        <message>
-            <source>Invitation Detect Interval</source>
-            <translation>检测间隔</translation>
-        </message>
-        <message>
-            <source>WhenNetworkAbnormal</source>
-            <translation>当网络异常时</translation>
-        </message>
-        <message>
-            <source>WhenNetworkError</source>
-            <translation>当网络出错需要重新连接服务器时</translation>
-        </message>
-        <message>
-            <source>Home Client Clear</source>
-            <translation>启用庭院客户端清空缓存</translation>
-        </message>
-        <message>
             <source>when_network_abnormal_help</source>
             <translation>默认会先等待10S</translation>
         </message>
         <message>
             <source>when_network_error_help</source>
             <translation>重启游戏</translation>
-        </message>
-        <message>
-            <source>ShikigamiConfig</source>
-            <translation>活动</translation>
-        </message>
-        <message>
-            <source>Limit Time</source>
-            <translation>限制运行时间</translation>
-        </message>
-        <message>
-            <source>Limit Count</source>
-            <translation>限制挑战次数</translation>
-        </message>
-        <message>
-            <source>GeneralClimb</source>
-            <translation>通用爬塔</translation>
-        </message>
-        <message>
-            <source>Ap Game Max</source>
-            <translation>活动每日使用体力挑战的最大次数</translation>
-        </message>
-        <message>
-            <source>ap_game_max_help</source>
-            <translation>保持默认300即可</translation>
-        </message>
-        <message>
-            <source>ApMode</source>
-            <translation>挂体力模式</translation>
-        </message>
-        <message>
-            <source>ap_mode_help</source>
-            <translation>设置是挂活动的次数(ap_activity)还是游戏的体力(ap_game)</translation>
-        </message>
-        <message>
-            <source>Activity Toggle</source>
-            <translation>挂完活动次数后切换到体力模式</translation>
-        </message>
-        <message>
-            <source>Buy Ap Activity</source>
-            <translation>游戏体力不足是否需要话勾玉购买</translation>
-        </message>
-        <message>
-            <source>buy_ap_activity_help</source>
-            <translation>该设置只有是设定为活动次数时有效</translation>
-        </message>
-        <message>
-            <source>activity_toggle_help</source>
-            <translation>该设置只有是设定为活动次数时有效</translation>
-        </message>
-        <message>
-            <source>InviteConfig</source>
-            <translation>邀请</translation>
-        </message>
-        <message>
-            <source>InviteNumber</source>
-            <translation>邀请人数</translation>
-        </message>
-        <message>
-            <source>Friend 1</source>
-            <translation>第一个队友名字</translation>
-        </message>
-        <message>
-            <source>Friend 2</source>
-            <translation>第二个队友名字</translation>
-        </message>
-        <message>
-            <source>FindMode</source>
-            <translation>寻找队友模式</translation>
-        </message>
-        <message>
-            <source>Wait Time</source>
-            <translation>等待时间</translation>
-        </message>
-        <message>
-            <source>Default Invite</source>
-            <translation>战斗结束后勾选默认邀请</translation>
-        </message>
-        <message>
-            <source>OrochiConfig</source>
-            <translation>副本</translation>
-        </message>
-        <message>
-            <source>UserStatus</source>
-            <translation>身份</translation>
-        </message>
-        <message>
-            <source>Layer</source>
-            <translation>挑战层数</translation>
-        </message>
-        <message>
-            <source>Soul Buff Enable</source>
-            <translation>开启御魂加成</translation>
-        </message>
-        <message>
-            <source>BondlingConfig</source>
-            <translation>契灵</translation>
-        </message>
-        <message>
-            <source>BondlingMode</source>
-            <translation>设置战斗策略</translation>
-        </message>
-        <message>
-            <source>Bondling Stone Enable</source>
-            <translation>是否使用契石召唤契灵</translation>
-        </message>
-        <message>
-            <source>BondlingClass</source>
-            <translation>使用契石时选择召唤类型</translation>
-        </message>
-        <message>
-            <source>BondlingSwitchSoul</source>
-            <translation>自动切换御魂</translation>
-        </message>
-        <message>
-            <source>Auto Switch Soul</source>
-            <translation>是否启用</translation>
-        </message>
-        <message>
-            <source>Tomb Guard Switch</source>
-            <translation>设置镇墓兽的御魂装配分组</translation>
-        </message>
-        <message>
-            <source>Snowball Switch</source>
-            <translation>设置茨球的御魂装配分组</translation>
-        </message>
-        <message>
-            <source>Little Kuro Switch</source>
-            <translation>设置小黑的御魂装配分组</translation>
-        </message>
-        <message>
-            <source>Azure Basan Switch</source>
-            <translation>设置火灵的御魂装配分组</translation>
-        </message>
-        <message>
-            <source>HarvestConfig</source>
-            <translation>收获奖励</translation>
-        </message>
-        <message>
-            <source>Enable Jade</source>
-            <translation>永久勾玉卡</translation>
-        </message>
-        <message>
-            <source>Enable Sign</source>
-            <translation>每日签到</translation>
-        </message>
-        <message>
-            <source>Enable Sign 999</source>
-            <translation>签到999天后的签到福袋</translation>
-        </message>
-        <message>
-            <source>Enable Mail</source>
-            <translation>邮件</translation>
-        </message>
-        <message>
-            <source>Enable Soul</source>
-            <translation>御魂或者觉醒加成</translation>
-        </message>
-        <message>
-            <source>Enable Ap</source>
-            <translation>体力</translation>
-        </message>
-        <message>
-            <source>UtilizeScheduler</source>
-            <translation>任务调度</translation>
-        </message>
-        <message>
-            <source>UtilizeConfig</source>
-            <translation>寄养</translation>
-        </message>
-        <message>
-            <source>UtilizeRule</source>
-            <translation>寄养规则</translation>
-        </message>
-        <message>
-            <source>Auto Switch Sort</source>
-            <translation>切换好友列表以游戏刷新高星排序</translation>
-        </message>
-        <message>
-            <source>ShikigamiClass</source>
-            <translation>寄养式神类型</translation>
-        </message>
-        <message>
-            <source>Shikigami Order</source>
-            <translation>选中第几个式神寄养</translation>
-        </message>
-        <message>
-            <source>Guild Ap Enable</source>
-            <translation>顺路收取寮补给</translation>
-        </message>
-        <message>
-            <source>Guild Assets Enable</source>
-            <translation>顺路收取寮资金</translation>
-        </message>
-        <message>
-            <source>Box Ap Enable</source>
-            <translation>顺路收取体力盒子</translation>
-        </message>
-        <message>
-            <source>Box Exp Enable</source>
-            <translation>顺路收取经验盒子</translation>
-        </message>
-        <message>
-            <source>auto_switch_sort_help</source>
-            <translation>会自动寻找最优的坑位</translation>
-        </message>
-        <message>
-            <source>SelectFriendList</source>
-            <translation>选择同区还是跨区好友</translation>
-        </message>
-        <message>
-            <source>Box Exp Waste</source>
-            <translation>从盒子提取经验时浪费一部分</translation>
-        </message>
-        <message>
-            <source>ActivationScheduler</source>
-            <translation>任务调度</translation>
-        </message>
-        <message>
-            <source>ActivationConfig</source>
-            <translation>寄养</translation>
-        </message>
-        <message>
-            <source>Card Rule</source>
-            <translation>放卡规则</translation>
-        </message>
-        <message>
-            <source>Exchange Max</source>
-            <translation>收取经验后更换下来满级的式神</translation>
-        </message>
-        <message>
-            <source>Exchange Before</source>
-            <translation>收取经验前更换下来满级的式神</translation>
-        </message>
-        <message>
-            <source>TrueOrochiScheduler</source>
-            <translation>任务调度</translation>
-        </message>
-        <message>
-            <source>TrueOrochiConfig</source>
-            <translation>任务</translation>
-        </message>
-        <message>
-            <source>Find True Orochi</source>
-            <translation>挑战御魂十层触发真蛇</translation>
-        </message>
-        <message>
-            <source>Green Mark Type</source>
-            <translation>绿标哪一个</translation>
         </message>
         <message>
             <source>find_true_orochi_help</source>
@@ -1806,360 +1754,12 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation> </translation>
         </message>
         <message>
-            <source>Current Success</source>
-            <translation>本周已经挑战成功的次数</translation>
-        </message>
-        <message>
-            <source>current_success_help</source>
-            <translation>请不要手动修改这一项，是为了给机器计数的，机器会自动修改</translation>
-        </message>
-        <message>
-            <source>ScheduleRule</source>
-            <translation>选择任务调度规则</translation>
-        </message>
-        <message>
-            <source>SwitchSoulConfig</source>
-            <translation>执行任务前切换御魂</translation>
-        </message>
-        <message>
-            <source>Switch Group Team</source>
-            <translation>御魂装配分组设置</translation>
-        </message>
-        <message>
-            <source>Group Name</source>
-            <translation>御魂分组名</translation>
-        </message>
-        <message>
-            <source>Team Name</source>
-            <translation>队伍名</translation>
-        </message>
-        <message>
-            <source>Enable Switch By Name</source>
-            <translation>通过OCR来切换御魂预设</translation>
-        </message>
-        <message>
-            <source>Notify Enable</source>
-            <translation>启用消息推送</translation>
-        </message>
-        <message>
-            <source>Number Attack</source>
-            <translation>挑战次数</translation>
-        </message>
-        <message>
-            <source>Exit Four</source>
-            <translation>当进攻到左上角第一个的时候先退四次再进攻</translation>
-        </message>
-        <message>
-            <source>Order Attack</source>
-            <translation>挑战顺序</translation>
-        </message>
-        <message>
-            <source>WhenAttackFail</source>
-            <translation>挑战失败时</translation>
-        </message>
-        <message>
-            <source>Three Refresh</source>
-            <translation>每三次就刷新</translation>
-        </message>
-        <message>
-            <source>Number Base</source>
-            <translation>突破卷数量大于等于 X 时才会挑战</translation>
-        </message>
-        <message>
-            <source>SougenbiConfig</source>
-            <translation>业原火</translation>
-        </message>
-        <message>
-            <source>SougenbiClass</source>
-            <translation>挑战类型</translation>
-        </message>
-        <message>
-            <source>DailyTriflesConfig</source>
-            <translation>琐事</translation>
-        </message>
-        <message>
-            <source>One Summon</source>
-            <translation>每日召唤</translation>
-        </message>
-        <message>
-            <source>Friend Love</source>
-            <translation>友情点</translation>
-        </message>
-        <message>
-            <source>Store Sign</source>
-            <translation>商店签到</translation>
-        </message>
-        <message>
             <source>store_sign_help</source>
             <translation>就那个签到50次得黑蛋的</translation>
         </message>
         <message>
-            <source>ThousandThings</source>
-            <translation>千物宝箱</translation>
-        </message>
-        <message>
-            <source>Mystery Amulet</source>
-            <translation>神秘咒符</translation>
-        </message>
-        <message>
-            <source>Black Daruma Fragment</source>
-            <translation>御行达摩碎片</translation>
-        </message>
-        <message>
-            <source>AP</source>
-            <translation>体力</translation>
-        </message>
-        <message>
-            <source>Consignment</source>
-            <translation>寄售屋</translation>
-        </message>
-        <message>
-            <source>Buy Sale Ticket</source>
-            <translation>兑换一百张寄售券</translation>
-        </message>
-        <message>
-            <source>Scales</source>
-            <translation>御魂礼盒</translation>
-        </message>
-        <message>
-            <source>Orochi Scales</source>
-            <translation>朴素御魂</translation>
-        </message>
-        <message>
-            <source>Demon Souls</source>
-            <translation>首领御魂</translation>
-        </message>
-        <message>
-            <source>DemonClass</source>
-            <translation>首领御魂类型</translation>
-        </message>
-        <message>
-            <source>Demon Position</source>
-            <translation>首领御魂号位</translation>
-        </message>
-        <message>
-            <source>Picture Book Scrap</source>
-            <translation>海汐御魂</translation>
-        </message>
-        <message>
-            <source>Picture Book Rule</source>
-            <translation>选择御魂优先级</translation>
-        </message>
-        <message>
-            <source>SpecialRoom</source>
-            <translation>[杂货铺]特殊购买</translation>
-        </message>
-        <message>
-            <source>Totem Pass</source>
-            <translation>御灵券(40张)</translation>
-        </message>
-        <message>
-            <source>Low Bondling Discs</source>
-            <translation>百物式盘</translation>
-        </message>
-        <message>
-            <source>Medium Bondling Discs</source>
-            <translation>千咒式盘</translation>
-        </message>
-        <message>
-            <source>HonorRoom</source>
-            <translation>[杂货铺]荣誉购买</translation>
-        </message>
-        <message>
-            <source>FriendshipPoints</source>
-            <translation>[杂货铺]友情点购买</translation>
-        </message>
-        <message>
-            <source>White Daruma</source>
-            <translation>奉为达摩</translation>
-        </message>
-        <message>
-            <source>Red Daruma</source>
-            <translation>招福达摩</translation>
-        </message>
-        <message>
-            <source>Broken Amulet</source>
-            <translation>破碎的咒符</translation>
-        </message>
-        <message>
-            <source>MedalRoom</source>
-            <translation>[杂货铺]勋章购买</translation>
-        </message>
-        <message>
-            <source>AP 100</source>
-            <translation>体力100</translation>
-        </message>
-        <message>
-            <source>Random Soul</source>
-            <translation>随机御魂</translation>
-        </message>
-        <message>
-            <source>Challenge Pass</source>
-            <translation>挑战券</translation>
-        </message>
-        <message>
-            <source>Charisma</source>
-            <translation>[杂货铺]魅力值购买</translation>
-        </message>
-        <message>
-            <source>Shrine</source>
-            <translation>神龛</translation>
-        </message>
-        <message>
-            <source>White Daruma Five</source>
-            <translation>五星奉为达摩</translation>
-        </message>
-        <message>
-            <source>White Daruma Four</source>
-            <translation>四星奉为达摩</translation>
-        </message>
-        <message>
-            <source>Bondlings</source>
-            <translation>契忆商店</translation>
-        </message>
-        <message>
-            <source>Bondling Stone</source>
-            <translation>鸣契石</translation>
-        </message>
-        <message>
-            <source>High Bondling Discs</source>
-            <translation>万象式盘</translation>
-        </message>
-        <message>
-            <source>GuildStore</source>
-            <translation>{寮]功勋商店</translation>
-        </message>
-        <message>
-            <source>Skin Ticket</source>
-            <translation>皮肤券</translation>
-        </message>
-        <message>
-            <source>Black Daruma Scrap</source>
-            <translation>御行达摩碎片</translation>
-        </message>
-        <message>
-            <source>Black Daruma</source>
-            <translation>御行达摩</translation>
-        </message>
-        <message>
-            <source>Share Collect</source>
-            <translation>图鉴分享</translation>
-        </message>
-        <message>
-            <source>Share Area Boss</source>
-            <translation>地鬼分享</translation>
-        </message>
-        <message>
-            <source>Share Secret</source>
-            <translation>秘闻分享</translation>
-        </message>
-        <message>
-            <source>Trifles</source>
-            <translation>启用</translation>
-        </message>
-        <message>
-            <source>SecretConfig</source>
-            <translation>秘闻</translation>
-        </message>
-        <message>
-            <source>Secret Gold 50</source>
-            <translation>金币加成50%</translation>
-        </message>
-        <message>
-            <source>Secret Gold 100</source>
-            <translation>金币加成100%</translation>
-        </message>
-        <message>
-            <source>Layer 10</source>
-            <translation>挑战十层</translation>
-        </message>
-        <message>
-            <source>Layer 9</source>
-            <translation>挑战九层</translation>
-        </message>
-        <message>
-            <source>TalismanConfig</source>
-            <translation>花合战</translation>
-        </message>
-        <message>
-            <source>LevelReward</source>
-            <translation>选择礼盒</translation>
-        </message>
-        <message>
-            <source>PetsConfig</source>
-            <translation>宠物喂养配置</translation>
-        </message>
-        <message>
-            <source>GoldYoukaiConfig</source>
-            <translation>金币妖怪</translation>
-        </message>
-        <message>
-            <source>ShopConfig</source>
-            <translation>购买</translation>
-        </message>
-        <message>
-            <source>Shop Kaiko 3</source>
-            <translation>三星太鼓</translation>
-        </message>
-        <message>
-            <source>Shop Kaiko 4</source>
-            <translation>四星太鼓</translation>
-        </message>
-        <message>
-            <source>ShareConfig</source>
-            <translation>分享</translation>
-        </message>
-        <message>
-            <source>Share Friend 1</source>
-            <translation>第一个好友名字</translation>
-        </message>
-        <message>
-            <source>share_friend_1_help</source>
-            <translation>使用OCR来识别，留空表示不使用</translation>
-        </message>
-        <message>
-            <source>Share Friend 2</source>
-            <translation>第二个好友名字</translation>
-        </message>
-        <message>
-            <source>Share Friend 3</source>
-            <translation>第三个好友名字</translation>
-        </message>
-        <message>
-            <source>Share Friend 4</source>
-            <translation>第四个好友名字</translation>
-        </message>
-        <message>
-            <source>Share Friend 5</source>
-            <translation>第五个好友名字</translation>
-        </message>
-        <message>
-            <source>GoryouConfig</source>
-            <translation>御灵</translation>
-        </message>
-        <message>
-            <source>GoryouClass</source>
-            <translation>御灵类型</translation>
-        </message>
-        <message>
-            <source>DuelConfig</source>
-            <translation>自动斗技</translation>
-        </message>
-        <message>
-            <source>Switch All Soul</source>
-            <translation>一键切换斗技御魂</translation>
-        </message>
-        <message>
-            <source>Target Score</source>
-            <translation>达到 X 分数后会结束任务</translation>
-        </message>
-        <message>
             <source>switch_all_soul_help</source>
             <translation>你应当先进行式神御魂的导入</translation>
-        </message>
-        <message>
-            <source>Honor Full Exit</source>
-            <translation>刷满荣誉就退出</translation>
         </message>
         <message>
             <source>target_score_help</source>
@@ -2170,92 +1770,32 @@ Frida Server 会自动推送到模拟器并启动，无需手动操作。</trans
             <translation>这无需关心本周荣誉的上限是什么</translation>
         </message>
         <message>
-            <source>SimpleTidy</source>
-            <translation>简易整理</translation>
-        </message>
-        <message>
-            <source>Greed Maneki</source>
-            <translation>贪吃鬼喂食+未升级的御魂奉纳</translation>
-        </message>
-        <message>
-            <source>greed_maneki_help</source>
-            <translation>建议四星及一下的吃掉，五星的留给贪吃鬼</translation>
-        </message>
-        <message>
-            <source>DelegationConfig</source>
-            <translation>委派</translation>
-        </message>
-        <message>
-            <source>Bird Feather</source>
-            <translation>鸟之羽</translation>
-        </message>
-        <message>
             <source>bird_feather_help</source>
             <translation>50体力-&gt;20片大蛇的逆鳞</translation>
-        </message>
-        <message>
-            <source>Find Earring</source>
-            <translation>寻找耳环</translation>
         </message>
         <message>
             <source>find_earring_help</source>
             <translation>300体力-&gt;金币28万</translation>
         </message>
         <message>
-            <source>Cat Boss</source>
-            <translation>猫老大</translation>
-        </message>
-        <message>
             <source>cat_boss_help</source>
             <translation>300体力-&gt;四星白蛋</translation>
-        </message>
-        <message>
-            <source>Miyoshino</source>
-            <translation>接送弥助</translation>
         </message>
         <message>
             <source>miyoshino_help</source>
             <translation>100体力-&gt;三星结界卡</translation>
         </message>
         <message>
-            <source>Strange Trace</source>
-            <translation>奇怪的痕迹</translation>
-        </message>
-        <message>
             <source>strange_trace_help</source>
             <translation>100体力-&gt;金币九万八</translation>
-        </message>
-        <message>
-            <source>Miyoshino Painting</source>
-            <translation>弥助的画</translation>
         </message>
         <message>
             <source>miyoshino_painting_help</source>
             <translation>300体力-&gt;六星变异卡</translation>
         </message>
         <message>
-            <source>WantedQuestsConfig</source>
-            <translation>悬赏</translation>
-        </message>
-        <message>
-            <source>Before End</source>
-            <translation>强制设定悬赏刷新前 X 分钟执行</translation>
-        </message>
-        <message>
             <source>before_end_help</source>
             <translation>默认'00:00:00'表示不使用这个功能，不可取负值，建议最后一小时才执行悬赏'01:00:00'</translation>
-        </message>
-        <message>
-            <source>Time Of Mystery</source>
-            <translation>强制设定出现神秘商店当天的执行时间</translation>
-        </message>
-        <message>
-            <source>time_of_mystery_help</source>
-            <translation>限定[00:00:01-23:30:00],这将使你无视掉调度器的Interval。保持默认'00:00:00'表示不使用</translation>
-        </message>
-        <message>
-            <source>TakoConfig</source>
-            <translation>石距加成</translation>
         </message>
     </context>
     <context>
@@ -2374,6 +1914,22 @@ nemu_ipc仅限mumu12模拟器且要求版本大于3.8.13，并且需要设置模
             <translation>出错时，保留最后 X 张截图</translation>
         </message>
         <message>
+            <source>notify_enable</source>
+            <translation>启用消息推送</translation>
+        </message>
+        <message>
+            <source>notify_enable_help</source>
+            <translation>任务失败三次或异常卡死时通过 OnePush 发送通知</translation>
+        </message>
+        <message>
+            <source>notify_config</source>
+            <translation>推送配置</translation>
+        </message>
+        <message>
+            <source>notify_config_help</source>
+            <translation>OnePush YAML 配置（包含 provider 与对应令牌参数）</translation>
+        </message>
+        <message>
             <source>screenshot_interval</source>
             <translation>放慢截图速度至 X 秒一张</translation>
         </message>
@@ -2436,10 +1992,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         </message>
         <message>
             <source>WindowsClient</source>
-            <translation>Windows 桌面版</translation>
-        </message>
-        <message>
-            <source>WINDOWS_ONMYOJI</source>
             <translation>Windows 桌面版</translation>
         </message>
         <message>
@@ -2567,44 +2119,12 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>PVP</translation>
         </message>
         <message>
-            <source>SSL/TLS</source>
-            <translation>SSL/TLS</translation>
-        </message>
-        <message>
             <source>SushiOnly</source>
             <translation>SushiOnly</translation>
         </message>
         <message>
-            <source>TCP</source>
-            <translation>TCP</translation>
-        </message>
-        <message>
-            <source>account</source>
-            <translation>账号</translation>
-        </message>
-        <message>
-            <source>account_alias</source>
-            <translation>账号别名</translation>
-        </message>
-        <message>
-            <source>account_alias_help</source>
-            <translation>账号在脚本中的简短名称</translation>
-        </message>
-        <message>
-            <source>account_help</source>
-            <translation>要登录的账号名称</translation>
-        </message>
-        <message>
             <source>active_souls_clean</source>
             <translation>已装配御魂清理</translation>
-        </message>
-        <message>
-            <source>apple_or_android</source>
-            <translation>系统平台</translation>
-        </message>
-        <message>
-            <source>apple_or_android_help</source>
-            <translation>苹果 iOS 或安卓 Android 客户端</translation>
         </message>
         <message>
             <source>auto_close_exploration</source>
@@ -2617,10 +2137,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>auto_finish_exploration</source>
             <translation>自动完成探索</translation>
-        </message>
-        <message>
-            <source>ban_name</source>
-            <translation>禁用名单</translation>
         </message>
         <message>
             <source>battle_priority</source>
@@ -2663,10 +2179,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>猫咪首领</translation>
         </message>
         <message>
-            <source>character_help</source>
-            <translation>用于绑定的式神或角色识别辅助</translation>
-        </message>
-        <message>
             <source>cooperation_only</source>
             <translation>仅限协战</translation>
         </message>
@@ -2685,18 +2197,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>courtyard_affairs_dt</source>
             <translation>庭院事务</translation>
-        </message>
-        <message>
-            <source>current_success</source>
-            <translation>当前成功</translation>
-        </message>
-        <message>
-            <source>default_invite_type</source>
-            <translation>默认邀请类型</translation>
-        </message>
-        <message>
-            <source>default_invite_type_help</source>
-            <translation>向好友发起邀请的默认范围</translation>
         </message>
         <message>
             <source>delegation</source>
@@ -2775,10 +2275,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>寻找耳环</translation>
         </message>
         <message>
-            <source>find_jade_config</source>
-            <translation>寻玉配置</translation>
-        </message>
-        <message>
             <source>find_true_orochi</source>
             <translation>寻找真大蛇</translation>
         </message>
@@ -2831,60 +2327,12 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>荣誉满退出</translation>
         </message>
         <message>
-            <source>initial_score</source>
-            <translation>初始积分</translation>
-        </message>
-        <message>
             <source>invite_friend_name</source>
             <translation>邀请好友名字</translation>
         </message>
         <message>
             <source>invite_friend_name_help</source>
             <translation>默认邀请并组队的主力好友昵称</translation>
-        </message>
-        <message>
-            <source>invite_history_1</source>
-            <translation>邀请历史1</translation>
-        </message>
-        <message>
-            <source>invite_history_1_help</source>
-            <translation>第一优先组队好友记录</translation>
-        </message>
-        <message>
-            <source>invite_history_2</source>
-            <translation>邀请历史2</translation>
-        </message>
-        <message>
-            <source>invite_history_2_help</source>
-            <translation>第二优先组队好友记录</translation>
-        </message>
-        <message>
-            <source>invite_history_4</source>
-            <translation>邀请历史3</translation>
-        </message>
-        <message>
-            <source>invite_history_4_help</source>
-            <translation>第三优先组队好友记录</translation>
-        </message>
-        <message>
-            <source>invite_history_8</source>
-            <translation>邀请历史4</translation>
-        </message>
-        <message>
-            <source>invite_history_8_help</source>
-            <translation>第四优先组队好友记录</translation>
-        </message>
-        <message>
-            <source>invite_info_count</source>
-            <translation>邀请数据计数</translation>
-        </message>
-        <message>
-            <source>invite_info_count_help</source>
-            <translation>用于核对邀请总次数的限制</translation>
-        </message>
-        <message>
-            <source>invite_info_list</source>
-            <translation>邀请好友列表</translation>
         </message>
         <message>
             <source>kitty_attempts</source>
@@ -2905,14 +2353,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>kitty_shop_config</source>
             <translation>猫咪屋配置</translation>
-        </message>
-        <message>
-            <source>last_complete_time</source>
-            <translation>上次完成时间</translation>
-        </message>
-        <message>
-            <source>last_complete_time_help</source>
-            <translation>记录本任务最近一次成功运行的时间戳</translation>
         </message>
         <message>
             <source>level_reward</source>
@@ -2941,10 +2381,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>miyoshino_painting</source>
             <translation>美吉野作画</translation>
-        </message>
-        <message>
-            <source>name_help</source>
-            <translation>配置别名或标识辅助说明</translation>
         </message>
         <message>
             <source>next_exploration_time</source>
@@ -3027,18 +2463,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>要集中捐献的第几号绘卷 (1-6)</translation>
         </message>
         <message>
-            <source>shop_config</source>
-            <translation>shop_config</translation>
-        </message>
-        <message>
-            <source>shop_kaiko_3</source>
-            <translation>商店海寇3</translation>
-        </message>
-        <message>
-            <source>shop_kaiko_4</source>
-            <translation>商店海寇4</translation>
-        </message>
-        <message>
             <source>simple_tidy</source>
             <translation>简易整理</translation>
         </message>
@@ -3069,26 +2493,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>summon_dt</source>
             <translation>召唤设置</translation>
-        </message>
-        <message>
-            <source>sup_account_count</source>
-            <translation>副号账号数</translation>
-        </message>
-        <message>
-            <source>sup_account_count_help</source>
-            <translation>绑定的用于辅助的第二账号数量</translation>
-        </message>
-        <message>
-            <source>sup_account_list</source>
-            <translation>副号账号列表</translation>
-        </message>
-        <message>
-            <source>svr</source>
-            <translation>服务器</translation>
-        </message>
-        <message>
-            <source>svr_help</source>
-            <translation>要连接的游戏服务器节点名字</translation>
         </message>
         <message>
             <source>switch_all_soul</source>
@@ -3133,10 +2537,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>three_stars</source>
             <translation>三星</translation>
-        </message>
-        <message>
-            <source>time_of_mystery</source>
-            <translation>神秘时间段</translation>
         </message>
         <message>
             <source>trifles_config</source>
@@ -3193,10 +2593,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>when_network_error</source>
             <translation>网络报错对策</translation>
-        </message>
-        <message>
-            <source>FindJade</source>
-            <translation>寻玉</translation>
         </message>
         <message>
             <source>FloatParade</source>
@@ -3421,14 +2817,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>默认全部接受</translation>
         </message>
         <message>
-            <source>accept_invitation_complete_now</source>
-            <translation>接受协作后立即去完成</translation>
-        </message>
-        <message>
-            <source>accept_invitation_complete_now_help</source>
-            <translation>防止两小时不做被对方取消，默认开启</translation>
-        </message>
-        <message>
             <source>invitation_detect_interval</source>
             <translation>检测间隔</translation>
         </message>
@@ -3483,14 +2871,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>costume_realm_type_help</source>
             <translation>测试阶段</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_type</source>
-            <translation>鲤鱼旗皮肤</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_type_help</source>
-            <translation>多数结界通用</translation>
         </message>
         <message>
             <source>costume_theme_type</source>
@@ -3583,42 +2963,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>costume_realm_default</source>
             <translation>妖扇结界</translation>
-        </message>
-        <message>
-            <source>costume_realm_1</source>
-            <translation>鬼灵咒符</translation>
-        </message>
-        <message>
-            <source>costume_realm_2</source>
-            <translation>狐梦之乡</translation>
-        </message>
-        <message>
-            <source>costume_realm_3</source>
-            <translation>编心织忆</translation>
-        </message>
-        <message>
-            <source>costume_realm_4</source>
-            <translation>花海繁生</translation>
-        </message>
-        <message>
-            <source>costume_realm_5</source>
-            <translation>5555</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_default</source>
-            <translation>吉鲤游风</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_1</source>
-            <translation>无垢莲台</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_2</source>
-            <translation>萤灯月夜</translation>
-        </message>
-        <message>
-            <source>costume_carpbanner_3</source>
-            <translation>鸢戏游鲤</translation>
         </message>
         <message>
             <source>costume_theme_default</source>
@@ -3757,30 +3101,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>invite_config</source>
             <translation>通用邀请配置</translation>
-        </message>
-        <message>
-            <source>invite_number</source>
-            <translation>邀请人数</translation>
-        </message>
-        <message>
-            <source>invite_number_help</source>
-            <translation>作为队长时有效，可选1或者2，为1时只会邀请第一个队友,</translation>
-        </message>
-        <message>
-            <source>friend_1</source>
-            <translation>第一个队友名字</translation>
-        </message>
-        <message>
-            <source>friend_2</source>
-            <translation>第二个队友名字</translation>
-        </message>
-        <message>
-            <source>friend_name_help</source>
-            <translation>输入队友的名字必须是全称，这一项是基于OCR来识别，如果名字过于离谱建议画200勾玉改一个正常点的名字</translation>
-        </message>
-        <message>
-            <source>friend_2_name_help</source>
-            <translation>同上</translation>
         </message>
         <message>
             <source>find_mode</source>
@@ -4067,10 +3387,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>鬼王</translation>
         </message>
         <message>
-            <source>boss_number</source>
-            <translation>鬼王挑战数量</translation>
-        </message>
-        <message>
             <source>boss_reward</source>
             <translation>查找当日悬赏鬼王</translation>
         </message>
@@ -4085,10 +3401,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>use_collect</source>
             <translation>使用收藏的鬼王</translation>
-        </message>
-        <message>
-            <source>Attack_60</source>
-            <translation>启用攻打60级</translation>
         </message>
         <message>
             <source>boss_reward_help</source>
@@ -4110,26 +3422,12 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>设置战斗策略</translation>
         </message>
         <message>
-            <source>bondling_mode_help</source>
-            <translation>mode_1是指进行探查，刷到五个契灵后结束
-mode_2策略是刷到五个契灵后一直进行结契战斗，但是选择低级盘来结契失败获取材料
-mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来进行捕获</translation>
-        </message>
-        <message>
             <source>bondling_stone_enable</source>
             <translation>是否使用契石召唤契灵</translation>
         </message>
         <message>
-            <source>bondling_stone_enable_help</source>
-            <translation>会优先开启契石，之后才是探查</translation>
-        </message>
-        <message>
             <source>bondling_stone_class</source>
             <translation>使用契石时选择召唤类型</translation>
-        </message>
-        <message>
-            <source>bondling_stone_class_help</source>
-            <translation/>
         </message>
         <message>
             <source>bondling_switch_soul</source>
@@ -4138,10 +3436,6 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
         <message>
             <source>auto_switch_soul</source>
             <translation>是否启用</translation>
-        </message>
-        <message>
-            <source>auto_switch_soul_help</source>
-            <translation>如果你有5套独立阵容，那么这一项无需开启,否则你可以开启这一项御魂轮换（探查是默认不需要轮换的）</translation>
         </message>
         <message>
             <source>tomb_guard_switch</source>
@@ -4215,14 +3509,6 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
         <message>
             <source>exploration_config</source>
             <translation>探索副本</translation>
-        </message>
-        <message>
-            <source>attack_number</source>
-            <translation>通关次数</translation>
-        </message>
-        <message>
-            <source>current_exploration_times</source>
-            <translation>current_exploration_times</translation>
         </message>
         <message>
             <source>exploration_level</source>
@@ -4389,10 +3675,6 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
             <translation>收取寮资金或体力失败的最大尝试次数</translation>
         </message>
         <message>
-            <source>harvest_guild_max_times_help</source>
-            <translation>默认3次</translation>
-        </message>
-        <message>
             <source>min_run_interval</source>
             <translation>最小再运行间隔</translation>
         </message>
@@ -4438,10 +3720,6 @@ mode_3策略是刷到五个契灵后开始结契，选择高级、中级盘来�
         <message>
             <source>activation_config</source>
             <translation>结界挂卡</translation>
-        </message>
-        <message>
-            <source>card_rule</source>
-            <translation>放卡规则</translation>
         </message>
         <message>
             <source>card_rule_help</source>
@@ -4522,22 +3800,6 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
         <message>
             <source>missions_config</source>
             <translation>集体任务</translation>
-        </message>
-        <message>
-            <source>missions_rule</source>
-            <translation>任务选择优先级</translation>
-        </message>
-        <message>
-            <source>missions_rule_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>setup_when_bondling</source>
-            <translation>执行契灵任务是唤起</translation>
-        </message>
-        <message>
-            <source>setup_when_bondling_help</source>
-            <translation/>
         </message>
         <message>
             <source>missions_select</source>
@@ -4656,10 +3918,6 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
         <message>
             <source>challenge_pass</source>
             <translation>挑战券</translation>
-        </message>
-        <message>
-            <source>charisma</source>
-            <translation>[杂货铺]魅力值购买</translation>
         </message>
         <message>
             <source>thousand_things</source>
@@ -4859,10 +4117,6 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
             <source>share_secret_help</source>
             <translation>建议在秘闻结束后再来执行这个任务</translation>
         </message>
-        <message>
-            <source>trifles_broken_amulet_help</source>
-            <translation>建议设置较大的数值以每周清空</translation>
-        </message>
     </context>
     <context>
         <name>_cn_general_climb_config</name>
@@ -4875,34 +4129,16 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
             <translation>门票爬塔最大次数</translation>
         </message>
         <message>
-            <source>pass_limit_help</source>
-            <translation>0 表示不限制</translation>
-        </message>
-        <message>
             <source>ap_limit</source>
             <translation>体力爬塔最大次数</translation>
-        </message>
-        <message>
-            <source>ap_limit_help</source>
-            <translation>0 表示不限制</translation>
         </message>
         <message>
             <source>boss_limit</source>
             <translation>Boss战最大次数</translation>
         </message>
         <message>
-            <source>boss_limit_help</source>
-            <translation>0 表示不限制</translation>
-        </message>
-        <message>
             <source>run_sequence</source>
             <translation>运行爬塔顺序</translation>
-        </message>
-        <message>
-            <source>run_sequence_help</source>
-            <translation>可选：pass(门票), ap(体力), boss(boss战)
-英文逗号分隔，从左到右依次运行
-例：pass,ap,boss = 先门票 -&gt; 再体力 -&gt; 再boss战</translation>
         </message>
         <message>
             <source>pass_battle_conf</source>
@@ -4940,226 +4176,8 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
             <translation>自动喝茶</translation>
         </message>
         <message>
-            <source>auto_tea_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>extreme_notify</source>
-            <translation>最高等级鬼王不打而是发送通知</translation>
-        </message>
-        <message>
-            <source>extreme_notify_help</source>
-            <translation/>
-        </message>
-        <message>
-            <source>interval</source>
-            <translation>执行任务后设定经过 X 时间后执行</translation>
-        </message>
-        <message>
-            <source>interval_help</source>
-            <translation/>
-        </message>
-        <message>
             <source>demon_soul_config</source>
             <translation>御魂配置</translation>
-        </message>
-        <message>
-            <source>meta_crafting_card</source>
-            <translation>自动合成高星召唤卡</translation>
-        </message>
-        <message>
-            <source>craft_essence_help</source>
-            <translation>只会把一星合成二星</translation>
-        </message>
-        <message>
-            <source>md_strategy_count</source>
-            <translation>策略组数量</translation>
-        </message>
-        <message>
-            <source>md_strategy_count_help</source>
-            <translation>设置后，切换别的设置然后切换回来就会显示全部策略， 不要设置为负值</translation>
-        </message>
-        <message>
-            <source>md_use_strategy</source>
-            <translation>开启策略组模式</translation>
-        </message>
-        <message>
-            <source>md_use_strategy_help</source>
-            <translation>没有开启时任务全程不会切换预设阵容 
-开启后会根据策略组在战斗准备阶段切换出战阵容(后面加别的功能) 
-
-第一次战斗的时候如果是1~4星鬼王, 会切换一次默认预设阵容 
-如果鬼王是5/6高星, 每一次战斗准备阶段根据鬼王血量和策略组设置来换阵容
-如果没有匹配的鬼王时使用默认策略  
-
-注: 鬼王血量阈值大概是35%  
-匹配的鬼王全名需要和游戏界面上显示的一致, 不能是缩写 每一组可以匹配多个鬼王中间用逗号分隔开 举个例子： 妙主九命猫,御撰津 
-推荐开启消息推送,在脚本-&gt;脚本-&gt;出错设置中配置,当寻找到5/6星鬼王的时候推送通知</translation>
-        </message>
-        <message>
-            <source>md_default_strategy</source>
-            <translation>默认策略</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_default_1</source>
-            <translation>鬼王血量大于阈值时使用的预设阵容</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_default_2</source>
-            <translation>鬼王血量小于阈值时使用的预设阵容</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_default_1_help</source>
-            <translation>选项格式: group,team, 比如3,2 
-group的值在[1~7]之间, team的值在[1~4]之间</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_default_2_help</source>
-            <translation>下面的预设阵容设置同理</translation>
-        </message>
-        <message>
-            <source>md_match_names</source>
-            <translation>匹配的鬼王全名</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_1</source>
-            <translation>鬼王血量大于阈值时使用的预设阵容</translation>
-        </message>
-        <message>
-            <source>md_preset_group_team_2</source>
-            <translation>鬼王血量小于阈值时使用的预设阵容</translation>
-        </message>
-        <message>
-            <source>md_strategies_1</source>
-            <translation>自定义策略组1</translation>
-        </message>
-        <message>
-            <source>md_strategies_2</source>
-            <translation>自定义策略组2</translation>
-        </message>
-        <message>
-            <source>md_strategies_3</source>
-            <translation>自定义策略组3</translation>
-        </message>
-        <message>
-            <source>md_strategies_4</source>
-            <translation>自定义策略组4</translation>
-        </message>
-        <message>
-            <source>md_strategies_5</source>
-            <translation>自定义策略组5</translation>
-        </message>
-        <message>
-            <source>md_strategies_6</source>
-            <translation>自定义策略组6</translation>
-        </message>
-        <message>
-            <source>md_strategies_7</source>
-            <translation>自定义策略组7</translation>
-        </message>
-        <message>
-            <source>md_strategies_8</source>
-            <translation>自定义策略组8</translation>
-        </message>
-        <message>
-            <source>md_strategies_9</source>
-            <translation>自定义策略组9</translation>
-        </message>
-        <message>
-            <source>md_strategies_10</source>
-            <translation>自定义策略组10</translation>
-        </message>
-        <message>
-            <source>md_strategies_11</source>
-            <translation>自定义策略组11</translation>
-        </message>
-        <message>
-            <source>md_strategies_12</source>
-            <translation>自定义策略组12</translation>
-        </message>
-        <message>
-            <source>md_strategies_13</source>
-            <translation>自定义策略组13</translation>
-        </message>
-        <message>
-            <source>md_strategies_14</source>
-            <translation>自定义策略组14</translation>
-        </message>
-        <message>
-            <source>md_strategies_15</source>
-            <translation>自定义策略组15</translation>
-        </message>
-        <message>
-            <source>md_strategies_16</source>
-            <translation>自定义策略组16</translation>
-        </message>
-        <message>
-            <source>md_strategies_17</source>
-            <translation>自定义策略组17</translation>
-        </message>
-        <message>
-            <source>md_strategies_18</source>
-            <translation>自定义策略组18</translation>
-        </message>
-        <message>
-            <source>md_strategies_19</source>
-            <translation>自定义策略组19</translation>
-        </message>
-        <message>
-            <source>md_strategies_20</source>
-            <translation>自定义策略组20</translation>
-        </message>
-        <message>
-            <source>md_strategies_21</source>
-            <translation>自定义策略组21</translation>
-        </message>
-        <message>
-            <source>md_strategies_22</source>
-            <translation>自定义策略组22</translation>
-        </message>
-        <message>
-            <source>md_strategies_23</source>
-            <translation>自定义策略组23</translation>
-        </message>
-        <message>
-            <source>md_strategies_24</source>
-            <translation>自定义策略组24</translation>
-        </message>
-        <message>
-            <source>md_strategies_25</source>
-            <translation>自定义策略组25</translation>
-        </message>
-        <message>
-            <source>md_strategies_26</source>
-            <translation>自定义策略组26</translation>
-        </message>
-        <message>
-            <source>md_strategies_27</source>
-            <translation>自定义策略组27</translation>
-        </message>
-        <message>
-            <source>md_strategies_28</source>
-            <translation>自定义策略组28</translation>
-        </message>
-        <message>
-            <source>md_strategies_29</source>
-            <translation>自定义策略组29</translation>
-        </message>
-        <message>
-            <source>md_strategies_30</source>
-            <translation>自定义策略组30</translation>
-        </message>
-        <message>
-            <source>md_strategies_31</source>
-            <translation>自定义策略组31</translation>
-        </message>
-        <message>
-            <source>md_strategies_32</source>
-            <translation>自定义策略组32</translation>
-        </message>
-        <message>
-            <source>md_strategies_33</source>
-            <translation>自定义策略组33</translation>
         </message>
     </context>
     <context>
@@ -5380,14 +4398,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation/>
         </message>
         <message>
-            <source>anti_detect_click_fixed_random_area</source>
-            <translation>点击固定随机区域</translation>
-        </message>
-        <message>
-            <source>anti_detect_click_fixed_random_area_help</source>
-            <translation>防封使用固定的随机区域进行随机点击, 若不启用将自动识别当前画面中的最大纯色区域作为随机点击区域</translation>
-        </message>
-        <message>
             <source>monday_to_thursday</source>
             <translation>周一到周四</translation>
         </message>
@@ -5398,10 +4408,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>try_start_dokan</source>
             <translation>尝试开启道馆</translation>
-        </message>
-        <message>
-            <source>try_start_dokan_help</source>
-            <translation>在道馆未开启状态下，是否查找道馆并开启。没有权限不建议开启</translation>
         </message>
         <message>
             <source>find_dokan_score</source>
@@ -5434,38 +4440,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>find_dokan_refresh_count_help</source>
             <translation>单次查找道馆过程中，最大刷新次数。若超过此次数，会随机在当前显示的列表中(3-4个)选择系数最低的</translation>
-        </message>
-        <message>
-            <source>switch_preset_enable</source>
-            <translation>开启切换预设队伍</translation>
-        </message>
-        <message>
-            <source>switch_preset_enable_help</source>
-            <translation>不建议使用通用战斗设置中的切换预设队伍</translation>
-        </message>
-        <message>
-            <source>preset_group_1</source>
-            <translation>馆员阵容</translation>
-        </message>
-        <message>
-            <source>preset_group_1_help</source>
-            <translation>打除馆主外的人时，使用的阵容,格式：3,2 ,表示第三组，第二个队伍,取值范围与其他设置预设队伍相同</translation>
-        </message>
-        <message>
-            <source>preset_group_2</source>
-            <translation>馆主阵容</translation>
-        </message>
-        <message>
-            <source>preset_group_2_help</source>
-            <translation>打馆主时使用的阵容,格式同上</translation>
-        </message>
-        <message>
-            <source>green_mark_shikigami_name</source>
-            <translation>式神名绿标</translation>
-        </message>
-        <message>
-            <source>green_mark_shikigami_name_help</source>
-            <translation>根据式神自定义名称进行绿标，多个式神名可用英文逗号,分隔;</translation>
         </message>
         <message>
             <source>attack_count_config</source>
@@ -5532,48 +4506,12 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <source>abyss_shadows_time</source>
             <translation>狭间暗域时间配置</translation>
         </message>
-        <message>
-            <source>custom_run_time_friday</source>
-            <translation>自定义周五运行时间</translation>
-        </message>
-        <message>
-            <source>custom_run_time_saturday</source>
-            <translation>自定义周六运行时间</translation>
-        </message>
-        <message>
-            <source>custom_run_time_sunday</source>
-            <translation>自定义周日运行时间</translation>
-        </message>
-        <message>
-            <source>abyss_shadows_combat_time</source>
-            <translation>狭间暗域战斗时间配置</translation>
-        </message>
-        <message>
-            <source>CombatTime_enable</source>
-            <translation>启用智能时间</translation>
-        </message>
-        <message>
-            <source>boss_combat_time</source>
-            <translation>首领战斗时间</translation>
-        </message>
-        <message>
-            <source>general_combat_time</source>
-            <translation>副将战斗时间</translation>
-        </message>
-        <message>
-            <source>elite_combat_time</source>
-            <translation>精英战斗时间</translation>
-        </message>
     </context>
     <context>
         <name>_cn_guild_banquet_config</name>
         <message>
             <source>guild_banquet_config</source>
             <translation>配置</translation>
-        </message>
-        <message>
-            <source>guild_banquet_time</source>
-            <translation>寮宴会时间配置</translation>
         </message>
         <message>
             <source>day_1</source>
@@ -5599,10 +4537,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>极逢魔配置</translation>
         </message>
         <message>
-            <source>best_demon_kiryou_select</source>
-            <translation>极鬼灵歌姬</translation>
-        </message>
-        <message>
             <source>best_demon_shinkirou_select</source>
             <translation>极蜃气楼</translation>
         </message>
@@ -5621,10 +4555,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>demon_kiryou_utahime</source>
             <translation>鬼灵歌姬</translation>
-        </message>
-        <message>
-            <source>demon_kiryou_utahime_supplementary</source>
-            <translation>鬼灵歌姬补充</translation>
         </message>
         <message>
             <source>demon_shinkirou</source>
@@ -5657,10 +4587,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>best_demon_kiryou_utahime</source>
             <translation>极鬼灵歌姬</translation>
-        </message>
-        <message>
-            <source>best_demon_kiryou_utahime_supplementary</source>
-            <translation>极鬼灵歌姬补充</translation>
         </message>
         <message>
             <source>best_demon_shinkirou</source>
@@ -5701,32 +4627,16 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>通知检测间隔（秒）</translation>
         </message>
         <message>
-            <source>detection_interval_help</source>
-            <translation>通过adb检测系统中收到的活动推送，自动拉起对应任务</translation>
-        </message>
-        <message>
             <source>monitor_duration</source>
             <translation>监控持续时间（分）</translation>
-        </message>
-        <message>
-            <source>monitor_duration_help</source>
-            <translation>请确保已开启游戏通知权限，游戏设置权限中对应活动推送</translation>
         </message>
         <message>
             <source>recheck_interval</source>
             <translation>再次检测间隔（分）</translation>
         </message>
         <message>
-            <source>recheck_interval_help</source>
-            <translation>拉起对应活动后，间隔多久再次开启检测；若监控时间内未检测到活动，则按调度器设置下次运行时间</translation>
-        </message>
-        <message>
             <source>run_days</source>
             <translation>运行日期</translation>
-        </message>
-        <message>
-            <source>run_days_help</source>
-            <translation>1-7 对应周一到周日；例如 5,6,7</translation>
         </message>
         <message>
             <source>guild_activity</source>
@@ -5772,22 +4682,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>ATTACK_ZERO_ZERO</translation>
         </message>
         <message>
-            <source>BlueStacks4</source>
-            <translation>BlueStacks4</translation>
-        </message>
-        <message>
-            <source>BlueStacks4HyperV</source>
-            <translation>BlueStacks4HyperV</translation>
-        </message>
-        <message>
-            <source>BlueStacks5</source>
-            <translation>BlueStacks5</translation>
-        </message>
-        <message>
-            <source>BlueStacks5HyperV</source>
-            <translation>BlueStacks5HyperV</translation>
-        </message>
-        <message>
             <source>Continue</source>
             <translation>Continue</translation>
         </message>
@@ -5820,48 +4714,16 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>INT8</translation>
         </message>
         <message>
-            <source>LDPlayer3</source>
-            <translation>LDPlayer3</translation>
-        </message>
-        <message>
-            <source>LDPlayer4</source>
-            <translation>LDPlayer4</translation>
-        </message>
-        <message>
-            <source>LDPlayer9</source>
-            <translation>LDPlayer9</translation>
-        </message>
-        <message>
             <source>MATERIAL</source>
             <translation>MATERIAL</translation>
-        </message>
-        <message>
-            <source>MEmuPlayer</source>
-            <translation>MEmuPlayer</translation>
-        </message>
-        <message>
-            <source>MuMuPlayer</source>
-            <translation>MuMuPlayer</translation>
         </message>
         <message>
             <source>MuMuPlayer12</source>
             <translation>MuMuPlayer12</translation>
         </message>
         <message>
-            <source>MuMuPlayerX</source>
-            <translation>MuMuPlayerX</translation>
-        </message>
-        <message>
             <source>N</source>
             <translation>N</translation>
-        </message>
-        <message>
-            <source>NoxPlayer</source>
-            <translation>NoxPlayer</translation>
-        </message>
-        <message>
-            <source>NoxPlayer64</source>
-            <translation>NoxPlayer64</translation>
         </message>
         <message>
             <source>Onnxruntime</source>
@@ -6088,10 +4950,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>保段位</translation>
         </message>
         <message>
-            <source>rank_protection_help</source>
-            <translation>上一局进入前四名后主动退出三局；主动退出的局数不计入执行次数</translation>
-        </message>
-        <message>
             <source>run_count</source>
             <translation>执行次数</translation>
         </message>
@@ -6100,32 +4958,12 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>匹配限制时间（秒）</translation>
         </message>
         <message>
-            <source>matchmaking_timeout_seconds_help</source>
-            <translation>单次超时后取消并重新匹配；连续三次超时则标记为等待过多并结束任务</translation>
-        </message>
-        <message>
             <source>coin_full_exit</source>
             <translation>刷满鼬乐币</translation>
         </message>
         <message>
-            <source>coin_full_exit_help</source>
-            <translation>检测到鼬乐币为600/600时结束百鬼棋局</translation>
-        </message>
-        <message>
             <source>continue_grigri_refresh_below_nine</source>
             <translation>刷新非前40%符咒</translation>
-        </message>
-        <message>
-            <source>continue_grigri_refresh_below_nine_help</source>
-            <translation>按当前品质符咒的收益排名保留前40%，只刷新其余仍有刷新次数的位置</translation>
-        </message>
-        <message>
-            <source>quick_loadout_custom_preset_enable_help</source>
-            <translation>按任务关卡名称选择不同的一键配置预设；每次挑战新首领时上阵对应预设并装配一次御魂</translation>
-        </message>
-        <message>
-            <source>quick_loadout_custom_preset_help</source>
-            <translation>示例：boss_name:(1,1); 或 boss_name:(&quot;预设组&quot;,&quot;预设名&quot;); 多项配置以分号分隔；ALL表示匹配除已单独指定外的所有怪物，例如 ALL:(1,1);</translation>
         </message>
         <message>
             <source>costume_main_14</source>
@@ -6248,10 +5086,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>green_main</translation>
         </message>
         <message>
-            <source>gua_gua_art_room_config</source>
-            <translation>呱呱画室设置</translation>
-        </message>
-        <message>
             <source>handoff1</source>
             <translation>托管1</translation>
         </message>
@@ -6292,10 +5126,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
             <translation>连续战斗的最大场次，0 表示不限制</translation>
         </message>
         <message>
-            <source>md_strategies</source>
-            <translation>Md Strategies</translation>
-        </message>
-        <message>
             <source>member</source>
             <translation>队员</translation>
         </message>
@@ -6318,10 +5148,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>netherworld_battle_config</source>
             <translation>Hunt</translation>
-        </message>
-        <message>
-            <source>one</source>
-            <translation>one</translation>
         </message>
         <message>
             <source>pass_group_team</source>
@@ -6378,10 +5204,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>thirteen_switch_help</source>
             <translation>基于数字索引，魂十三</translation>
-        </message>
-        <message>
-            <source>two</source>
-            <translation>two</translation>
         </message>
         <message>
             <source>uiautomator2</source>
@@ -6474,134 +5296,6 @@ group的值在[1~7]之间, team的值在[1~4]之间</translation>
         <message>
             <source>ap100_group_team_name_help</source>
             <translation>组名,队伍名 中间用英文,分隔</translation>
-        </message>
-        <message>
-            <source>enable_pass_preset</source>
-            <translation>切换门票爬塔预设</translation>
-        </message>
-        <message>
-            <source>enable_pass_preset_help</source>
-            <translation>是否切换门票爬塔预设, 仅数字切换御魂可用</translation>
-        </message>
-        <message>
-            <source>enable_pass_green</source>
-            <translation>开启门票爬塔绿标</translation>
-        </message>
-        <message>
-            <source>enable_pass_green_help</source>
-            <translation>是否开启门票爬塔绿标</translation>
-        </message>
-        <message>
-            <source>pass_green_mark</source>
-            <translation>门票爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>pass_green_mark_help</source>
-            <translation>门票爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>enable_pass_anti_detect</source>
-            <translation>门票爬塔防检测</translation>
-        </message>
-        <message>
-            <source>enable_pass_anti_detect_help</source>
-            <translation>门票爬塔战斗过程是否随机点击或滑动</translation>
-        </message>
-        <message>
-            <source>enable_ap_preset</source>
-            <translation>切换体力爬塔预设</translation>
-        </message>
-        <message>
-            <source>enable_ap_preset_help</source>
-            <translation>是否切换体力爬塔预设, 仅数字切换御魂可用</translation>
-        </message>
-        <message>
-            <source>enable_ap_green</source>
-            <translation>开启体力爬塔绿标</translation>
-        </message>
-        <message>
-            <source>enable_ap_green_help</source>
-            <translation>是否开启体力爬塔绿标</translation>
-        </message>
-        <message>
-            <source>ap_green_mark</source>
-            <translation>体力爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>ap_green_mark_help</source>
-            <translation>体力爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>enable_ap_anti_detect</source>
-            <translation>体力爬塔防检测</translation>
-        </message>
-        <message>
-            <source>enable_ap_anti_detect_help</source>
-            <translation>体力爬塔战斗过程是否随机点击或滑动</translation>
-        </message>
-        <message>
-            <source>enable_boss_preset</source>
-            <translation>切换Boss爬塔预设</translation>
-        </message>
-        <message>
-            <source>enable_boss_preset_help</source>
-            <translation>是否切换boss爬塔预设, 仅数字切换御魂可用</translation>
-        </message>
-        <message>
-            <source>enable_boss_green</source>
-            <translation>开启Boss爬塔绿标</translation>
-        </message>
-        <message>
-            <source>enable_boss_green_help</source>
-            <translation>是否开启boss爬塔绿标</translation>
-        </message>
-        <message>
-            <source>boss_green_mark</source>
-            <translation>Boss爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>boss_green_mark_help</source>
-            <translation>boss爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>enable_boss_anti_detect</source>
-            <translation>Boss爬塔防检测</translation>
-        </message>
-        <message>
-            <source>enable_boss_anti_detect_help</source>
-            <translation>boss爬塔战斗过程是否随机点击或滑动</translation>
-        </message>
-        <message>
-            <source>enable_ap100_preset</source>
-            <translation>切换100体爬塔预设</translation>
-        </message>
-        <message>
-            <source>enable_ap100_preset_help</source>
-            <translation>是否切换100体爬塔预设, 仅数字切换御魂可用</translation>
-        </message>
-        <message>
-            <source>enable_ap100_green</source>
-            <translation>开启100体爬塔绿标</translation>
-        </message>
-        <message>
-            <source>enable_ap100_green_help</source>
-            <translation>是否开启100体爬塔绿标</translation>
-        </message>
-        <message>
-            <source>ap100_green_mark</source>
-            <translation>100体爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>ap100_green_mark_help</source>
-            <translation>100体爬塔绿标位置</translation>
-        </message>
-        <message>
-            <source>enable_ap100_anti_detect</source>
-            <translation>100体爬塔防检测</translation>
-        </message>
-        <message>
-            <source>enable_ap100_anti_detect_help</source>
-            <translation>100体爬塔战斗过程是否随机点击或滑动</translation>
         </message>
     </context>
 </TS>

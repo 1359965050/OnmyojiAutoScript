@@ -66,12 +66,12 @@ def _parse_target_date(date_text: str) -> date:
 
 
 @stats_app.get("/{script_name}/dates", response_model=StatsAvailableDatesResponse)
-async def stats_available_dates(script_name: str):
+def stats_available_dates(script_name: str):
     return log_stats_service.list_available_dates(script_name)
 
 
 @stats_app.get("/{script_name}", response_model=StatsResponse)
-async def stats_snapshot(
+def stats_snapshot(
     script_name: str,
     date_text: str = Query(..., alias="date", description="YYYY-MM-DD"),
 ):
