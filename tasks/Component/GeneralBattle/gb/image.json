@@ -12,7 +12,7 @@
     "itemName": "preset",
     "imageName": "gb_preset.png",
     "roiFront": "32,650,47,45",
-    "roiBack": "32,650,47,45",
+    "roiBack": "16,634,80,78",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "预设的小图标"
@@ -39,7 +39,7 @@
     "itemName": "prepare_dark",
     "imageName": "gb_prepare_dark.png",
     "roiFront": "1131,538,100,100",
-    "roiBack": "1131,538,100,100",
+    "roiBack": "1110,500,169,200",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "准备但是界面还未加载这个时候是黑色的"

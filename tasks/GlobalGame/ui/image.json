@@ -106,5 +106,14 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "弯曲返回按钮"
+  },
+  {
+    "itemName": "ui_reward_scroll",
+    "imageName": "ui_ui_reward_scroll.png",
+    "roiFront": "530,220,224,52",
+    "roiBack": "460,120,360,200",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "新版卷轴样式'获得奖励'"
   }
 ]

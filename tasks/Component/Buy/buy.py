@@ -79,7 +79,7 @@ class Buy(BaseTask, BuyAssets):
                         break
                     self.screenshot()
                     # 等待动画结束
-                    if not self.appear(self.I_UI_REWARD, threshold=0.6):
+                    if not self.ui_reward_appear(threshold=0.6):
                         logger.info('Get reward success')
                         break
                     # 一直点击
@@ -180,7 +180,7 @@ class Buy(BaseTask, BuyAssets):
                         break
                     self.screenshot()
                     # 等待动画结束
-                    if not self.appear(self.I_UI_REWARD, threshold=0.6):
+                    if not self.ui_reward_appear(threshold=0.6):
                         logger.info('Get reward success')
                         break
                     # 一直点击

@@ -38,15 +38,15 @@ class ScriptTask(BaseExploration):
             pages.page_exp_entrance: self.run_on_exp_entrance,
             pages.page_exploration: self.run_on_exp,
             pages.page_mainline: self.run_on_exp,
-            pages.page_battle_prepare: self.run_on_battle,
-            pages.page_battle: self.run_on_battle,
-            pages.page_battle_result: self.run_on_battle,
+            pages.page_battle_prepare: lambda: self.run_on_battle(skip_first_screenshot=True),
+            pages.page_battle: lambda: self.run_on_battle(skip_first_screenshot=True),
+            pages.page_battle_result: lambda: self.run_on_battle(skip_first_screenshot=True),
             pages.page_reward: lambda : self.click(cast(RuleClick, pages.random_click()), interval=0.8),
             pages.page_battle_team: self.run_on_battle_team
         }
 
     def run(self):
-        logger.hr('exploration')
+        logger.hr('探索副本')
         self.pre_process()
         self.exec_exp_page()
         self.post_process()
@@ -127,6 +127,8 @@ class ScriptTask(BaseExploration):
             return
         fire_button = self.get_fire_button()
         if fire_button is not None and self.fire(fire_button):
+            if getattr(self, "_last_fire_page", None) in (pages.page_battle_prepare, pages.page_battle):
+                self.run_on_battle(skip_first_screenshot=True)
             return
         if self.fire_monster_type != 'boss' and self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=1.5):
             self.device.stuck_record_clear()
@@ -134,7 +136,8 @@ class ScriptTask(BaseExploration):
                 self.quit_exp_main()
 
     def run_on_exp_entrance(self):
-        self.collect_treasure_box()
+        if self.collect_treasure_box():
+            return
         self.fire_monster_type = ''  # 入口处重置怪物类型
         self.need_exit = False
         match self.user_status:
@@ -150,6 +153,8 @@ class ScriptTask(BaseExploration):
                 self.device.stuck_record_clear()
 
     def run_on_exp(self):
+        if self._close_reward_panel():
+            return
         self.fire_monster_type = ''  # 入口处重置怪物类型
         self.need_exit = False
         match self.user_status:
@@ -167,8 +172,12 @@ class ScriptTask(BaseExploration):
                 self.check_then_accept()
                 self.device.stuck_record_clear()
 
-    def run_on_battle(self):
-        self.run_general_battle(self._config.general_battle_config, exit_matcher=pages.page_exp_main)
+    def run_on_battle(self, skip_first_screenshot: bool = False):
+        self.run_general_battle(
+            self._config.general_battle_config,
+            exit_matcher=pages.page_exp_main,
+            skip_first_screenshot=skip_first_screenshot,
+        )
         self._match_end.refresh()  # 防止同一张图多次打怪导致误以为探索结束
         self.wait_start_time = datetime.now()  # 队友等待时间重置
 

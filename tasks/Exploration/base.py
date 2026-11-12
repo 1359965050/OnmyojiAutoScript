@@ -2,7 +2,7 @@
 # @author AzurTian
 import time
 import numpy as np
-from cached_property import cached_property
+from functools import cached_property
 from datetime import timedelta, datetime
 from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
@@ -19,6 +19,7 @@ from tasks.Utils.config_enum import ShikigamiClass
 import tasks.Exploration.page as pages
 
 from module.logger import logger
+from module.base.timer import Timer
 from module.exception import TaskEnd, GameStuckError
 from module.atom.animate import RuleAnimate
 from typing import Optional
@@ -30,6 +31,7 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
     user_status: UserStatus = UserStatus.ALONE
     wait_start_time: datetime = datetime.now()
     pre_page: pages.Page = None
+    _last_fire_page: Optional[pages.Page] = None
     # 候补式神"充足"状态有效期：游戏每消耗一次候补就会把「自动轮换」置回关闭，
     # 这属于正常表现；此期间只需在主界面重新点开轮换，无需进设置补候补
     ALTERNATE_ENOUGH_VALID: timedelta = timedelta(seconds=180)
@@ -43,7 +45,8 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
 
     @cached_property
     def _config(self) -> Exploration:
-        self.config.exploration.general_battle_config.lock_team_enable = True
+        # 探索副本不存在自动开局锁阵，开启会触发 GeneralBattle 准备页 3 秒延迟点击
+        self.config.exploration.general_battle_config.lock_team_enable = False
         limit_time = self.config.exploration.exploration_config.limit_time
         self.limit_time: timedelta = timedelta(
             hours=limit_time.hour,
@@ -154,7 +157,11 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
             time.sleep(1)
 
         # 选中对应章节
+        open_timer = Timer(20).start()
         while 1:
+            if open_timer.reached():
+                logger.warning('open_expect_level timeout')
+                break
             self.screenshot()
             if self.appear_then_click(self.I_UI_CONFIRM, interval=1):
                 continue
@@ -327,15 +334,27 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
         回到外循环之后由于UP旋转的特性可能导致识别不到怪物然后开始滑动, 导致错过的怪物更多
         因此这里使用贪心的思想, 只要识别到怪物一次就尽最大可能直接进入战斗, 保证尽可能有怪则打
         """
+        self._last_fire_page = None
         max_tries = 4
-        while max_tries > 0:
-            self.screenshot()
-            cur_page = self.get_current_page()
+        fire_timer = Timer(8).start()
+        first_frame = True
+        while max_tries > 0 and not fire_timer.reached():
+            if not first_frame:
+                self.screenshot()
+            first_frame = False
+            cur_page = self.detect_page_in(
+                pages.page_exp_exit,
+                pages.page_battle_prepare,
+                pages.page_battle,
+                include_global=False,
+            )
             # 退出动画期间可能再次识别到怪物开始攻击, 因此取消退出
             if cur_page == pages.page_exp_exit:
+                self._last_fire_page = cur_page
                 self.need_exit = False
                 return True
             if cur_page in (pages.page_battle_prepare, pages.page_battle):
+                self._last_fire_page = cur_page
                 return True
             if self.appear_then_click(button, interval=0.8):
                 max_tries -= 1
@@ -378,18 +397,48 @@ class BaseExploration(GeneralBattle, GeneralRoom, GeneralInvite, ReplaceShikigam
             return self.I_BOSS_BATTLE_BUTTON
         return self.search_up_fight()
 
+    def _close_reward_panel(self) -> bool:
+        """关闭已弹出的结算奖励弹窗（达摩或‘获得奖励’弹窗）。"""
+        handled = False
+        if self.appear(self.I_REWARD):
+            self.ui_click_until_disappear(self.I_REWARD, interval=0.8)
+            handled = True
+        if self.ui_reward_appear():
+            timer = Timer(10).start()
+            while True:
+                if self.ui_reward_appear_click():
+                    time.sleep(0.3)
+                if timer.reached():
+                    logger.warning('Get reward panel not disappear, stop waiting')
+                    break
+                self.screenshot()
+                if not self.ui_reward_appear():
+                    logger.info('Get reward success')
+                    break
+            handled = True
+        return handled
+
+    def _open_treasure_box(self, box_rule: RuleImage, label: str) -> bool:
+        """点击宝箱并关闭其弹出的达摩或‘获得奖励’弹窗。"""
+        logger.info(f'Treasure box {label} appear, get it.')
+        timer = Timer(10).start()
+        while True:
+            self.screenshot()
+            if self._close_reward_panel():
+                return True
+            if timer.reached():
+                logger.warning(f'collect_treasure_box timeout waiting reward for {box_rule.name}')
+                return True
+            self.appear_then_click(box_rule, interval=0.8)
+
     def collect_treasure_box(self) -> bool:
         """收集宝箱奖励"""
+        if self._close_reward_panel():
+            return True
         if self.appear(self.I_E_REWARD_BOX_SMALL):  # 小宝箱
-            logger.info('Treasure box small appear, get it.')
-            self.ui_click(self.I_E_REWARD_BOX_SMALL, self.I_REWARD, interval=0.8)
-            self.ui_click_until_disappear(self.I_REWARD, interval=0.8)
-            return True
+            return self._open_treasure_box(self.I_E_REWARD_BOX_SMALL, 'small')
         if self.appear(self.I_E_REWARD_BOX_BIG):  # 大宝箱
-            logger.info('Treasure box big appear, get it.')
-            self.ui_click(self.I_E_REWARD_BOX_BIG, self.I_REWARD, interval=0.8)
-            self.ui_click_until_disappear(self.I_REWARD, interval=0.8)
-            return True
+            return self._open_treasure_box(self.I_E_REWARD_BOX_BIG, 'big')
         return False
 
     def collect_paper_man_reward(self) -> bool:

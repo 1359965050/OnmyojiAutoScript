@@ -63,5 +63,7 @@ class GlobalGameAssets:
 	I_UI_CHECK = RuleImage(roi_front=(564,341,40,38), roi_back=(512,329,164,78), threshold=0.8, method="Template matching", file="./tasks/GlobalGame/ui/ui_ui_check.png")
 	# 弯曲返回按钮 
 	I_UI_BACK_CIRCLE = RuleImage(roi_front=(24,21,36,39), roi_back=(0,0,95,101), threshold=0.8, method="Template matching", file="./tasks/GlobalGame/ui/ui_ui_back_circle.png")
+	# 新版卷轴样式'获得奖励' 
+	I_UI_REWARD_SCROLL = RuleImage(roi_front=(530,220,224,52), roi_back=(460,120,360,200), threshold=0.7, method="Template matching", file="./tasks/GlobalGame/ui/ui_ui_reward_scroll.png")
 
 

@@ -231,12 +231,15 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             self.screenshot()
         return (
             self.appear(self.I_BATTLE_INFO)
+            or self.appear(self.I_BUFF)
             or self.appear(self.I_PREPARE_HIGHLIGHT)
+            or self.appear(self.I_PREPARE_DARK)
             or self.appear(self.I_FRIENDS)
             or self.appear(self.I_WIN)
             or self.appear(self.I_DE_WIN)
             or self.appear(self.I_FALSE)
             or self.appear(self.I_REWARD)
+            or self.appear(self.I_REWARD_STATISTICS)
             or self.appear(self.I_REWARD_GOLD)
         )
 
@@ -795,6 +798,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         buff: Union[BuffClass | list[BuffClass]] = None,
         battle_key: str = "default",
         exit_matcher: ExitMatcher | None = None,
+        skip_first_screenshot: bool = False,
     ) -> bool:
         """
         运行基于 Page FSM 的通用战斗。
@@ -806,6 +810,7 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             exit_matcher: 本次调用专用的结束识别条件。
                 优先级高于 `_exit_matcher()`；适合同一任务不同入口回不同页面的场景。
                 传 `None` 时会继续尝试任务级 `_exit_matcher()`，若仍为空则回退到 2 秒兜底。
+            skip_first_screenshot: 是否跳过首次截图，直接复用当前帧进入战斗页面识别。
 
         Returns:
             bool: `True` 表示本轮战斗获胜，`False` 表示失败或主动退出。
@@ -823,9 +828,12 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         context = self._build_context(config, buff, battle_key)
         self._battle_context = context
         resolved_exit_matcher = exit_matcher if exit_matcher is not None else self._exit_matcher()
+        first_frame = True
         try:
             while True:
-                self.screenshot()
+                if not (first_frame and skip_first_screenshot):
+                    self.screenshot()
+                first_frame = False
                 self._tick_long_battle(context)
                 self._tick_timeout(context)
                 page = GameUi.detect_page_in(self, page_battle_prepare, page_battle, page_battle_result,
