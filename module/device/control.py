@@ -91,13 +91,22 @@ class Control(Minitouch, Adb, Scrcpy, Window):
 
     def multi_click(self, button, n, interval=(0.1, 0.2)):
         """
-        也是不能用button的逻辑
-        :param button:
-        :param n:
-        :param interval:
-        :return:
+        连续多次点击指定坐标或按钮对象。
+        :param button: (x, y) 坐标元组或含 coord()/roi_front 属性的按钮对象
+        :param n: 点击次数
+        :param interval: 每次点击间隔
         """
-        self.handle_control_check(button)
+        control_name = getattr(button, 'name', str(button))
+        if isinstance(button, (tuple, list)) and len(button) >= 2:
+            x, y = button[0], button[1]
+        elif hasattr(button, 'coord') and callable(button.coord):
+            x, y = button.coord()
+        elif hasattr(button, 'front_center') and callable(button.front_center):
+            x, y = button.front_center()
+        else:
+            raise ValueError(f'Unsupported button target for multi_click: {button!r}')
+
+        self.handle_control_check(control_name)
         click_timer = Timer(0.1)
         for _ in range(n):
             remain = ensure_time(interval) - click_timer.current()
@@ -105,7 +114,7 @@ class Control(Minitouch, Adb, Scrcpy, Window):
                 self.sleep(remain)
             click_timer.reset()
 
-            self.click(button, control_check=False)
+            self.click(x, y, control_check=False, control_name=control_name)
 
     def long_click(self, x: int, y: int, duration=(0.5, 2), control_name='LongClick') -> None:
         """
@@ -215,7 +224,8 @@ class Control(Minitouch, Adb, Scrcpy, Window):
         self.handle_control_check(name)
         p1, p2 = ensure_int(p1, p2)
         drag_log = 'Drag %s -> %s' % (point2str(*p1), point2str(*p2))
-        method = self.config.script.emulator.control_method
+        raw_method = self.config.script.device.control_method
+        method = getattr(raw_method, 'value', raw_method)
         start = time.perf_counter()
         if method == 'minitouch':
             self.drag_minitouch(p1, p2, point_random=point_random)

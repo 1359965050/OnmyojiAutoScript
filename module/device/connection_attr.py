@@ -13,6 +13,31 @@ from module.config.utils import deep_iter
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 
+def is_windows_client_config(config) -> bool:
+    """
+    判断配置是否为 Windows 桌面版客户端。
+    """
+    try:
+        device_cfg = getattr(config.script, 'device', None)
+        if device_cfg:
+            emu_type = getattr(device_cfg, 'emulatorinfo_type', '')
+            emu_val = getattr(emu_type, 'value', emu_type)
+            emu_str = f"{emu_type} {emu_val}".lower()
+            if 'windowsclient' in emu_str or 'windows_client' in emu_str or emu_str.strip() == 'pc':
+                return True
+            pkg = getattr(device_cfg, 'package_name', '')
+            pkg_val = getattr(pkg, 'value', pkg)
+            pkg_str = f"{pkg} {pkg_val}".lower()
+            if 'onmyoji.exe' in pkg_str or 'windows_onmyoji' in pkg_str:
+                return True
+            ser = str(getattr(device_cfg, 'serial', '')).lower()
+            if ser in ('windows-0', 'pc', 'windows'):
+                return True
+    except Exception:
+        pass
+    return False
+
+
 class ConnectionAttr:
     config: Config
     serial: str
@@ -28,7 +53,7 @@ class ConnectionAttr:
         Args:
             config (AzurLaneConfig, str): Name of the user config under ./config
         """
-        logger.hr('Device', level=1)
+        logger.hr('设备连接', level=1)
         if isinstance(config, str):
             self.config = Config(config, task=None)
         else:
@@ -118,25 +143,7 @@ class ConnectionAttr:
 
     @cached_property
     def is_windows_client(self):
-        try:
-            device_cfg = getattr(self.config.script, 'device', None)
-            if device_cfg:
-                emu_type = getattr(device_cfg, 'emulatorinfo_type', '')
-                emu_val = getattr(emu_type, 'value', emu_type)
-                emu_str = f"{emu_type} {emu_val}".lower()
-                if 'windowsclient' in emu_str or 'windows_client' in emu_str or emu_str.strip() == 'pc':
-                    return True
-                pkg = getattr(device_cfg, 'package_name', '')
-                pkg_val = getattr(pkg, 'value', pkg)
-                pkg_str = f"{pkg} {pkg_val}".lower()
-                if 'onmyoji.exe' in pkg_str or 'windows_onmyoji' in pkg_str:
-                    return True
-                ser = str(getattr(device_cfg, 'serial', '')).lower()
-                if ser in ('windows-0', 'pc', 'windows'):
-                    return True
-        except Exception:
-            pass
-        return False
+        return is_windows_client_config(self.config)
 
     @cached_property
     def is_wsa(self):

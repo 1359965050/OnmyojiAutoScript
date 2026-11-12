@@ -22,15 +22,17 @@ from module.logger import logger
 
 
 class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
-    _screen_size_checked = False
-    _screen_black_checked = False
-    _minicap_uninstalled = False
-    _screenshot_interval = Timer(0.1)
-    _last_save_time = {}
-    image: np.ndarray
-    image_frame_id: str | None = None
+    image: np.ndarray | None
+    image_frame_id: str | None
 
     def __init__(self, *args, **kwargs):
+        self._screen_size_checked = False
+        self._screen_black_checked = False
+        self._minicap_uninstalled = False
+        self._screenshot_interval = Timer(0.1)
+        self._last_save_time: dict[str, float] = {}
+        self.image = None
+        self.image_frame_id = None
         super().__init__(*args, **kwargs)
         super(Window, self).__init__(*args, **kwargs)
 
@@ -165,7 +167,8 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
                 logger.warning(f'Optimization.ScreenshotInterval {origin} is revised to {interval}')
                 self.config.script.optimization.screenshot_interval = interval
             # Allow nemu_ipc to have a lower default
-            if self.config.Emulator_ScreenshotMethod == 'nemu_ipc':
+            method = getattr(self.config.script.device.screenshot_method, 'value', self.config.script.device.screenshot_method)
+            if method == 'nemu_ipc':
                 interval = limit_in(origin, 0.1, 0.2)
         elif interval == 'combat':
             origin = self.config.script.optimization.combat_screenshot_interval

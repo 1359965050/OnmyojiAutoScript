@@ -1,9 +1,12 @@
 import asyncio
+import contextlib
 import ctypes
+import io
 import os
 import random
 import re
 import sys
+import threading
 from functools import partial, wraps
 from pathlib import Path
 
@@ -26,59 +29,140 @@ class NemuIpcError(Exception):
     pass
 
 
-class CaptureStd:
-    """
-    Capture stdout and stderr from both python and C library
-    https://stackoverflow.com/questions/5081657/how-do-i-prevent-a-c-shared-library-to-print-on-stdout-in-python/17954769
+_capture_std_lock = threading.RLock()
 
-    ```
-    with CaptureStd() as capture:
-        # String wasn't printed
-        print('whatever')
-    # But captured in ``capture.stdout``
-    print(f'Got stdout: "{capture.stdout}"')
-    print(f'Got stderr: "{capture.stderr}"')
-    ```
+
+class CaptureStd:
+    """线程安全的标准输出/错误捕获器。
+
+    - 通过全局可重入锁串行化对进程级 FD1/FD2 的重定向，避免多线程并发写管道或关闭已替换流对象；
+    - 当宿主环境无底层文件描述符（如 StringIO 或无控制台窗口的 GUI 进程）时自动降级为 Python 级重定向。
     """
 
     def __init__(self):
         self.stdout = b''
         self.stderr = b''
+        self._lock_acquired = False
+        self._fd_mode = False
+        self._py_mode = False
+        self._old_py_stdout = None
+        self._old_py_stderr = None
+        self._buf_out: io.StringIO | None = None
+        self._buf_err: io.StringIO | None = None
+        self.fdout: int | None = None
+        self.fderr: int | None = None
+        self.old_stdout: int | None = None
+        self.old_stderr: int | None = None
+        self.reader_out: int | None = None
+        self.writer_out: int | None = None
+        self.reader_err: int | None = None
+        self.writer_err: int | None = None
 
-    def _redirect_stdout(self, to):
+    @staticmethod
+    def _try_fileno(stream) -> int | None:
+        if stream is None:
+            return None
+        try:
+            return stream.fileno()
+        except (AttributeError, ValueError, OSError, io.UnsupportedOperation):
+            return None
+
+    def _redirect_stdout(self, to: int):
+        sys.stdout.flush()
         sys.stdout.close()
         os.dup2(to, self.fdout)
         sys.stdout = os.fdopen(self.fdout, 'w')
 
-    def _redirect_stderr(self, to):
+    def _redirect_stderr(self, to: int):
+        sys.stderr.flush()
         sys.stderr.close()
         os.dup2(to, self.fderr)
         sys.stderr = os.fdopen(self.fderr, 'w')
 
     def __enter__(self):
-        self.fdout = sys.stdout.fileno()
-        self.fderr = sys.stderr.fileno()
-        self.reader_out, self.writer_out = os.pipe()
-        self.reader_err, self.writer_err = os.pipe()
-        self.old_stdout = os.dup(self.fdout)
-        self.old_stderr = os.dup(self.fderr)
+        _capture_std_lock.acquire()
+        self._lock_acquired = True
+        try:
+            self.fdout = self._try_fileno(sys.stdout)
+            self.fderr = self._try_fileno(sys.stderr)
+            if self.fdout is None or self.fderr is None:
+                # 降级为 Python 级流捕获，避免 StringIO / pythonw 触发 UnsupportedOperation
+                self._py_mode = True
+                self._old_py_stdout = sys.stdout
+                self._old_py_stderr = sys.stderr
+                self._buf_out = io.StringIO()
+                self._buf_err = io.StringIO()
+                sys.stdout = self._buf_out
+                sys.stderr = self._buf_err
+                return self
 
-        file_out = os.fdopen(self.writer_out, 'w')
-        file_err = os.fdopen(self.writer_err, 'w')
-        self._redirect_stdout(to=file_out.fileno())
-        self._redirect_stderr(to=file_err.fileno())
-        return self
+            self.reader_out, self.writer_out = os.pipe()
+            self.reader_err, self.writer_err = os.pipe()
+            self.old_stdout = os.dup(self.fdout)
+            self.old_stderr = os.dup(self.fderr)
+
+            file_out = os.fdopen(self.writer_out, 'w')
+            file_err = os.fdopen(self.writer_err, 'w')
+            self._redirect_stdout(to=file_out.fileno())
+            self._redirect_stderr(to=file_err.fileno())
+            with contextlib.suppress(Exception):
+                file_out.close()
+            with contextlib.suppress(Exception):
+                file_err.close()
+            self._fd_mode = True
+            return self
+        except Exception:
+            self._cleanup_on_exit()
+            raise
+
+    def _cleanup_on_exit(self):
+        try:
+            if self._py_mode:
+                if self._old_py_stdout is not None:
+                    sys.stdout = self._old_py_stdout
+                if self._old_py_stderr is not None:
+                    sys.stderr = self._old_py_stderr
+                self.stdout = (self._buf_out.getvalue() if self._buf_out else '').encode('utf-8', errors='replace')
+                self.stderr = (self._buf_err.getvalue() if self._buf_err else '').encode('utf-8', errors='replace')
+                return
+
+            if self._fd_mode:
+                if self.old_stdout is not None:
+                    with contextlib.suppress(Exception):
+                        self._redirect_stdout(to=self.old_stdout)
+                    with contextlib.suppress(OSError):
+                        os.close(self.old_stdout)
+                    self.old_stdout = None
+                if self.old_stderr is not None:
+                    with contextlib.suppress(Exception):
+                        self._redirect_stderr(to=self.old_stderr)
+                    with contextlib.suppress(OSError):
+                        os.close(self.old_stderr)
+                    self.old_stderr = None
+                if self.reader_out is not None:
+                    self.stdout = self.recvall(self.reader_out)
+                if self.reader_err is not None:
+                    self.stderr = self.recvall(self.reader_err)
+            else:
+                for fd_name in ('old_stdout', 'old_stderr', 'writer_out', 'writer_err'):
+                    fd = getattr(self, fd_name, None)
+                    if fd is not None:
+                        with contextlib.suppress(OSError):
+                            os.close(fd)
+                        setattr(self, fd_name, None)
+            for fd_name in ('reader_out', 'reader_err'):
+                fd = getattr(self, fd_name, None)
+                if fd is not None:
+                    with contextlib.suppress(OSError):
+                        os.close(fd)
+                    setattr(self, fd_name, None)
+        finally:
+            if self._lock_acquired:
+                self._lock_acquired = False
+                _capture_std_lock.release()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._redirect_stdout(to=self.old_stdout)
-        self._redirect_stderr(to=self.old_stderr)
-        os.close(self.old_stdout)
-        os.close(self.old_stderr)
-
-        self.stdout = self.recvall(self.reader_out)
-        self.stderr = self.recvall(self.reader_err)
-        os.close(self.reader_out)
-        os.close(self.reader_err)
+        self._cleanup_on_exit()
 
     @staticmethod
     def recvall(reader, length=1024) -> bytes:
@@ -94,30 +178,47 @@ class CaptureStd:
 
 
 class CaptureNemuIpc(CaptureStd):
-    instance = None
+    _capture_depth: int = 0
+    _owner_thread_id: int | None = None
 
     def is_capturing(self):
-        """
-        Only capture at the topmost wrapper to avoid nested capturing
-        If a capture is ongoing, this instance does nothing
-        """
+        """Only skip redundant FD capture when already nested on the same thread."""
         cls = self.__class__
-        return isinstance(cls.instance, cls) and cls.instance != self
+        return cls._capture_depth > 0 and cls._owner_thread_id == threading.get_ident()
 
     def __enter__(self):
+        _capture_std_lock.acquire()
+        self._skip_exit = False
         if self.is_capturing():
+            self._skip_exit = True
+            _capture_std_lock.release()
             return self
 
-        super().__enter__()
-        CaptureNemuIpc.instance = self
+        CaptureNemuIpc._owner_thread_id = threading.get_ident()
+        CaptureNemuIpc._capture_depth += 1
+        try:
+            super().__enter__()
+        except Exception:
+            CaptureNemuIpc._capture_depth = max(0, CaptureNemuIpc._capture_depth - 1)
+            if CaptureNemuIpc._capture_depth == 0:
+                CaptureNemuIpc._owner_thread_id = None
+            _capture_std_lock.release()
+            raise
+        # super().__enter__() 已额外持有一把 RLock，这里归还外层提前获取的那一次
+        _capture_std_lock.release()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.is_capturing():
+        if getattr(self, '_skip_exit', False):
             return
 
-        CaptureNemuIpc.instance = None
-        super().__exit__(exc_type, exc_val, exc_tb)
+        with _capture_std_lock:
+            try:
+                super().__exit__(exc_type, exc_val, exc_tb)
+            finally:
+                CaptureNemuIpc._capture_depth = max(0, CaptureNemuIpc._capture_depth - 1)
+                if CaptureNemuIpc._capture_depth == 0:
+                    CaptureNemuIpc._owner_thread_id = None
 
         self.check_stdout()
         self.check_stderr()

@@ -423,7 +423,7 @@ class Minitouch(Connection):
 
     @Config.when(DEVICE_OVER_HTTP=False)
     def minitouch_init(self):
-        logger.hr('MiniTouch init')
+        logger.hr('初始化 MiniTouch')
         max_x, max_y = 1280, 720
         max_contacts = 2
         max_pressure = 50
@@ -532,7 +532,7 @@ class Minitouch(Connection):
 
     @Config.when(DEVICE_OVER_HTTP=True)
     def minitouch_init(self):
-        logger.hr('MiniTouch init')
+        logger.hr('初始化 MiniTouch')
         self.max_x, self.max_y = 1280, 720
         self.get_orientation()
 

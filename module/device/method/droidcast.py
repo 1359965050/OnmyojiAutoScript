@@ -140,7 +140,7 @@ class DroidCast(Uiautomator2):
 
 
     def droidcast_init(self):
-        logger.hr('DroidCast init')
+        logger.hr('初始化 DroidCast')
         self.droidcast_stop()
         self._droidcast_update_resolution()
 

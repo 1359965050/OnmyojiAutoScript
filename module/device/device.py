@@ -27,14 +27,17 @@ from module.logger import logger
 
 
 class Device(Platform, Screenshot, Control, AppControl):
-    _screen_size_checked = False
-    detect_record = set()
-    click_record = deque(maxlen=15)
-    stuck_timer = Timer(60, count=60).start()
-    stuck_timer_long = Timer(300, count=300).start()
-    stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'PREPARE_BEFORE_BATTLE']
+    stuck_long_wait_list = ('BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'PREPARE_BEFORE_BATTLE')
+
+    def _init_runtime_state(self) -> None:
+        self._screen_size_checked = False
+        self.detect_record = set()
+        self.click_record = deque(maxlen=15)
+        self.stuck_timer = Timer(60, count=60).start()
+        self.stuck_timer_long = Timer(300, count=300).start()
 
     def __init__(self, *args, **kwargs):
+        self._init_runtime_state()
         # 预先探测是否为 Windows 桌面版渠道
         config_obj = args[0] if args else kwargs.get('config', None)
         is_pc = False
@@ -66,39 +69,13 @@ class Device(Platform, Screenshot, Control, AppControl):
             self.screenshot_interval_set()
             self._image_batch_cache_frame_id: str | None = None
             self._image_batch_cache: dict[int, dict] = {}
-            from module.device.handle import is_handle_valid, Handle
             need_login = False
             if not self.app_is_alive():
                 logger.info('Onmyoji PC client is not running, launching...')
                 self.app_start()
                 need_login = True
-            # 无论是刚拉起还是已在拉起中，轮询等待直到有效窗口句柄被成功捕获（最长等待 25s）
-            hwnd = getattr(self, 'screenshot_handle_num', 0)
-            if not hwnd or not is_handle_valid(hwnd):
-                for wait_i in range(50):
-                    time.sleep(0.5)
-                    # 轻量检查是否有阴阳师可见窗口，避免在等待期间刷屏产生 ERROR
-                    win_list = Handle.all_windows()
-                    has_yys = any('阴阳师' in w or 'Onmyoji' in w for w in win_list)
-                    if has_yys:
-                        if hasattr(self, 'init_handle'):
-                            self.init_handle()
-                        hwnd = getattr(self, 'screenshot_handle_num', 0)
-                        if hwnd and is_handle_valid(hwnd):
-                            logger.info(f'Onmyoji PC client window ready after {(wait_i + 1) * 0.5:.1f}s.')
-                            if hasattr(self, 'bring_to_front'):
-                                self.bring_to_front()
-                            break
-                    if (wait_i + 1) % 4 == 0:  # 每 2 秒提示一次
-                        logger.info(f'Waiting for Onmyoji PC client window to appear (elapsed: {(wait_i + 1) * 0.5:.1f}s)...')
-                else:
-                    logger.warning('Timeout waiting for Onmyoji PC client window to appear.')
-                    if hasattr(self, 'init_handle'):
-                        self.init_handle()
-
-            # 自动校准桌面版窗口物理客户区大小为标准 1280x720，保证 1:1 像素资产对齐
-            if hasattr(self, 'desktop_window_set_size'):
-                self.desktop_window_set_size(1280, 720)
+            else:
+                self._ensure_windows_client_window(timeout=25.0, log_if_matched=True)
 
             logger.info('Device initialized successfully for Windows Native Client.')
 
@@ -282,7 +259,7 @@ class Device(Platform, Screenshot, Control, AppControl):
         logger.info(f'Add stuck record: {button}')
 
     def stuck_record_clear(self):
-        self.detect_record = set()
+        self.detect_record.clear()
         self.stuck_timer.reset()
         self.stuck_timer_long.reset()
 
@@ -374,12 +351,55 @@ class Device(Platform, Screenshot, Control, AppControl):
         self.click_record_check = empty_function
         self.stuck_record_check = empty_function
 
+    def _ensure_windows_client_window(
+        self,
+        timeout: float = 25.0,
+        log_if_matched: bool = False,
+    ) -> bool:
+        """等待 Windows 桌面端游戏窗口就绪并自动校准客户区尺寸为 1280x720。"""
+        from module.device.handle import is_handle_valid, Handle
+
+        hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if not hwnd or not is_handle_valid(hwnd):
+            steps = max(1, int(timeout / 0.5))
+            for wait_i in range(steps):
+                # 轻量检查是否有阴阳师可见窗口，避免在等待期间刷屏产生 ERROR
+                win_list = Handle.all_windows()
+                has_yys = any('阴阳师' in w or 'Onmyoji' in w for w in win_list)
+                if has_yys:
+                    if hasattr(self, 'init_handle'):
+                        self.init_handle()
+                    hwnd = getattr(self, 'screenshot_handle_num', 0)
+                    if hwnd and is_handle_valid(hwnd):
+                        logger.info(f'Onmyoji PC client window ready after {wait_i * 0.5:.1f}s.')
+                        if hasattr(self, 'bring_to_front'):
+                            self.bring_to_front()
+                        break
+                if (wait_i + 1) % 4 == 0:  # 每 2 秒提示一次
+                    logger.info(f'Waiting for Onmyoji PC client window to appear (elapsed: {(wait_i + 1) * 0.5:.1f}s)...')
+                if wait_i < steps - 1:
+                    time.sleep(0.5)
+            else:
+                logger.warning('Timeout waiting for Onmyoji PC client window to appear.')
+                if hasattr(self, 'init_handle'):
+                    self.init_handle()
+
+        if hasattr(self, 'desktop_window_set_size'):
+            return self.desktop_window_set_size(1280, 720, log_if_matched=log_if_matched)
+        return False
+
     def app_start(self):
         if not self.config.script.error.handle_error:
             logger.critical('No app stop/start, because HandleError disabled')
             logger.critical('Please enable script.error.handle_error or manually login to Onmyoji')
             raise RequestHumanTakeover
+        if getattr(self, 'is_windows_client', False):
+            del_cached_property(self, 'root_node')
+            del_cached_property(self, 'screenshot_handle_num')
+            del_cached_property(self, 'screenshot_size')
         super().app_start()
+        if getattr(self, 'is_windows_client', False):
+            self._ensure_windows_client_window(timeout=25.0, log_if_matched=True)
         if hasattr(self, '_display_id_checked'):
             self._display_id_checked = False
         self.stuck_record_clear()
@@ -431,6 +451,8 @@ class Device(Platform, Screenshot, Control, AppControl):
                 logger.info(f'Game start ready, frame mean brightness: {mean_brightness:.1f}, color: {color}')
                 # 给予游戏首屏渲染与 CEF 控件就绪的稳定缓冲时间
                 time.sleep(1.0)
+                if getattr(self, 'is_windows_client', False) and hasattr(self, 'desktop_window_set_size'):
+                    self.desktop_window_set_size(1280, 720, log_if_matched=False)
                 return
 
             time.sleep(interval)
@@ -441,7 +463,7 @@ class Device(Platform, Screenshot, Control, AppControl):
         """
         重启模拟器：优雅释放截屏/触控资源，停止模拟器，重新拉起并刷新句柄与截屏缓存。
         """
-        logger.hr('Emulator restart', level=1)
+        logger.hr('重启模拟器', level=1)
         if self.emulator_instance is None:
             logger.warning('No emulator instance detected, cannot restart emulator')
             return False

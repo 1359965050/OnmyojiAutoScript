@@ -9,7 +9,7 @@ import time
 from math import dist
 import ctypes
 from ctypes import c_long, byref, POINTER, Structure, wintypes
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from functools import cached_property
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetWindowDC, DeleteObject,
@@ -135,30 +135,20 @@ class Window(Handle):
         mfcDc = None
         saveDc = None
         saveBitMap = None
+        oldBitMap = None
 
         try:
-            if is_windows_client:
-                with dpi_awareness():
-                    hwndDc = GetDC(handle)
-                    if not hwndDc:
-                        raise ScriptError(f"Failed to obtain window DC for handle {handle}")
-                    mfcDc = CreateDCFromHandle(hwndDc)
-                    saveDc = mfcDc.CreateCompatibleDC()
-                    saveBitMap = CreateBitmap()
-                    saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
-                    saveDc.SelectObject(saveBitMap)
-                    saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
-                    signedIntsArray = saveBitMap.GetBitmapBits(True)
-            else:
-                # 返回句柄窗口的设备环境，覆盖整个窗口，包括非客户区，标题栏，菜单，边框
-                hwndDc = GetWindowDC(handle)
+            dpi_ctx = dpi_awareness() if is_windows_client else nullcontext()
+            with dpi_ctx:
+                # 使用 GetDC 获取客户区 DC，与 GetClientRect 测量的客户区尺寸一一对应，避免包含标题栏与边框
+                hwndDc = GetDC(handle)
                 if not hwndDc:
                     raise ScriptError(f"Failed to obtain window DC for handle {handle}")
                 mfcDc = CreateDCFromHandle(hwndDc)
                 saveDc = mfcDc.CreateCompatibleDC()
                 saveBitMap = CreateBitmap()
                 saveBitMap.CreateCompatibleBitmap(mfcDc, widthScreen, heightScreen)
-                saveDc.SelectObject(saveBitMap)
+                oldBitMap = saveDc.SelectObject(saveBitMap)
                 saveDc.BitBlt((0, 0), (widthScreen, heightScreen), mfcDc, (0, 0), SRCCOPY)
                 signedIntsArray = saveBitMap.GetBitmapBits(True)
 
@@ -174,21 +164,23 @@ class Window(Handle):
             return imgSrceen
         finally:
             # 严格确保所有 GDI 对象成对释放，杜绝长时间运行下的 GDI 句柄泄漏
+            if saveDc is not None:
+                if oldBitMap is not None:
+                    try:
+                        saveDc.SelectObject(oldBitMap)
+                    except Exception:
+                        pass
+                try:
+                    saveDc.DeleteDC()
+                except Exception:
+                    pass
             if saveBitMap is not None:
                 try:
                     DeleteObject(saveBitMap.GetHandle())
                 except Exception:
                     pass
-            if saveDc is not None:
-                try:
-                    saveDc.DeleteDC()
-                except Exception:
-                    pass
-            if mfcDc is not None:
-                try:
-                    mfcDc.DeleteDC()
-                except Exception:
-                    pass
+            # CreateDCFromHandle 仅包装 GetDC 返回的共享 DC，不可调用 DeleteDC，应通过 ReleaseDC 归还
+            mfcDc = None
             if hwndDc is not None:
                 try:
                     ReleaseDC(handle, hwndDc)
@@ -216,7 +208,12 @@ class Window(Handle):
         virt_w, virt_h = self.desktop_client_size_virtual(hwnd)
         return int(round(x * virt_w / 1280.0)), int(round(y * virt_h / 720.0))
 
-    def desktop_window_set_size(self, width: int = 1280, height: int = 720) -> bool:
+    def desktop_window_set_size(
+        self,
+        width: int = 1280,
+        height: int = 720,
+        log_if_matched: bool = True,
+    ) -> bool:
         """
         检测桌面客户端客户区物理尺寸，非 1280x720 时用 SetWindowPos 自动校准到目标物理尺寸。
         在 DPI 感知上下文内完成，确保客户区物理像素恰为 1280x720，与模板资产 1:1 对应。
@@ -230,6 +227,18 @@ class Window(Handle):
             return False
 
         with dpi_awareness():
+            # 最小化或最大化窗口无法直接通过 SetWindowPos 收敛到 1280x720，先恢复为普通窗口
+            if IsIconic(hwnd):
+                self.ensure_window_restored(hwnd)
+            else:
+                try:
+                    if ctypes.windll.user32.IsZoomed(hwnd):
+                        ShowWindow(hwnd, SW_RESTORE)
+                        time.sleep(0.08)
+                except Exception:
+                    pass
+
+            last_client_size: tuple[int, int] | None = None
             for attempt in range(5):
                 if not IsWindow(hwnd):
                     return False
@@ -240,23 +249,48 @@ class Window(Handle):
                     return False
 
                 if cw == width and ch == height:
-                    logger.info(f"Desktop client size matches target: {width}x{height}")
+                    del_cached_property(self, 'screenshot_size')
+                    if attempt > 0 or log_if_matched:
+                        logger.info(f"Desktop client size matches target: {width}x{height}")
                     return True
 
-                style = GetWindowLong(hwnd, GWL_STYLE)
-                ex_style = GetWindowLong(hwnd, GWL_EXSTYLE)
-                total_w, total_h = _window_total_size(width, height, style, ex_style)
-                total_w += width - cw
-                total_h += height - ch
+                if last_client_size == (cw, ch):
+                    logger.warning(
+                        f"Desktop client size unchanged at {cw}x{ch}, stop calibration "
+                        f"(target physical {width}x{height})"
+                    )
+                    break
+                last_client_size = (cw, ch)
+
+                try:
+                    wrect = GetWindowRect(hwnd)
+                    win_w, win_h = wrect[2] - wrect[0], wrect[3] - wrect[1]
+                except Exception:
+                    win_w, win_h = 0, 0
+
+                if cw > 0 and ch > 0 and win_w >= cw and win_h >= ch:
+                    # 直接用当前真实边框厚度 (win - client) + 目标客户区宽高，避免与 AdjustWindowRectEx 叠加导致大小震荡
+                    total_w = width + (win_w - cw)
+                    total_h = height + (win_h - ch)
+                else:
+                    style = GetWindowLong(hwnd, GWL_STYLE)
+                    ex_style = GetWindowLong(hwnd, GWL_EXSTYLE)
+                    total_w, total_h = _window_total_size(width, height, style, ex_style)
+
                 try:
                     SetWindowPos(hwnd, HWND_TOP, 0, 0, total_w, total_h, SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
                     time.sleep(0.1)
                 except Exception as e:
                     logger.warning(f"desktop_window_set_size SetWindowPos failed: {e}")
+                    del_cached_property(self, 'screenshot_size')
                     return False
 
-            rect = GetClientRect(hwnd)
-            cw, ch = rect[2] - rect[0], rect[3] - rect[1]
+            try:
+                rect = GetClientRect(hwnd)
+                cw, ch = rect[2] - rect[0], rect[3] - rect[1]
+            except Exception:
+                cw, ch = 0, 0
+            del_cached_property(self, 'screenshot_size')
             logger.info(f"Desktop client calibrated size: {cw}x{ch} (target physical {width}x{height})")
             return (cw == width and ch == height)
 
@@ -407,14 +441,7 @@ class Window(Handle):
 
         self.bring_to_front()
 
-        size = self.screenshot_size
-        cw, ch = size if size else (1280, 720)
-        target_x = x
-        target_y = y
-        if cw != 1280 and cw > 0:
-            target_x = int(x * (cw / 1280.0))
-        if ch != 720 and ch > 0:
-            target_y = int(y * (ch / 720.0))
+        target_x, target_y = self.desktop_message_coord(x, y, hwnd)
 
         try:
             screen_x, screen_y = ClientToScreen(hwnd, (target_x, target_y))
@@ -427,6 +454,19 @@ class Window(Handle):
         except Exception as e:
             logger.warning(f"click_window_foreground error: {e}")
 
+    def _resolve_windows_client_control_hwnd(self) -> int:
+        """获取并校验桌面客户端控制窗口句柄，必要时自动恢复最小化状态。"""
+        hwnd = self.control_handle_list[0] if getattr(self, 'control_handle_list', None) else 0
+        if not hwnd or not IsWindow(hwnd):
+            if hasattr(self, 'init_handle'):
+                self.init_handle()
+            hwnd = self.control_handle_list[0] if getattr(self, 'control_handle_list', None) else 0
+        if not hwnd or not IsWindow(hwnd):
+            return 0
+        if IsIconic(hwnd):
+            self.ensure_window_restored(hwnd)
+        return hwnd
+
     def click_window_message(self, x: int, y: int, fast: bool = False):
         """
 
@@ -436,14 +476,10 @@ class Window(Handle):
         :return:
         """
         if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
-            hwnd = self.control_handle_list[0] if self.control_handle_list else 0
-            if not hwnd or not IsWindow(hwnd):
-                if hasattr(self, 'init_handle'):
-                    self.init_handle()
-                hwnd = self.control_handle_list[0] if self.control_handle_list else 0
-
-            if IsIconic(hwnd):
-                self.ensure_window_restored(hwnd)
+            hwnd = self._resolve_windows_client_control_hwnd()
+            if not hwnd:
+                logger.warning("click_window_message: Window handle is invalid")
+                return
 
             target_x, target_y = self.desktop_message_coord(x, y, hwnd)
 
@@ -455,12 +491,8 @@ class Window(Handle):
             SendMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
             return
 
-        # 我不知道为什么的使用的pywin32==306的版本会导致获取的图片的是(1024, 576)
-        # 所有我在点击的时候会除以这个缩放比例
-        # 但是后面发现又不是影响的很奇怪
-
-        x = int(round(x / self.window_scale_rate))
-        y = int(round(y / self.window_scale_rate))
+        x = int(round(x))
+        y = int(round(y))
         if fast:
             press_time: float = (random.randint(10, 40)) / 1000.0
         else:
@@ -496,19 +528,12 @@ class Window(Handle):
         :return:
         """
         if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
-            hwnd = self.control_handle_list[0] if self.control_handle_list else 0
-            if not hwnd or not IsWindow(hwnd):
-                if hasattr(self, 'init_handle'):
-                    self.init_handle()
-                hwnd = self.control_handle_list[0] if self.control_handle_list else 0
+            hwnd = self._resolve_windows_client_control_hwnd()
+            if not hwnd:
+                logger.warning("long_click_window_message: Window handle is invalid")
+                return
 
-            if IsIconic(hwnd):
-                self.ensure_window_restored(hwnd)
-
-            size = self.screenshot_size
-            cw, ch = size if size else (1280, 720)
-            target_x = int(round(x * (cw / 1280.0))) if (cw != 1280 and cw > 0) else int(round(x))
-            target_y = int(round(y * (ch / 720.0))) if (ch != 720 and ch > 0) else int(round(y))
+            target_x, target_y = self.desktop_message_coord(x, y, hwnd)
             clickPos = MAKELONG(target_x, target_y)
             try:
                 PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)
@@ -519,10 +544,8 @@ class Window(Handle):
             PostMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
             return
 
-        # 我不知道为什么的使用的pywin32==306的版本会导致获取的图片的是(1024, 576)
-        # 所有我在点击的时候会除以这个缩放比例
-        x = int(x / self.window_scale_rate)
-        y = int(y / self.window_scale_rate)
+        x = int(round(x))
+        y = int(round(y))
 
         emulator_type = len(self.control_handle_list)
         if self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
@@ -569,18 +592,12 @@ class Window(Handle):
                                                   deviation=deviation, bias=0.5, type=_type, cbb=0, yhh=20)
 
         # 使用生成的点列表进行拖拽
-        handleNum = None
+        handleNum = self._get_emulator_control_handle()
+        if not handleNum:
+            logger.warning("swipe_window_message: no valid control handle")
+            return
         if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
-            handleNum = self.control_handle_list[0]
-            if IsIconic(handleNum):
-                self.ensure_window_restored(handleNum)
             trace = [list(self.desktop_message_coord(pt[0], pt[1], handleNum)) for pt in trace]
-        elif self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
-            handleNum = self.control_handle_list[1]
-        elif self.emulator_family == EmulatorFamily.FAMILY_NOX:  # 夜神模拟器
-            handleNum = self.control_handle_list[3]
-        elif self.emulator_family == EmulatorFamily.FAMILY_LD:  # 雷电模拟器
-            handleNum = self.control_handle_list[0]
 
         # 激活窗口
         # SendMessage(self.control_handle_list[0], WM_PARENTNOTIFY, WM_LBUTTONDOWN, tmpPos)
@@ -638,31 +655,46 @@ class Window(Handle):
         trace: list = generate_points(start_pos=startPos, end_pos=endPos, number=numberList)
 
         # 使用生成的点列表进行拖拽
-        emulator_type = len(self.control_handle_list)
-        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
-            handleNum = self.control_handle_list[0]
-            if IsIconic(handleNum):
-                self.ensure_window_restored(handleNum)
-        elif emulator_type == 1:  # 雷电模拟器
-            handleNum = self.control_handle_list[0]
-        elif emulator_type == 2:  # mumu模拟器
-            handleNum = self.control_handle_list[1]
-        elif emulator_type > 2:  # 夜神模拟器
-            handleNum = self.control_handle_list[3]
+        handleNum = self._get_emulator_control_handle()
+        if not handleNum:
+            logger.warning("swipe_vector_window_message2: no valid control handle")
+            return
         PostMessage(handleNum, WM_ACTIVATE, WA_ACTIVE, 0)  # 激活窗口
         # 先移动到第一个点
-        tmpPos = MAKELONG(trace[0][0], trace[0][1])
+        tmpPos = MAKELONG(int(round(trace[0][0])), int(round(trace[0][1])))
         SendMessage(handleNum, WM_NCHITTEST, 0, tmpPos)
         SendMessage(handleNum, WM_SETCURSOR, handleNum, MAKELONG(HTCLIENT, WM_LBUTTONDOWN))
         PostMessage(handleNum, WM_LBUTTONDOWN, MK_LBUTTON, tmpPos)
         # 一点一点移动鼠标
         for pos in trace:
-            tmpPos = MAKELONG(pos[0], pos[1])
+            tmpPos = MAKELONG(int(round(pos[0])), int(round(pos[1])))
             PostMessage(handleNum, WM_MOUSEMOVE, MK_LBUTTON, tmpPos)
             time.sleep((interval + random.randint(-2, 2)) / 1000.0)
         # 最后释放鼠标
-        tmpPos = MAKELONG(trace[-1][0], trace[-1][1])
+        tmpPos = MAKELONG(int(round(trace[-1][0])), int(round(trace[-1][1])))
         PostMessage(handleNum, WM_LBUTTONUP, 0, tmpPos)
+
+    def _get_emulator_control_handle(self) -> int:
+        """
+        统一解析窗口控制消息的目标句柄，兼容桌面客户端与各类模拟器句柄树结构。
+        """
+        handles = getattr(self, 'control_handle_list', None) or []
+        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+            hwnd = handles[0] if handles else getattr(self, 'screenshot_handle_num', 0)
+            if hwnd and IsIconic(hwnd):
+                self.ensure_window_restored(hwnd)
+            return hwnd
+        if self.emulator_family == EmulatorFamily.FAMILY_MUMU:
+            if len(handles) >= 2:
+                return handles[1]
+            return handles[0] if handles else getattr(self, 'screenshot_handle_num', 0)
+        if len(handles) > 3:
+            return handles[3]
+        if len(handles) == 2:
+            return handles[1]
+        if handles:
+            return handles[0]
+        return getattr(self, 'screenshot_handle_num', 0)
 
     def scroll_window_message(self, x: int, y: int, delta: int=-120) -> None:
         """
@@ -675,14 +707,10 @@ class Window(Handle):
         """
         wparam = MAKELONG(0, delta)
         lparam = MAKELONG(x, y)
-        handle_num = None
-        if self.emulator_family == EmulatorFamily.FAMILY_MUMU:  # mumu模拟器
-            handle_num = self.control_handle_list[1]
-
-        elif self.emulator_family == EmulatorFamily.FAMILY_NOX:  # 夜神模拟器
-            handle_num = self.control_handle_list[3]
-        elif self.emulator_family == EmulatorFamily.FAMILY_LD:  # 雷电模拟器
-            handle_num = self.control_handle_list[0]
+        handle_num = self._get_emulator_control_handle()
+        if not handle_num:
+            logger.warning("scroll_window_message: no valid control handle")
+            return
 
         SetForegroundWindow(handle_num)
         time.sleep(2)

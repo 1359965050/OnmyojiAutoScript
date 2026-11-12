@@ -28,17 +28,17 @@ class ScrcpyCore(Connection):
     Module from https://github.com/leng-yue/py-scrcpy-client
     """
 
-    _scrcpy_last_frame: t.Optional[np.ndarray] = None
-    _scrcpy_last_frame_time: float = 0.
-
-    _scrcpy_alive = False
-    _scrcpy_server_stream: t.Optional[_AdbStreamConnection] = None
-    _scrcpy_video_socket: t.Optional[socket.socket] = None
-    _scrcpy_control_socket: t.Optional[socket.socket] = None
-    _scrcpy_control_socket_lock = threading.Lock()
-
-    _scrcpy_stream_loop_thread = None
-    _scrcpy_resolution: t.Tuple[int, int] = (1280, 720)
+    def __init__(self, *args, **kwargs):
+        self._scrcpy_last_frame: t.Optional[np.ndarray] = None
+        self._scrcpy_last_frame_time: float = 0.
+        self._scrcpy_alive: bool = False
+        self._scrcpy_server_stream: t.Optional[_AdbStreamConnection] = None
+        self._scrcpy_video_socket: t.Optional[socket.socket] = None
+        self._scrcpy_control_socket: t.Optional[socket.socket] = None
+        self._scrcpy_control_socket_lock = threading.Lock()
+        self._scrcpy_stream_loop_thread = None
+        self._scrcpy_resolution: t.Tuple[int, int] = (1280, 720)
+        super().__init__(*args, **kwargs)
 
     @cached_property
     def _scrcpy_control(self) -> ControlSender:
@@ -47,7 +47,7 @@ class ScrcpyCore(Connection):
     def scrcpy_init(self):
         self._scrcpy_server_stop()
 
-        logger.hr('Scrcpy init')
+        logger.hr('初始化 Scrcpy')
         logger.info(f'pushing {self.config.SCRCPY_FILEPATH_LOCAL}')
         self.adb_push(self.config.SCRCPY_FILEPATH_LOCAL, self.config.SCRCPY_FILEPATH_REMOTE)
 
@@ -66,7 +66,7 @@ class ScrcpyCore(Connection):
         Raises:
             ScrcpyError:
         """
-        logger.hr('Scrcpy server start')
+        logger.hr('启动 Scrcpy 服务')
         commands = ScrcpyOptions.command_v120(jar_path=self.config.SCRCPY_FILEPATH_REMOTE)
         self._scrcpy_server_stream: _AdbStreamConnection = self.adb.shell(
             commands,
@@ -145,7 +145,7 @@ class ScrcpyCore(Connection):
         """
         Stop listening (both threaded and blocked)
         """
-        logger.hr('Scrcpy server stop')
+        logger.hr('停止 Scrcpy 服务')
         # err = self._scrcpy_receive_from_server_stream()
         # if err:
         #     logger.error(err)

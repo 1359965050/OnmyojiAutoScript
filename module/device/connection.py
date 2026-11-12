@@ -467,8 +467,8 @@ class Connection(ConnectionAttr):
                     logger.info(f'Reuse reverse: {reverse}')
                     port = int(reverse.local[4:])
                 else:
-                    logger.info(f'Remove redundant forward: {reverse}')
-                    self.adb_forward_remove(reverse.local)
+                    logger.info(f'Remove redundant reverse: {reverse}')
+                    self.adb_reverse_remove(reverse.local)
 
         if port:
             return port
@@ -816,7 +816,7 @@ class Connection(ConnectionAttr):
         Find available devices
         If serial=='auto' and only 1 device detected, use it
         """
-        logger.hr('Detect device')
+        logger.hr('检测设备')
         logger.info('正在检测可用设备。若需指定设备，请复制设备序列号至 [设置 -> 模拟器设置 -> 模拟器 Serial]；或直接填入 "auto"')
         devices = self.list_device()
 
@@ -897,7 +897,7 @@ class Connection(ConnectionAttr):
         """
         Show all possible packages with the given keyword on this device.
         """
-        logger.hr('Detect package')
+        logger.hr('检测游戏包名')
         packages = self.list_app_packages(keywords=keywords)
 
         # Show packages

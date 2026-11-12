@@ -308,12 +308,13 @@ class EmulatorManager(Connection):
             logger.warning('Restart simulator only works under Windows platform')
             return False
 
-        logger.hr('Emulator restart')
-        # if self.config.RestartEmulator_EmulatorType == 'auto':
-        if self.config.get_arg('Restart', '') == 'auto':
+        logger.hr('重启模拟器')
+        raw_emu_type = getattr(self.config.script.device, 'emulatorinfo_type', 'auto')
+        emu_type = getattr(raw_emu_type, 'value', raw_emu_type)
+        if not emu_type or emu_type == 'auto' or emu_type not in self.SUPPORTED_EMULATORS:
             emulator, multi_id = self.detect_emulator(serial)
         else:
-            emulator = self.SUPPORTED_EMULATORS[self.config.RestartEmulator_EmulatorType]
+            emulator = self.SUPPORTED_EMULATORS[emu_type]
             emulator, multi_id = self.detect_emulator(serial, emulator=emulator)
 
         for _ in range(3):

@@ -608,7 +608,7 @@ class PlatformWindows(PlatformBase, EmulatorManager):
             bool: True if startup completed
                 False if timeout, unexpected stop, adb preemptive
         """
-        logger.hr('Emulator start', level=2)
+        logger.hr('启动模拟器', level=2)
         if instance is None:
             instance = self.emulator_instance
         if instance is None:
@@ -639,7 +639,7 @@ class PlatformWindows(PlatformBase, EmulatorManager):
         if getattr(self, 'is_windows_client', False):
             logger.info('Running on Windows Native Client, bypass emulator_start')
             return True
-        logger.hr('Emulator start', level=1)
+        logger.hr('启动模拟器', level=1)
         for i in range(3):
             attempt = i + 1
             logger.info(f'[emu-start] lock wait: attempt={attempt}/3')
@@ -684,7 +684,7 @@ class PlatformWindows(PlatformBase, EmulatorManager):
         return False
 
     def emulator_stop(self):
-        logger.hr('Emulator stop', level=1)
+        logger.hr('停止模拟器', level=1)
         logger.info('[emu-stop] lock wait')
         with self.emulator_lifecycle_lock():
             logger.info('[emu-stop] lock acquired')

@@ -7,7 +7,7 @@ from module.base.dpi import enable_dpi_awareness
 enable_dpi_awareness()
 
 from enum import Enum
-from cached_property import cached_property
+from functools import cached_property
 from anytree import NodeMixin, RenderTree, PreOrderIter
 from win32api import GetSystemMetrics, SendMessage, MAKELONG, PostMessage
 from win32print import GetDeviceCaps
@@ -15,13 +15,14 @@ from win32process import GetWindowThreadProcessId
 from win32gui import (GetWindowText, EnumWindows, FindWindow, FindWindowEx,
                       IsWindow, GetWindowRect, GetClientRect, SetWindowPos,
                       GetWindowDC, DeleteObject,
-                      SetForegroundWindow, IsWindowVisible, GetDC, GetParent,
+                      SetForegroundWindow, IsWindowVisible, GetDC, ReleaseDC, GetParent,
                       EnumChildWindows, IsIconic)
 from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
                       SWP_NOMOVE, SWP_NOZORDER)
 from module.config.config import Config
+from module.device.connection_attr import is_windows_client_config
 from module.logger import logger
 
 
@@ -86,14 +87,17 @@ def window_scale_rate() -> float:
     :return:
     """
     hDC = GetDC(0)
-    # 物理上（真实的）的 横纵向分辨率
-    wReal = GetDeviceCaps(hDC, DESKTOPHORZRES)
-    hReal = GetDeviceCaps(hDC, DESKTOPVERTRES)
-    # 缩放后的 分辨率
-    wAfter = GetSystemMetrics(0)
-    hAfter = GetSystemMetrics(1)
-    # print(wReal, wAfter)
-    return round(wReal / wAfter, 2)
+    try:
+        # 物理上（真实的）的 横纵向分辨率
+        wReal = GetDeviceCaps(hDC, DESKTOPHORZRES)
+        # 缩放后的 分辨率
+        wAfter = GetSystemMetrics(0)
+        if not wAfter:
+            return 1.0
+        return round(wReal / wAfter, 2)
+    finally:
+        if hDC:
+            ReleaseDC(0, hDC)
 
 
 class WindowNode(NodeMixin):
@@ -144,7 +148,7 @@ class Handle:
 
         :param config:
         """
-        logger.hr('Handle')
+        logger.hr('窗口句柄')
         if self.config is None:
             if isinstance(config, str):
                 self.config = Config(config, task=None)
@@ -153,11 +157,21 @@ class Handle:
 
         self.init_handle()
 
+    def _is_windows_client_mode(self):
+        val = getattr(self, 'is_windows_client', None)
+        if val is not None:
+            return bool(val)
+        cfg = getattr(self, 'config', None)
+        if cfg is not None:
+            return is_windows_client_config(cfg)
+        return None
+
     def init_handle(self) -> None:
         """
         探测并初始化窗口句柄树及相关属性。支持重试刷新。
         """
-        if getattr(self, 'is_windows_client', False):
+        is_win_client = bool(self._is_windows_client_mode())
+        if is_win_client:
             h_str = str(self.config.script.device.handle or '').lower()
             if not h_str or any(emu in h_str for emu in ['mumu', 'nox', '雷电', '逍遥', '蓝叠']):
                 self.config.script.device.handle = 'auto'
@@ -178,7 +192,6 @@ class Handle:
         self.root_handle_title = ''
         self.root_handle_num = 0
         self.root_handle = self.config.script.device.handle
-        is_win_client = getattr(self, 'is_windows_client', False)
         if self.root_handle == "auto":
             logger.info('Handle is auto. oas will find window emulator')
             window_list = Handle.all_windows()
@@ -251,6 +264,46 @@ class Handle:
             pass
         return windows
 
+    @staticmethod
+    def _is_ide_window_title(window_title: str) -> bool:
+        return any(
+            ide in window_title.lower()
+            for ide in ('ide', 'antigravity', 'visual studio', 'code', 'pycharm', 'cursor')
+        )
+
+    @classmethod
+    def _is_windows_pc_client_window(cls, window_title: str) -> bool:
+        """
+        判断窗口是否属于 Windows 桌面版阴阳师客户端，避免模拟器配置误绑桌面端窗口。
+        """
+        if not window_title or cls._is_ide_window_title(window_title):
+            return False
+
+        # 若窗口真实存在，优先根据进程可执行文件名区分桌面客户端与安卓模拟器
+        try:
+            hwnd = FindWindow(None, window_title)
+            if hwnd and IsWindow(hwnd):
+                pid = handle_num2pid(hwnd)
+                if pid:
+                    import psutil
+                    proc_name = psutil.Process(pid).name().lower()
+                    if 'onmyoji' in proc_name:
+                        return True
+                    if any(emu in proc_name for emu in ('mumu', 'nemu', 'dnplayer', 'ld', 'nox', 'bluestacks', 'hd-player', 'meplayer')):
+                        return False
+        except Exception:
+            pass
+
+        stripped = window_title.strip()
+        lower = stripped.lower()
+        if stripped in ('阴阳师', 'Onmyoji') or lower == 'onmyoji':
+            return True
+        if '模拟器专版' in stripped or '桌面版' in stripped:
+            return True
+        if ('阴阳师' in stripped or 'onmyoji' in lower) and '专版' in stripped:
+            return True
+        return False
+
     @classmethod
     def auto_handle_title(cls, windows: list, is_windows_client: bool = False, serial: str = None) -> str:
         """
@@ -264,36 +317,36 @@ class Handle:
             logger.error("handle_auto not get all wnidow")
             return None
 
-        # 优先检测阴阳师桌面版窗口（忽略 IDE 或编辑器窗口）
-        pc_candidates = []
-        for window_title in windows:
-            if '阴阳师' in window_title or 'Onmyoji' in window_title:
-                if any(ide in window_title.lower() for ide in ['ide', 'antigravity', 'visual studio', 'code', 'pycharm', 'cursor']):
-                    continue
-                pc_candidates.append(window_title)
-
-        if pc_candidates:
-            if len(pc_candidates) == 1:
-                logger.info(f'Found Onmyoji Windows client title: {pc_candidates[0]}')
-                return pc_candidates[0]
-            # 存在多个候选窗口时（例如启动器残留或同名窗口），优先取客户区面积最大的真实渲染窗口
-            best_title = pc_candidates[0]
-            best_area = -1
-            for title in pc_candidates:
-                hwnd = FindWindow(None, title)
-                if hwnd and IsWindow(hwnd):
-                    try:
-                        rect = GetClientRect(hwnd)
-                        area = (rect[2] - rect[0]) * (rect[3] - rect[1])
-                        if area > best_area:
-                            best_area = area
-                            best_title = title
-                    except Exception:
-                        pass
-            logger.info(f'Selected best Onmyoji Windows client title: {best_title} (client area: {best_area})')
-            return best_title
-
         if is_windows_client:
+            # 仅在配置为 Windows 桌面版客户端时匹配桌面版窗口（忽略 IDE 或编辑器窗口）
+            pc_candidates = []
+            for window_title in windows:
+                if '阴阳师' in window_title or 'Onmyoji' in window_title:
+                    if cls._is_ide_window_title(window_title):
+                        continue
+                    pc_candidates.append(window_title)
+
+            if pc_candidates:
+                if len(pc_candidates) == 1:
+                    logger.info(f'Found Onmyoji Windows client title: {pc_candidates[0]}')
+                    return pc_candidates[0]
+                # 存在多个候选窗口时（例如启动器残留或同名窗口），优先取客户区面积最大的真实渲染窗口
+                best_title = pc_candidates[0]
+                best_area = -1
+                for title in pc_candidates:
+                    hwnd = FindWindow(None, title)
+                    if hwnd and IsWindow(hwnd):
+                        try:
+                            rect = GetClientRect(hwnd)
+                            area = (rect[2] - rect[0]) * (rect[3] - rect[1])
+                            if area > best_area:
+                                best_area = area
+                                best_title = title
+                        except Exception:
+                            pass
+                logger.info(f'Selected best Onmyoji Windows client title: {best_title} (client area: {best_area})')
+                return best_title
+
             logger.info('Onmyoji PC client window is not present yet.')
             return None
 
@@ -331,15 +384,19 @@ class Handle:
                     f'MuMuPlayer-{target_index}',
                 ]
             for cand in target_candidates:
-                if cand in windows:
+                if cand in windows and not cls._is_windows_pc_client_window(cand):
                     logger.info(f'Found matched emulator window for instance {target_index}: {cand}')
                     return cand
 
+        # 非桌面客户端模式下仅匹配模拟器关键字，且排除桌面端游戏窗口与编辑器窗口
+        emulator_keywords = [item for item in Handle.emulator_list if item not in ('阴阳师', 'Onmyoji')]
         emu_list = []
         for window_title in windows:
             if window_title in exclude_internal or window_title.startswith('MuMuNxDevice'):
                 continue
-            for item in Handle.emulator_list:
+            if cls._is_ide_window_title(window_title) or cls._is_windows_pc_client_window(window_title):
+                continue
+            for item in emulator_keywords:
                 if window_title.find(item) != -1:
                     if window_title not in emu_list:
                         emu_list.append(window_title)
@@ -408,21 +465,23 @@ class Handle:
         通过句柄树来判断这个是那个模拟器大类
         :return:
         """
-        if getattr(self, 'is_windows_client', False):
-            return EmulatorFamily.FAMILY_WINDOWS_CLIENT
-        if '阴阳师' in self.root_handle_title or 'Onmyoji' in self.root_handle_title:
+        is_win_client = self._is_windows_client_mode()
+        if is_win_client is True:
             return EmulatorFamily.FAMILY_WINDOWS_CLIENT
 
-        children_num = len(self.root_node.children)
+        children_num = len(self.root_node.children) if getattr(self, 'root_node', None) else 0
         if children_num == 1:
             name = self.root_node.children[0].name
             if name in ('MuMuPlayer', 'MuMuNxDevice', 'NemuPlayer'):
                 return EmulatorFamily.FAMILY_MUMU
 
+        if is_win_client is None and ('阴阳师' in self.root_handle_title or 'Onmyoji' in self.root_handle_title):
+            return EmulatorFamily.FAMILY_WINDOWS_CLIENT
+
         # 基于句柄标题的判定
         for emu in Handle.emulator_list:
             if self.root_handle_title.find(emu) != -1:
-                if emu in ('阴阳师', 'Onmyoji'):
+                if emu in ('阴阳师', 'Onmyoji') and is_win_client is None:
                     return EmulatorFamily.FAMILY_WINDOWS_CLIENT
                 elif emu == 'MuMu':
                     return EmulatorFamily.FAMILY_MUMU
@@ -496,18 +555,18 @@ class Handle:
             logger.info(f'Windows client screenshot size: raw=({width_raw}, {height_raw}), scale={scale_rate}, final=({width}, {height})')
             return width, height
 
-        winRect = GetWindowRect(self.screenshot_handle_num)
+        crect = GetClientRect(self.screenshot_handle_num)
         scale_rate = window_scale_rate()
-        width_before: int = winRect[2] - winRect[0]  # 右x-左x
-        height_before: int = winRect[3] - winRect[1]  # 下y - 上y 计算高度
+        width_before: int = crect[2] - crect[0]
+        height_before: int = crect[3] - crect[1]
+        if width_before <= 0 or height_before <= 0:
+            logger.error(f'Get screenshot size error, width={width_before}, height={height_before}')
+            return None
         width, height = width_before, height_before
         if abs((width_before * scale_rate) - 1280) < 5:
             width = 1280
         if abs((height_before * scale_rate) - 720) < 5:
             height = 720
-        if width is None or height is None:
-            logger.error(f'Get screenshot size error, width={width}, height={height}')
-            return None
         return width, height
 
     @cached_property
@@ -516,15 +575,7 @@ class Handle:
         获取window的系统缩放 一般是1
         :return:
         """
-        hDC = GetDC(0)
-        # 物理上（真实的）的 横纵向分辨率
-        wReal = GetDeviceCaps(hDC, DESKTOPHORZRES)
-        hReal = GetDeviceCaps(hDC, DESKTOPVERTRES)
-        # 缩放后的 分辨率
-        wAfter = GetSystemMetrics(0)
-        hAfter = GetSystemMetrics(1)
-        # print(wReal, wAfter)
-        return round(wReal / wAfter, 2)
+        return window_scale_rate()
 
 
     @classmethod
