@@ -870,21 +870,33 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         """
         if skip_first:
             self.screenshot()
-        if not self.appear(self.I_EXIT):
+        if not (
+            self.appear(self.I_EXIT)
+            or self.appear(self.I_EXIT_ENSURE)
+            or (hasattr(self, "O_EXIT_ENSURE") and self.ocr_appear(self.O_EXIT_ENSURE))
+        ):
             return False
         exit_timer = Timer(20).start()
+        has_clicked_ensure = False
         while True:
             if exit_timer.reached():
                 logger.warning('Exit battle timeout')
                 return False
             self.screenshot()
             if self.appear_then_click(self.I_EXIT_ENSURE, interval=0.8):
+                has_clicked_ensure = True
                 continue
-            if GameUi.get_current_page(self) in (page_battle_result, page_reward):
+            if hasattr(self, "O_EXIT_ENSURE") and self.ocr_appear_click(self.O_EXIT_ENSURE, interval=0.8):
+                has_clicked_ensure = True
+                continue
+            current_page = GameUi.get_current_page(self)
+            if current_page in (page_battle_result, page_reward):
+                break
+            if has_clicked_ensure and current_page not in (page_battle_prepare, page_battle):
                 break
             if self.appear_then_click(self.I_EXIT, interval=6):
                 continue
-        self.ui_click_until_disappear(self.I_EXIT_ENSURE, interval=0.8)
+        self.ui_click_until_disappear(self.I_EXIT_ENSURE, interval=0.8, timeout=5.0)
         logger.info('Exit battle success')
         return True
 

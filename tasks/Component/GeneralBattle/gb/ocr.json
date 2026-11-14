@@ -52,5 +52,14 @@
     "method": "Default",
     "keyword": "手动",
     "description": "战斗页面手动标志"
+  },
+  {
+    "itemName": "exit_ensure",
+    "roiFront": "716,409,88,45",
+    "roiBack": "660,370,200,120",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "确定",
+    "description": "退出确认确定按钮"
   }
 ]

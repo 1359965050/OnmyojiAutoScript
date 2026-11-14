@@ -40,7 +40,7 @@ class RealmRaidAssets:
 	# 打完个后出现的领取奖励 
 	I_SOUL_RAID = RuleImage(roi_front=(577,502,100,100), roi_back=(577,502,100,100), threshold=0.8, method="Template matching", file="./tasks/RealmRaid/res/res_soul_raid.png")
 	# 刷新确认/再战确认 
-	I_FRESH_ENSURE = RuleImage(roi_front=(672,403,173,59), roi_back=(672,403,173,59), threshold=0.8, method="Template matching", file="./tasks/RealmRaid/res/res_fresh_ensure.png")
+	I_FRESH_ENSURE = RuleImage(roi_front=(716,409,88,45), roi_back=(660,370,200,120), threshold=0.8, method="Template matching", file="./tasks/RealmRaid/res/res_fresh_ensure.png")
 	# 无锁图片，适配呱太入侵 
 	I_UNLOCK_2 = RuleImage(roi_front=(1002,643,30,41), roi_back=(1002,643,30,41), threshold=0.9, method="Template matching", file="./tasks/RealmRaid/res/res_unlock_2.png")
 	# 以锁图片，适配呱太 
@@ -93,6 +93,8 @@ class RealmRaidAssets:
 	O_FROG_9 = RuleOcr(roi=(825,440,33,33), area=(825,440,33,33), mode="Digit", method="Default", keyword="", name="frog_9")
 	# 右上角突破券文本 
 	O_TEXT = RuleOcr(roi=(1143,13,80,39), area=(0,0,100,100), mode="Single", method="Default", keyword="", name="text")
+	# 刷新确认/再战确认 
+	O_FRESH_ENSURE = RuleOcr(roi=(716,409,88,45), area=(660,370,200,120), mode="Single", method="Default", keyword="确定", name="fresh_ensure")
 
 
 	# Click Rule Assets

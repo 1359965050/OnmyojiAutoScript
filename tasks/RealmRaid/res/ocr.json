@@ -106,5 +106,14 @@
     "method": "Default",
     "keyword": "",
     "description": "右上角突破券文本"
+  },
+  {
+    "itemName": "fresh_ensure",
+    "roiFront": "716,409,88,45",
+    "roiBack": "660,370,200,120",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "确定",
+    "description": "刷新确认/再战确认"
   }
 ]

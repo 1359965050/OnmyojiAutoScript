@@ -477,7 +477,11 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
                 logger.warning('Open refresh confirm popup timeout')
                 return False
             self.screenshot()
-            if self.appear(self.I_FRESH_ENSURE):
+            if (
+                self.appear(self.I_FRESH_ENSURE)
+                or self.appear(self.I_EXIT_ENSURE)
+                or (hasattr(self, "O_FRESH_ENSURE") and self.ocr_appear(self.O_FRESH_ENSURE))
+            ):
                 break
             if self.appear_then_click(self.I_FRESH, interval=1):
                 continue
@@ -487,9 +491,17 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
                 logger.warning('Confirm refresh timeout')
                 return False
             self.screenshot()
-            if not self.appear(self.I_FRESH_ENSURE):
+            if not (
+                self.appear(self.I_FRESH_ENSURE)
+                or self.appear(self.I_EXIT_ENSURE)
+                or (hasattr(self, "O_FRESH_ENSURE") and self.ocr_appear(self.O_FRESH_ENSURE))
+            ):
                 return True
-            if self.appear_then_click(self.I_FRESH_ENSURE, interval=1):
+            if (
+                self.appear_then_click(self.I_FRESH_ENSURE, interval=1)
+                or self.appear_then_click(self.I_EXIT_ENSURE, interval=1)
+                or (hasattr(self, "O_FRESH_ENSURE") and self.ocr_appear_click(self.O_FRESH_ENSURE, interval=1))
+            ):
                 continue
         return False
 
@@ -522,7 +534,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         失败界面再次挑战
         :return: 是否再战成功
         """
-        self.wait_until_appear(self.I_FIRE_AGAIN)
+        self.wait_until_appear(self.I_FIRE_AGAIN, wait_time=15)
         again_timer = Timer(25).start()
         while True:
             if again_timer.reached():
@@ -530,11 +542,16 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
                 return False
             self.screenshot()
             if self.appear(self.I_EXIT):
-                logger.info(f'Click fire again success')
+                logger.info('Click fire again success')
                 return True
             if self.appear_then_click(self.I_SHOW_AGAIN, interval=2):
                 continue
-            if self.appear_then_click(self.I_FRESH_ENSURE, interval=2):
+            if (
+                self.appear_then_click(self.I_FRESH_ENSURE, interval=1)
+                or self.appear_then_click(self.I_EXIT_ENSURE, interval=1)
+                or (hasattr(self, "O_FRESH_ENSURE") and self.ocr_appear_click(self.O_FRESH_ENSURE, interval=1))
+                or (hasattr(self, "O_EXIT_ENSURE") and self.ocr_appear_click(self.O_EXIT_ENSURE, interval=1))
+            ):
                 continue
             if self.appear_then_click(self.I_FIRE_AGAIN, interval=2):
                 continue
