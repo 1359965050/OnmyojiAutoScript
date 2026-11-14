@@ -248,6 +248,16 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         else:
             appear = target.match(self.device.image, threshold=threshold, frame_id=self.device.image_frame_id or None)
 
+        if not appear and isinstance(target, RuleImage):
+            # 默认庭院昼夜兼容：当 I_CHECK_MAIN (天空特征) 未命中时，
+            # 若处于默认庭院皮肤，回退检查庭院探索灯笼 (I_MAIN_GOTO_EXPLORATION)
+            check_main = getattr(self, 'I_CHECK_MAIN', None)
+            from tasks.GameUi.assets import GameUiAssets
+            if (target is check_main or target is GameUiAssets.I_CHECK_MAIN) and check_main is GameUiAssets.I_CHECK_MAIN:
+                goto_exp = getattr(self, 'I_MAIN_GOTO_EXPLORATION', None)
+                if goto_exp and goto_exp is not target:
+                    appear = self.appear(goto_exp, interval=interval, threshold=threshold)
+
         if appear and interval:
             self.interval_timer[timer_key].reset()
 
