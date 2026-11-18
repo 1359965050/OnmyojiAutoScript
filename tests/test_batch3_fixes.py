@@ -324,9 +324,12 @@ class TestTaskReuseAndGuards(unittest.TestCase):
             bf.lock_team()
         with patch("tasks.DemonRetreat.script_task.Timer", _ReachedTimer):
             self.assertFalse(dr.goto_demon_retreat())
-        with patch("tasks.MetaDemon.script_task.Timer", _ReachedTimer):
-            self.assertFalse(md.check_and_switch_ticket())
-            self.assertFalse(md.battle_wait(False))
+        md.ui_click = MagicMock(return_value=True)
+        md.ui_click_until_disappear = MagicMock(return_value=True)
+        with patch("tasks.MetaDemon.script_task.Timer", _ReachedTimer), \
+             patch("tasks.MetaDemon.script_task.sleep", return_value=None):
+            self.assertFalse(md.find_demon())
+            md.crafting()
 
     def test_auto_checkin_manual_claim_checks_timeout_at_top_of_loop(self):
         mc = _make_base_stub(ManualClaimMixin)

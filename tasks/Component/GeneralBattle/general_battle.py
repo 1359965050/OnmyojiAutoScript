@@ -1202,6 +1202,29 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
             if self.appear_then_click(self.I_BUFF, interval=1):
                 continue
 
+    def boss_mark(self, enable: bool = True) -> bool:
+        """战斗中为 Boss 添加集火标记（检测到“已标记”或连续点击 3 次后置位防重复）。"""
+        if not enable or getattr(self, '_boss_mark_flag', False):
+            return False
+        if self.ocr_appear(self.O_BOSS_MARK):
+            self.screenshot()
+            if self.ocr_appear(self.O_BOSS_MARK):
+                self._boss_mark_flag = True
+                logger.info('Boss marked')
+                self.device.stuck_record_add('BATTLE_STATUS_S')
+                return True
+        if self.device.click_record.count(str(self.O_BOSS_MARK)) >= 3:
+            self._boss_mark_flag = True
+            logger.info('Boss mark skipped due to maybe no boss')
+            self.device.stuck_record_add('BATTLE_STATUS_S')
+            return False
+        self.click(self.O_BOSS_MARK, interval=1.8)
+        return False
+
+    def boss_mark_reset(self) -> None:
+        """重置本场战斗 Boss 标记状态。"""
+        self._boss_mark_flag = False
+
 
 def run_task_or_default_general_battle(task) -> bool:
     """优先使用任务自身的通用战斗实现，缺失时回退默认 GeneralBattle。

@@ -1,121 +1,163 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from datetime import timedelta, time
-from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
+from typing import Any, Dict
 
-from tasks.Component.config_base import ConfigBase, TimeDelta, Time, dynamic_hide
-from pydantic import Field
-from enum import IntEnum
+from pydantic import Field, ValidationError, field_validator, model_serializer, model_validator
+
+from module.logger import logger
+from tasks.Component.SwitchSoul.switch_soul_config import SwitchSoulConfig
+from tasks.Component.config_base import ConfigBase
 from tasks.Component.config_scheduler import Scheduler
 
 
-class BossType(IntEnum):
-    ONE_STAR = 1
-    TWO_STARS = 2
-    THREE_STARS = 3
-    FOUR_STARS = 4
-    FIVE_STARS = 5
-    SIX_STARS = 6
-    MONEY = 7
+class DefaultStrategy(ConfigBase):
+    # 1 是高于阈值选这个阵容，2 是低于这个阈值选这个阵容
+    md_preset_group_team_default_1: str = Field(default='1,1', description='md_preset_group_team_default_1_help')
+    md_preset_group_team_default_2: str = Field(default='1,1', description='md_preset_group_team_default_2_help')
+
+
+class Strategy(ConfigBase):
+    # 匹配的式神中文名字
+    md_match_names: str = Field(default='御撰津')
+    # 选哪一个预设组（高血量 / 低血量）
+    md_preset_group_team_1: str = Field(default='1,1')
+    md_preset_group_team_2: str = Field(default='1,1')
+
+    def is_valid(self) -> bool:
+        return bool(self.md_match_names)
+
+    @classmethod
+    def parse_names(cls, names: str) -> list[str]:
+        names = names.replace('，', ',').replace(' ', '')
+        return [n for n in names.split(',') if n]
+
+    @classmethod
+    def parse_group_team(cls, team: str) -> list[int]:
+        team = team.replace('，', ',').replace(' ', '')
+        team = ''.join(c for c in team if c.isdigit() or c == ',')
+        try:
+            result = [int(i) for i in team.split(',') if i != '']
+            if len(result) != 2:
+                raise ValueError('group team length is not 2')
+            if result[0] < 1 or result[0] > 7:
+                raise ValueError('group is not valid (1-7)')
+            if result[1] < 1 or result[1] > 5:
+                raise ValueError('team is not valid (1-5)')
+            return result
+        except Exception as e:
+            logger.error(f'group team string: {team}')
+            logger.error(f'parse_team error: {e}')
+            raise
+
+    @classmethod
+    def parse_all(cls, data: list['Strategy'] | None) -> dict[str, list[int]]:
+        result: dict[str, list[int]] = {}
+        if not data:
+            return result
+        for item in data:
+            value = (
+                item.parse_group_team(item.md_preset_group_team_1)
+                + item.parse_group_team(item.md_preset_group_team_2)
+            )
+            for name in cls.parse_names(item.md_match_names):
+                result.setdefault(name, value)
+        return result
 
 
 class MetaDemonConfig(ConfigBase):
-    limit_time: Time = Field(default=Time(minute=45), description='limit_time_help')
-    limit_count: int = Field(default=50, description='limit_count_help')
-    auto_tea: bool = Field(default=False, description='疲劳度满时是否自动喝茶, 关闭则自动根据调度器等待间隔时间安排下一次调度')
-    fire_sequence: str = Field(default='1 2 3 4', description='攻击顺序:从左到右,空格分隔(1:一星鬼王,2:二星鬼王...)\n例:3 2(先攻击三星鬼王然后二星鬼王)')
-    powerful_list: str = Field(default='', description='开启强力鬼王列表(空格分隔),例:4 5(四星鬼王和五星鬼王开启强力追击)')
-    synthesis_list: str = Field(default='1', description='鬼王合成列表(空格分隔),支持1-5星合成,例:1 2 3(合成一星,二星,三星鬼王)')
+    meta_crafting_card: bool = Field(default=True, description='craft_essence_help')
+    auto_tea: bool = Field(default=False, description='auto_tea_help')
+    auto_shared_boss: bool = Field(default=True, description='auto_shared_boss_help')
+    md_fatigue_summon_first: bool = Field(default=True, description='md_fatigue_summon_first_help')
+    md_strategy_count: int = Field(default=0, ge=0, description='md_strategy_count_help')
+    md_use_strategy: bool = Field(default=False, description='md_use_strategy_help')
 
-    @property
-    def limit_time_v(self) -> timedelta:
-        if isinstance(self.limit_time, time):
-            return timedelta(hours=self.limit_time.hour, minutes=self.limit_time.minute, seconds=self.limit_time.second)
-        return self.limit_time
+    @field_validator('auto_tea', mode='after')
+    @classmethod
+    def to_false(cls, v):
+        return False
 
-    @property
-    def fire_sequence_v(self) -> list[BossType]:
-        sequence_text = self.fire_sequence.strip()
-        if sequence_text == '':
-            return []
-        fire_num_list = sequence_text.split(' ')
-        fire_boss_type_list = [BossType(int(num_text)) for num_text in fire_num_list]
-        return fire_boss_type_list
-
-    @property
-    def powerful_list_v(self) -> list[BossType]:
-        powerful_list_text = self.powerful_list.strip()
-        if powerful_list_text == '':
-            return []
-        powerful_num_list = powerful_list_text.split(' ')
-        powerful_boss_type_list = [BossType(int(num_text)) for num_text in powerful_num_list]
-        return powerful_boss_type_list
-
-    @property
-    def synthesis_list_v(self) -> list[BossType]:
-        synthesis_list_text = self.synthesis_list.strip()
-        if synthesis_list_text == '':
-            return []
-        synthesis_num_list = synthesis_list_text.split(' ')
-        synthesis_boss_type_list = [BossType(int(num_text)) for num_text in synthesis_num_list]
-        return synthesis_boss_type_list
-
-
-class MetaDemonSwitchSoulConfig(ConfigBase):
-    enable: bool = Field(default=False, description='是否启用自动切换御魂,清空则不会切换对应御魂\n若是数字,则以编号方式切换御魂(组号,队伍号),组1-7,队伍1-4\n若非数字,则以ocr方式切换御魂(组名,队伍名)')
-    switch_once: bool = Field(default=False, description='启用该项会一次性切换所有需要攻击的鬼王御魂(建议全部独立御魂再启用), 否则当鬼王级别变更时会自动切换对应级别御魂')
-    one_star: str = Field(default='', description='一星鬼王切换御魂配置')
-    enable_one_star_preset: bool = Field(default=False, description='是否战斗内切换一星鬼王预设,仅限数字切换御魂可用,否则无效,下面同理')
-    two_stars: str = Field(default='', description='二星鬼王切换御魂配置')
-    enable_two_stars_preset: bool = Field(default=False, description='是否战斗内切换二星鬼王预设')
-    three_stars: str = Field(default='', description='三星鬼王切换御魂配置')
-    enable_three_stars_preset: bool = Field(default=False, description='是否战斗内切换三星鬼王预设')
-    four_stars: str = Field(default='', description='四星鬼王切换御魂配置')
-    enable_four_stars_preset: bool = Field(default=False, description='是否战斗内切换四星鬼王预设')
-    five_stars: str = Field(default='', description='五星鬼王切换御魂配置')
-    enable_five_stars_preset: bool = Field(default=False, description='是否战斗内切换五星鬼王预设')
-    six_stars: str = Field(default='', description='六星鬼王切换御魂配置')
-    enable_six_stars_preset: bool = Field(default=False, description='是否战斗内切换六星鬼王预设')
-    # money: str = Field(default='', description='氪金鬼王切换御魂配置')
-    # enable_money_preset: bool = Field(default=False, description='是否切换氪金鬼王预设')
-
-    def get_switch_by_enum(self, boss_type: BossType) -> tuple[str, tuple[str | int, str | int]]:
-        """根据枚举获取对应的 切换类型, (group,team)"""
-        return self.get_switch_by_name(boss_type.name.lower())
-
-    def get_switch_by_name(self, switch_name: str) -> tuple[str, tuple[str | int, str | int]]:
-        """根据名称获取对应的御魂预设"""
-        group_team = getattr(self, switch_name, None)
-        if group_team is None or group_team.strip() == '' or ',' not in group_team or len(group_team.split(',')) != 2:
-            return None, (None, None)
-        group, team = group_team.split(',')
-        if group.isdigit() and team.isdigit():
-            return 'int', (int(group), int(team))
-        return 'str', (group, team)
-
-    def get_general_battle_conf(self, boss_type: BossType) -> GeneralBattleConfig:
-        """获取通用战斗配置"""
-        if boss_type is None:
-            return GeneralBattleConfig()
-        enable_preset = getattr(self, f'enable_{boss_type.name.lower()}_preset', False)
-        if not enable_preset:
-            return GeneralBattleConfig()
-        switch_type, (group, team) = self.get_switch_by_enum(boss_type)
-        if switch_type is None or switch_type == 'str':
-            return GeneralBattleConfig()
-        if switch_type == 'int':
-            return GeneralBattleConfig(lock_team_enable=False, preset_enable=True, preset_group=group, preset_team=team)
-        return GeneralBattleConfig()
-
-
-class MetaDemonScheduler(Scheduler):
-    wait_interval: TimeDelta = Field(default=TimeDelta(hours=1, minutes=40), description='疲劳度满时等多长时间后再次运行本任务,建议设置等待完全恢复疲劳度所需的时间\n例:100分钟恢复100点疲劳度,再次运行必定可以继续战斗')
-
-    hide_fields = dynamic_hide('server_update', 'delay_date')
+    @field_validator('md_strategy_count', mode='after')
+    @classmethod
+    def validator_strategy_count(cls, v):
+        return max(0, int(v))
 
 
 class MetaDemon(ConfigBase):
-    scheduler: MetaDemonScheduler = Field(default_factory=MetaDemonScheduler)
+    scheduler: Scheduler = Field(default_factory=Scheduler)
+    switch_soul: SwitchSoulConfig = Field(default_factory=SwitchSoulConfig)
     meta_demon_config: MetaDemonConfig = Field(default_factory=MetaDemonConfig)
-    switch_soul: MetaDemonSwitchSoulConfig = Field(default_factory=MetaDemonSwitchSoulConfig)
+    md_default_strategy: DefaultStrategy = Field(default_factory=DefaultStrategy)
+    md_strategies: list[Strategy] = Field(default_factory=list)
+
+    @model_validator(mode='before')
+    @classmethod
+    def validator_all(cls, v: Any) -> Any:
+        if not isinstance(v, dict):
+            return v
+        v = dict(v)
+        cfg = v.get('meta_demon_config')
+        if isinstance(cfg, dict):
+            strategy_count = max(0, int(cfg.get('md_strategy_count', 0)))
+        elif isinstance(cfg, MetaDemonConfig):
+            strategy_count = max(0, int(cfg.md_strategy_count))
+        else:
+            strategy_count = 0
+
+        list_name = 'md_strategies'
+        raw_list = v.get(list_name)
+        current_list: list[Strategy] = []
+        if isinstance(raw_list, list):
+            for elem in raw_list:
+                if isinstance(elem, Strategy):
+                    current_list.append(elem)
+                elif isinstance(elem, dict):
+                    try:
+                        item = Strategy(**elem)
+                        if item.is_valid():
+                            current_list.append(item)
+                    except (ValidationError, TypeError):
+                        pass
+
+        remove_keys = []
+        for key, value in v.items():
+            if key == list_name or list_name not in key:
+                continue
+            if isinstance(value, dict):
+                try:
+                    item = Strategy(**value)
+                    if item.is_valid():
+                        current_list.append(item)
+                    remove_keys.append(key)
+                except (ValidationError, TypeError):
+                    pass
+        for key in remove_keys:
+            del v[key]
+
+        if len(current_list) < strategy_count:
+            current_list.extend(Strategy() for _ in range(strategy_count - len(current_list)))
+        elif len(current_list) > strategy_count:
+            current_list = current_list[:strategy_count]
+        v[list_name] = current_list
+        return v
+
+    @model_serializer()
+    def serializer_model(self) -> Dict[str, Any]:
+        properties = self.__dict__
+        data: Dict[str, Any] = {}
+
+        def v_dump(val):
+            try:
+                return val.model_dump()
+            except AttributeError as e:
+                logger.error(e)
+                return val
+
+        for key, val in properties.items():
+            if isinstance(val, list):
+                for index, item in enumerate(val):
+                    data[f'{key}_{index + 1}'] = v_dump(item)
+            else:
+                data[key] = v_dump(val)
+        return data

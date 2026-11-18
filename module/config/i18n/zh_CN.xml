@@ -2239,14 +2239,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>启用每日</translation>
         </message>
         <message>
-            <source>enable_five_stars_preset</source>
-            <translation>启用五星预设</translation>
-        </message>
-        <message>
-            <source>enable_four_stars_preset</source>
-            <translation>启用四星预设</translation>
-        </message>
-        <message>
             <source>enable_greed</source>
             <translation>启用贪嗔痴</translation>
         </message>
@@ -2255,40 +2247,12 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>启用招财运势</translation>
         </message>
         <message>
-            <source>enable_one_star_preset</source>
-            <translation>启用一星预设</translation>
-        </message>
-        <message>
-            <source>enable_six_stars_preset</source>
-            <translation>启用六星预设</translation>
-        </message>
-        <message>
-            <source>enable_three_stars_preset</source>
-            <translation>启用三星预设</translation>
-        </message>
-        <message>
-            <source>enable_two_stars_preset</source>
-            <translation>启用二星预设</translation>
-        </message>
-        <message>
             <source>find_earring</source>
             <translation>寻找耳环</translation>
         </message>
         <message>
             <source>find_true_orochi</source>
             <translation>寻找真大蛇</translation>
-        </message>
-        <message>
-            <source>fire_sequence</source>
-            <translation>开火顺序</translation>
-        </message>
-        <message>
-            <source>five_stars</source>
-            <translation>五星</translation>
-        </message>
-        <message>
-            <source>four_stars</source>
-            <translation>四星</translation>
         </message>
         <message>
             <source>frog_always_blue</source>
@@ -2395,10 +2359,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>满精力通知</translation>
         </message>
         <message>
-            <source>one_star</source>
-            <translation>一星</translation>
-        </message>
-        <message>
             <source>orochi_moans</source>
             <translation>御魂悲鸣</translation>
         </message>
@@ -2409,10 +2369,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>pickup_email_dt</source>
             <translation>收取邮件</translation>
-        </message>
-        <message>
-            <source>powerful_list</source>
-            <translation>强力式神预设</translation>
         </message>
         <message>
             <source>quiz_cnt</source>
@@ -2467,10 +2423,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>简易整理</translation>
         </message>
         <message>
-            <source>six_stars</source>
-            <translation>六星</translation>
-        </message>
-        <message>
             <source>store_sign</source>
             <translation>店铺签到</translation>
         </message>
@@ -2503,16 +2455,8 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>启用切换</translation>
         </message>
         <message>
-            <source>switch_once</source>
-            <translation>单次切换</translation>
-        </message>
-        <message>
             <source>switch_onmyoji</source>
             <translation>切换阴阳师</translation>
-        </message>
-        <message>
-            <source>synthesis_list</source>
-            <translation>合成列表</translation>
         </message>
         <message>
             <source>tako</source>
@@ -2535,20 +2479,12 @@ FIFO：按下次执行时间升序排列，时间早的优先。
             <translation>目标积分</translation>
         </message>
         <message>
-            <source>three_stars</source>
-            <translation>三星</translation>
-        </message>
-        <message>
             <source>trifles_config</source>
             <translation>每日杂务配置</translation>
         </message>
         <message>
             <source>true_orochi_config</source>
             <translation>真·八岐大蛇配置</translation>
-        </message>
-        <message>
-            <source>two_stars</source>
-            <translation>二星</translation>
         </message>
         <message>
             <source>unavailable</source>
@@ -2573,10 +2509,6 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>wait_10s</source>
             <translation>等待10秒</translation>
-        </message>
-        <message>
-            <source>wait_interval</source>
-            <translation>运行间隔时间</translation>
         </message>
         <message>
             <source>wanted_quests</source>
@@ -2967,6 +2899,10 @@ FIFO：按下次执行时间升序排列，时间早的优先。
         <message>
             <source>costume_theme_default</source>
             <translation>伊始之卷</translation>
+        </message>
+        <message>
+            <source>costume_theme_xinyu_mingxiao</source>
+            <translation>新语明霄</translation>
         </message>
         <message>
             <source>costume_shikigami_default</source>
@@ -4172,8 +4108,88 @@ Refresh：直接刷新，如果刷新操作进入CD，将标记为失败并退�
             <translation>超鬼王配置</translation>
         </message>
         <message>
+            <source>meta_crafting_card</source>
+            <translation>合成一星鬼王门票</translation>
+        </message>
+        <message>
+            <source>craft_essence_help</source>
+            <translation>进入超鬼王后自动将一星门票合成为二星门票</translation>
+        </message>
+        <message>
             <source>auto_tea</source>
             <translation>自动喝茶</translation>
+        </message>
+        <message>
+            <source>auto_tea_help</source>
+            <translation>疲劳度满时是否自动喝茶（当前版本固定关闭，疲劳满后自动退出）</translation>
+        </message>
+        <message>
+            <source>auto_shared_boss</source>
+            <translation>自动挑战共享鬼王</translation>
+        </message>
+        <message>
+            <source>auto_shared_boss_help</source>
+            <translation>是否自动挑战其他玩家共享的鬼王</translation>
+        </message>
+        <message>
+            <source>md_fatigue_summon_first</source>
+            <translation>疲劳≥61优先召唤鬼王</translation>
+        </message>
+        <message>
+            <source>md_fatigue_summon_first_help</source>
+            <translation>开启后，疲劳值达到61及以上且自己没有鬼王在线时，优先召唤鬼王（先于协战鬼王判定）；疲劳满后仍按原逻辑买茶/退出</translation>
+        </message>
+        <message>
+            <source>md_strategy_count</source>
+            <translation>自定义策略数量</translation>
+        </message>
+        <message>
+            <source>md_strategy_count_help</source>
+            <translation>针对不同 5/6 星超鬼王配置的专属策略条数</translation>
+        </message>
+        <message>
+            <source>md_use_strategy</source>
+            <translation>启用策略切队</translation>
+        </message>
+        <message>
+            <source>md_use_strategy_help</source>
+            <translation>开启后在挑战 5/6 星超鬼王时按名称与血量阈值自动切换预设队伍</translation>
+        </message>
+        <message>
+            <source>md_default_strategy</source>
+            <translation>默认阵容策略</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_default_1</source>
+            <translation>默认高血量预设</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_default_1_help</source>
+            <translation>格式为 组号,队号（例如 1,1），用于未命中自定义策略且血量高于阈值时</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_default_2</source>
+            <translation>默认低血量预设</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_default_2_help</source>
+            <translation>格式为 组号,队号（例如 1,1），用于未命中自定义策略且血量低于阈值时</translation>
+        </message>
+        <message>
+            <source>md_strategies</source>
+            <translation>专属鬼王策略</translation>
+        </message>
+        <message>
+            <source>md_match_names</source>
+            <translation>匹配鬼王名称</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_1</source>
+            <translation>高血量预设</translation>
+        </message>
+        <message>
+            <source>md_preset_group_team_2</source>
+            <translation>低血量预设</translation>
         </message>
         <message>
             <source>demon_soul_config</source>

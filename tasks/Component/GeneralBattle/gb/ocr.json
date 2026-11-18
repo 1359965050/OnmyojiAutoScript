@@ -27,6 +27,15 @@
     "description": "预设"
   },
   {
+    "itemName": "boss_mark",
+    "roiFront": "379,44,50,21",
+    "roiBack": "379,44,50,21",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "已标记",
+    "description": "已标记"
+  },
+  {
     "itemName": "green_mark_area",
     "roiFront": "84,256,1116,308",
     "roiBack": "84,256,1116,308",
