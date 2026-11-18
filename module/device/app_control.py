@@ -65,6 +65,36 @@ class AppControl(Adb, Uiautomator2):
         logger.attr('Package_name', package)
         return package == self.package
 
+    def app_lost_login(self) -> bool:
+        """桌面客户端是否掉回了未登录态（检测到网易 MPay 登录弹窗）。
+
+        MPay 弹窗存活时游戏主窗口画面不可信，应直接交回 Restart 流程处理，
+        避免未知页兜底误点返回键。模拟器模式恒返回 False。
+        """
+        if not getattr(self, 'is_windows_client', False):
+            return False
+        target_pid = None
+        hwnd = getattr(self, 'screenshot_handle_num', 0)
+        if hwnd:
+            try:
+                from win32gui import IsWindow
+                from win32process import GetWindowThreadProcessId
+                if IsWindow(hwnd):
+                    _, pid = GetWindowThreadProcessId(hwnd)
+                    if pid:
+                        target_pid = pid
+            except Exception:
+                pass
+        try:
+            from tasks.Component.Login.service import find_desktop_login_popup
+            mpay_hwnd = find_desktop_login_popup(target_pid=target_pid)
+        except Exception:
+            return False
+        if not mpay_hwnd:
+            return False
+        logger.warning(f'Desktop MPay login popup present (hwnd={mpay_hwnd}), client dropped back to login')
+        return True
+
     def app_start(self):
         if getattr(self, 'is_windows_client', False):
             logger.info('App start (Windows): onmyoji.exe')

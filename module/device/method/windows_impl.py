@@ -21,7 +21,7 @@ from win32con import (SRCCOPY, DESKTOPHORZRES, DESKTOPVERTRES, WM_LBUTTONUP,
                       WM_LBUTTONDOWN, WM_ACTIVATE, WA_ACTIVE, MK_LBUTTON,
                       WM_NCHITTEST, WM_SETCURSOR, HTCLIENT, WM_MOUSEMOVE,
                       WM_PARENTNOTIFY, WM_MOUSEACTIVATE, WM_MOUSEWHEEL,
-                      WM_SETFOCUS, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, GA_ROOT,
+                      WM_SETFOCUS, WM_CAPTURECHANGED, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, GA_ROOT,
                       SW_RESTORE, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, HWND_BOTTOM,
                       GWL_STYLE, GWL_EXSTYLE, HWND_TOP, SWP_SHOWWINDOW)
 from win32ui import CreateDCFromHandle, CreateBitmap
@@ -69,7 +69,7 @@ def _window_total_size(width: int, height: int, style: int, ex_style: int) -> tu
     return rect.right - rect.left, rect.bottom - rect.top
 
 
-from module.base.cBezier import BezierTrajectory
+from module.base.cBezier import BezierTrajectory, human_track
 from module.exception import RequestHumanTakeover, ScriptError
 from module.base.decorator import Config, del_cached_property
 from module.base.timer import timer
@@ -80,6 +80,10 @@ from module.device.handle import Handle, window_scale_rate, EmulatorFamily
 
 
 class Window(Handle):
+
+    # 桌面模式后台鼠标移动：每 N 像素取一个轨迹点并限制点数上限，使长距离移动耗时与距离解耦
+    DESKTOP_MOVE_STEP = 60
+    DESKTOP_MOVE_MAX_POINTS = 12
 
     def __init__(self, *args, **kwargs):
         logger.info("Window init")
@@ -467,6 +471,34 @@ class Window(Handle):
             self.ensure_window_restored(hwnd)
         return hwnd
 
+    def move_desktop_window_message(self, x: int, y: int, hwnd: int | None = None) -> None:
+        """桌面客户端后台鼠标移动：沿拟人轨迹从上一落点移到 (x, y) 刷新悬停状态。"""
+        hwnd = hwnd or self._resolve_windows_client_control_hwnd()
+        if not hwnd:
+            return
+        start = getattr(self, '_desktop_cursor', None)
+        target = (int(round(x)), int(round(y)))
+
+        def post_move(px: int, py: int) -> None:
+            tx, ty = self.desktop_message_coord(px, py, hwnd)
+            try:
+                PostMessage(hwnd, WM_MOUSEMOVE, 0, MAKELONG(tx, ty))
+            except Exception:
+                pass
+
+        if start is None or start == target:
+            post_move(target[0], target[1])
+            self._desktop_cursor = target
+            return
+        trace = human_track(start, target, interval=self.DESKTOP_MOVE_STEP)
+        if len(trace) > self.DESKTOP_MOVE_MAX_POINTS:
+            step = len(trace) / self.DESKTOP_MOVE_MAX_POINTS
+            trace = [trace[int(i * step)] for i in range(self.DESKTOP_MOVE_MAX_POINTS)]
+        for px, py in trace:
+            post_move(px, py)
+        post_move(target[0], target[1])
+        self._desktop_cursor = target
+
     def click_window_message(self, x: int, y: int, fast: bool = False):
         """
 
@@ -481,6 +513,7 @@ class Window(Handle):
                 logger.warning("click_window_message: Window handle is invalid")
                 return
 
+            self.move_desktop_window_message(x, y, hwnd)
             target_x, target_y = self.desktop_message_coord(x, y, hwnd)
 
             press_time = random.uniform(0.045, 0.120) if not fast else random.uniform(0.020, 0.045)
@@ -489,6 +522,11 @@ class Window(Handle):
             SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, clickPos)
             time.sleep(press_time)
             SendMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
+            try:
+                SendMessage(hwnd, WM_CAPTURECHANGED, 0, 0)
+                PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)
+            except Exception:
+                pass
             return
 
         x = int(round(x))
@@ -533,15 +571,17 @@ class Window(Handle):
                 logger.warning("long_click_window_message: Window handle is invalid")
                 return
 
+            self.move_desktop_window_message(x, y, hwnd)
             target_x, target_y = self.desktop_message_coord(x, y, hwnd)
             clickPos = MAKELONG(target_x, target_y)
-            try:
-                PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)
-            except Exception:
-                pass
             PostMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, clickPos)
             time.sleep(duration)
             PostMessage(hwnd, WM_LBUTTONUP, 0, clickPos)
+            try:
+                SendMessage(hwnd, WM_CAPTURECHANGED, 0, 0)
+                PostMessage(hwnd, WM_MOUSEMOVE, 0, clickPos)
+            except Exception:
+                pass
             return
 
         x = int(round(x))
@@ -577,26 +617,16 @@ class Window(Handle):
         """
         # 生成的坐标点列表
         interval: int = 10  # 每次移动的间隔时间
-        numberList: int = int(dist(startPos, endPos) / (1 * interval))  # 表示每毫秒移动1.5个像素点， 总的时间除以每个点10ms就得到总的点的个数
-        le = random.randint(2, 4)  #
-        deviation = random.randint(20, 40)  # 幅度
-        _type: int = 3
-        obbsType = random.random()  # 0.8的概率是先快中间慢后面快， 0.1概率是先快后慢， 0.1概率先慢后快
-        if 0 < obbsType <= 0.8:
-            _type = 3
-        elif obbsType < 0.9:
-            _type = 2
-        else:
-            _type = 1
-        trace: list = BezierTrajectory.trackArray(start=startPos, end=endPos, numberList=numberList, le=le,
-                                                  deviation=deviation, bias=0.5, type=_type, cbb=0, yhh=20)
+        trace: list = human_track(startPos, endPos, interval=interval)
 
         # 使用生成的点列表进行拖拽
         handleNum = self._get_emulator_control_handle()
         if not handleNum:
             logger.warning("swipe_window_message: no valid control handle")
             return
-        if self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+        is_windows_client = (self.emulator_family == EmulatorFamily.FAMILY_WINDOWS_CLIENT)
+        if is_windows_client:
+            self.move_desktop_window_message(startPos[0], startPos[1], handleNum)
             trace = [list(self.desktop_message_coord(pt[0], pt[1], handleNum)) for pt in trace]
 
         # 激活窗口
@@ -608,7 +638,7 @@ class Window(Handle):
         tmpPos = MAKELONG(trace[0][0], trace[0][1])
         SendMessage(handleNum, WM_NCHITTEST, 0, tmpPos)
         SendMessage(handleNum, WM_SETCURSOR, handleNum, MAKELONG(HTCLIENT, WM_LBUTTONDOWN))
-        PostMessage(handleNum, WM_LBUTTONDOWN, 0, tmpPos)
+        PostMessage(handleNum, WM_LBUTTONDOWN, MK_LBUTTON if is_windows_client else 0, tmpPos)
 
         # 一点一点移动鼠标
         manual_control: int = 3  # 手动控制最后几个点的数量
@@ -625,6 +655,12 @@ class Window(Handle):
         time.sleep(0.05)
         end_lparam = MAKELONG(trace[-1][0], trace[-1][1])
         PostMessage(handleNum, WM_LBUTTONUP, 0, end_lparam)
+        if is_windows_client:
+            try:
+                SendMessage(handleNum, WM_CAPTURECHANGED, 0, 0)
+            except Exception:
+                pass
+            self._desktop_cursor = (int(round(endPos[0])), int(round(endPos[1])))
 
     def swipe_vector_window_message2(self, startPos: list, endPos: list) -> None:
         """

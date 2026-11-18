@@ -160,19 +160,26 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
                 Minimum interval between 2 screenshots in seconds.
                 Or None for Optimization_ScreenshotInterval, 'combat' for Optimization_CombatScreenshotInterval
         """
+        is_windows_client = bool(getattr(self, 'is_windows_client', False))
         if interval is None:
             origin = self.config.script.optimization.screenshot_interval
-            interval = limit_in(origin, 0.1, 0.3)
+            method = getattr(self.config.script.device.screenshot_method, 'value', self.config.script.device.screenshot_method)
+            # 分支判断放在夹取之前，避免按错误区间改写用户配置；桌面端 BitBlt 极快，允许更小间隔
+            if is_windows_client:
+                interval = limit_in(origin, 0.05, 0.3)
+            elif method == 'nemu_ipc':
+                interval = limit_in(origin, 0.1, 0.2)
+            else:
+                interval = limit_in(origin, 0.1, 0.3)
             if interval != origin:
                 logger.warning(f'Optimization.ScreenshotInterval {origin} is revised to {interval}')
                 self.config.script.optimization.screenshot_interval = interval
-            # Allow nemu_ipc to have a lower default
-            method = getattr(self.config.script.device.screenshot_method, 'value', self.config.script.device.screenshot_method)
-            if method == 'nemu_ipc':
-                interval = limit_in(origin, 0.1, 0.2)
         elif interval == 'combat':
             origin = self.config.script.optimization.combat_screenshot_interval
-            interval = limit_in(origin, 0.6, 3.0)
+            if is_windows_client:
+                interval = limit_in(origin, 0.1, 3.0)
+            else:
+                interval = limit_in(origin, 0.6, 3.0)
             if interval != origin:
                 logger.warning(f'Optimization.CombatScreenshotInterval {origin} is revised to {interval}')
                 self.config.script.optimization.combat_screenshot_interval = interval

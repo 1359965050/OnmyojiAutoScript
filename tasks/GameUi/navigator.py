@@ -719,6 +719,12 @@ class GameUi(ChessBattleNavigationMixin, BaseTask, GameUiAssets):
         """
 
         self.maybe_screenshot(skip_first_screenshot)
+
+        # 桌面客户端掉回登录态（掉线/被顶号）时页面特征全部不可信，立即交回 Restart 处理
+        app_lost_login = getattr(self.device, "app_lost_login", None)
+        if callable(app_lost_login) and app_lost_login():
+            raise GameNotRunningError("Client dropped back to login")
+
         logger.warning("Try switch to a supported page")
         for action in [*self.navigator.local_unknown_closers, *self.DEFAULT_UNKNOWN_CLOSERS]:
             action_name = self._action_name(action)

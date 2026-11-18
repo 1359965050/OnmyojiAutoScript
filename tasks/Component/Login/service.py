@@ -13,6 +13,9 @@ from tasks.Restart.assets import RestartAssets
 from tasks.base_task import BaseTask
 from module.device.handle import EmulatorFamily
 
+# 登录期间 MPay 弹窗“关掉又重弹”的容忍上限，超过则交由重启流程重建
+DESKTOP_MPAY_CLOSE_LIMIT = 5
+
 
 def find_desktop_login_popup(target_pid: int | None = None) -> int:
     """
@@ -101,25 +104,59 @@ class LoginService(
         skip_click_mx_cnt = 5
         login_success = False
         anim_skip_first_wait = True
+        mpay_popup_handled = 0
+
+        def _desktop_target_pid() -> int | None:
+            hwnd = getattr(self.device, 'screenshot_handle_num', 0)
+            if not hwnd:
+                return None
+            try:
+                from win32gui import IsWindow
+                from win32process import GetWindowThreadProcessId
+                if IsWindow(hwnd):
+                    _, pid = GetWindowThreadProcessId(hwnd)
+                    return pid or None
+            except Exception:
+                return None
+            return None
+
+        def _handle_desktop_login_popup() -> bool:
+            nonlocal mpay_popup_handled
+            if getattr(self.device, 'emulator_family', None) != EmulatorFamily.FAMILY_WINDOWS_CLIENT:
+                return False
+            target_pid = _desktop_target_pid()
+            mpay_hwnd = find_desktop_login_popup(target_pid=target_pid)
+            if not mpay_hwnd:
+                return False
+            mpay_popup_handled += 1
+            if mpay_popup_handled > DESKTOP_MPAY_CLOSE_LIMIT:
+                raise GameStuckError(
+                    f'Desktop MPay login popup reappeared more than {DESKTOP_MPAY_CLOSE_LIMIT} times'
+                )
+            if not confirm_desktop_login_popup(mpay_hwnd):
+                if not find_desktop_login_popup(target_pid=target_pid):
+                    return True
+                raise GameStuckError('Desktop MPay login popup cannot be closed')
+            self.device.sleep(0.8)
+            confirm_timer.reset()
+            return True
 
         if hasattr(self.device, 'bring_to_front'):
             self.device.bring_to_front()
 
         while True:
-            # 桌面客户端网易通行证 MPay 弹窗检测与直连穿透
-            if getattr(self.device, 'emulator_family', None) == EmulatorFamily.FAMILY_WINDOWS_CLIENT:
-                mpay_hwnd = find_desktop_login_popup()
-                if mpay_hwnd:
-                    confirm_desktop_login_popup(mpay_hwnd)
-                    self.device.sleep(0.8)
-                    confirm_timer.reset()
-                    continue
+            # 桌面客户端网易通行证 MPay 弹窗检测与直连穿透（带重弹上限熔断）
+            if _handle_desktop_login_popup():
+                continue
 
             if not login_success and orientation_timer.reached():
                 self.device.get_orientation()
                 orientation_timer.reset()
 
             self.screenshot()
+            # 截图与窗口枚举存在竞态，截图后复检一次避免 MPay 刚弹出进入图像识别
+            if _handle_desktop_login_popup():
+                continue
 
             # 游戏启动初期或场景切换可能存在纯黑屏加载阶段，避免在未完成渲染时过早触发 OCR 或误操作
             if hasattr(self.device, 'image') and self.device.image is not None:
