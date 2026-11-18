@@ -83,14 +83,17 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
             self.set_next_run(self.task_name, finish=False, success=False)
         raise TaskEnd(self.task_name)
 
-    def run_leader(self):
-        logger.info('Start run leader')
+    def _prepare_eternity_sea(self):
         self.goto_page(page_soul_zones)
         self._enter_eternity_sea()
         layer = self._task_config.eternity_sea_config.layer
         self.check_layer(layer)
         self.check_lock(self._task_config.general_battle_config.lock_team_enable, self.I_NEWETERNITYSEA_LOCK,
                         self.I_ETERNITYSEA_UNLOCK)
+
+    def run_leader(self):
+        logger.info('Start run leader')
+        self._prepare_eternity_sea()
         # 创建队伍
         logger.info('Create team')
         create_timer = Timer(15).start()
@@ -156,6 +159,8 @@ class ScriptTask(GeneralBattle, GeneralRoom, GeneralInvite, GameUi, SwitchSoul, 
 
     def run_member(self):
         logger.info('Start run member')
+        if not self.is_in_team_session():
+            self._prepare_eternity_sea()
         # 进入战斗流程
         self.device.stuck_record_add('BATTLE_STATUS_S')
         while 1:

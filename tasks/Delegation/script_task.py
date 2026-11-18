@@ -68,18 +68,34 @@ class ScriptTask(GameUi, DelegationAssets):
             self.screenshot()
             if self.appear(self.I_D_START):
                 break
+            # 检测到弹出的勾玉确认框，优先点击取消保护勾玉
+            if self.appear_then_click(self.I_UI_CANCEL, interval=1):
+                continue
             # 如果出现’召回‘ ’返回‘ 说明这个是现在委派中
             # 需要退出
             if self.appear(self.I_D_BACK):
                 logger.warning(f'Delegation: {name} is in delegation')
-                self.ui_click_until_disappear(self.I_D_BACK)
-                self.wait_until_appear(self.I_REWARDS_MIN)
+                back_timer = Timer(6).start()
+                while 1:
+                    self.screenshot()
+                    if not self.appear(self.I_D_BACK):
+                        break
+                    if back_timer.reached():
+                        logger.warning('Exit delegation detail timeout')
+                        break
+                    # 若此时被取消弹窗遮挡返回，优先点取消
+                    if self.appear_then_click(self.I_UI_CANCEL, interval=1):
+                        continue
+                    if self.appear_then_click(self.I_D_BACK, interval=1.2):
+                        continue
+                self.wait_until_appear(self.I_REWARDS_MIN, wait_time=3)
                 return False
             if self.appear_then_click(self.I_D_SKIP, interval=0.8):
                 continue
             if self.appear_then_click(self.I_D_CONFIRM, interval=0.8):
                 continue
-            if self.ocr_appear_click(self.O_D_NAME, interval=1):
+            # 点击委派任务名：防抖由 1s 提升至 3s，杜绝跨页面过渡时误触右上角"完成(30勾玉)"
+            if self.ocr_appear_click(self.O_D_NAME, interval=3):
                 continue
         # 进入委派
         logger.info(f'Enter Delegation: {name}')

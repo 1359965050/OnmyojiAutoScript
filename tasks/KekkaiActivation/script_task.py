@@ -101,9 +101,11 @@ class ScriptTask(KU, KekkaiActivationAssets):
 
             # 不稳定太，等待动画结束
             if not card_status and not card_effect:
-                # 黄色的 ”激活“
+                # 黄色的 ”激活“（对比灰按钮得分，避免灰态误判死等 #2013）
                 if self.appear(self.I_A_ACTIVATE_YELLOW, threshold=0.95):
-                    continue
+                    gray_matched = self.appear(self.I_A_ACTIVATE_GRAY)
+                    if not gray_matched or self.I_A_ACTIVATE_YELLOW.last_score > self.I_A_ACTIVATE_GRAY.last_score:
+                        continue
                 if self.appear(self.I_A_DEMOUNT):
                     # 现在在动画里面
                     logger.info('Now in the animation')

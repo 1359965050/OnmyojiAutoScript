@@ -113,6 +113,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
     def before_run(self):
         self.dokan_owner_battle = False
         self.first_master_killed = False
+        self._create_dokan_attempted = False
         pages.page_dokan_rank = self.navigator.add_page(pages.Page(self.I_RYOU_DOKAN_TOPPA_RANK, priority=75, register=False))
         pages.page_dokan_rank.connect(pages.page_dokan, pages.random_click, key="page_dokan_rank->page_dokan")
 
@@ -239,7 +240,8 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, DokanAssets):
                 raise DokanNotStartedError
             if self.update_remain_attack_count() <= 0:  # 可挑战次数为<=0,当作道馆成功完成
                 raise DokanFinishedError
-            if datetime.now().weekday() == 0:  # NOTE 只在周一尝试建立道馆
+            if not self._create_dokan_attempted:
+                self._create_dokan_attempted = True
                 self.creat_dokan()
             # 寻找合适道馆,找不到直接退出
             if not self.find_dokan(self.config.dokan.dokan_config.find_dokan_score):
