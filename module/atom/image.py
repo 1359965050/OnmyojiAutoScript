@@ -7,7 +7,7 @@ import numpy as np
 from numpy import uint8, fromfile
 from pathlib import Path
 
-from module.base.decorator import cached_property
+from module.base.decorator import cached_property, del_cached_property
 from module.image.rpc import get_image_client
 from module.logger import logger
 from module.base.utils import is_approx_rectangle
@@ -202,6 +202,16 @@ class RuleImage:
             return result
         logger.error("match result contains nan/inf (solid-color region), treated as not matched")
         return np.nan_to_num(result, nan=-1.0, posinf=-1.0, neginf=-1.0)
+
+    def refresh(self) -> None:
+        self._image = None
+        self._kp = None
+        self._des = None
+        self._mask = None
+        self._mask_loaded = False
+        self._match_init = False
+        for cached_name in ('name', 'kp', 'des'):
+            del_cached_property(self, cached_name)
 
     @cached_property
     def sift(self):

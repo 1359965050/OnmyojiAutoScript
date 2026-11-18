@@ -6,10 +6,18 @@ from module.atom.image import RuleImage
 from module.logger import logger
 from module.server.i18n import I18n
 
-from tasks.Component.Costume.config import (MainType, CostumeConfig, ShikigamiType, BattleType, CourtyardAffairType)
+from tasks.Component.Costume.config import (
+    MainType,
+    CostumeConfig,
+    ShikigamiType,
+    BattleType,
+    CourtyardAffairType,
+    ThemeType,
+)
 from tasks.Component.Costume.assets import CostumeAssets
 from tasks.Component.CostumeBattle.assets import CostumeBattleAssets
 from tasks.Component.CostumeShikigami.assets import CostumeShikigamiAssets
+from tasks.Component.CostumeTheme.theme import apply_theme
 from tasks.Component.CustomCourtyardAffair.assets import CustomCourtyardAffairAssets
 
 # 庭院皮肤
@@ -98,7 +106,14 @@ class CostumeBase:
         self.check_costume_main(config.costume_main_type)
         self.check_costume_battle(config.costume_battle_type)
         self.check_costume_shikigami(config.costume_shikigami_type)
+        self.check_costume_theme(config.costume_theme_type)
         self.check_custom_courtyard_affair(config.custom_courtyard_affair)
+
+    def check_costume_theme(self, theme_type: ThemeType):
+        apply_theme(theme_type)
+        if theme_type != ThemeType.COSTUME_THEME_DEFAULT:
+            theme_name = I18n.trans_zh_cn(theme_type)
+            logger.info(f'Switch menu theme {theme_type} ({theme_name})')
 
     @classmethod
     def _snapshot_original(cls, asset_object: RuleImage) -> None:
@@ -116,11 +131,7 @@ class CostumeBase:
 
     @staticmethod
     def _reset_image_cache(asset_object: RuleImage) -> None:
-        asset_object._image = None
-        asset_object._mask_loaded = False
-        asset_object._mask = None
-        asset_object._kp = None
-        asset_object._des = None
+        asset_object.refresh()
 
     def restore_img(self, asset_before: str) -> None:
         if not hasattr(self, asset_before):
@@ -152,7 +163,7 @@ class CostumeBase:
         # setattr(self, asset_before, asset_after)
         asset_before_object: RuleImage = getattr(self, asset_before)
         self._snapshot_original(asset_before_object)
-        asset_before_object.roi_front = asset_after.roi_front
+        asset_before_object.roi_front = list(asset_after.roi_front)
         if rp_roi_back:
             asset_before_object.roi_back = asset_after.roi_back
         asset_before_object.threshold = asset_after.threshold
@@ -160,11 +171,7 @@ class CostumeBase:
         asset_before_object.scale_range = asset_after.scale_range
         asset_before_object.scale_step = asset_after.scale_step
         asset_before_object.file = asset_after.file
-        asset_before_object._image = None
-        asset_before_object._mask_loaded = False
-        asset_before_object._mask = None
-        asset_before_object._kp = None
-        asset_before_object._des = None
+        self._reset_image_cache(asset_before_object)
 
     def check_costume_main(self, main_type: MainType):
         self._restore_assets(_MAIN_ASSET_KEYS)
